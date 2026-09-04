@@ -1,12 +1,14 @@
 import * as React from "react"
 import { toast } from "sonner"
-import { IconPower, IconTrash } from "@tabler/icons-react"
+import { IconPlus, IconPower, IconTrash } from "@tabler/icons-react"
 
-import { countries } from "@/data/countries"
+import { countries as seedCountries, type Country } from "@/data/countries"
+import { useDialogs } from "@/components/dialogs/dialogs"
 import { PageBody, PageHeader } from "@/components/page-header"
 import { IconButton, IconButtonGroup } from "@/components/icon-button"
 import { TableCard } from "@/components/table-card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -17,8 +19,10 @@ import {
 } from "@/components/ui/table"
 
 export function KatalogNegaraPage() {
+  const dialogs = useDialogs()
+  const [countries, setCountries] = React.useState<Country[]>(seedCountries)
   const [active, setActive] = React.useState<Record<string, boolean>>(
-    () => Object.fromEntries(countries.map((c) => [c.iso2, c.active]))
+    () => Object.fromEntries(seedCountries.map((c) => [c.iso2, c.active]))
   )
 
   return (
@@ -26,6 +30,24 @@ export function KatalogNegaraPage() {
       <PageHeader
         title="Negara"
         description="Negara yang didukung untuk pendaftaran tenant."
+        annotation="Nonaktifkan atau hapus negara diblokir selama masih ada tenant yang memakainya — cek kolom Tenant sebelum mencoba."
+        actions={
+          <Button
+            onClick={() =>
+              dialogs.open({
+                kind: "country.create",
+                existingIso2: countries.map((c) => c.iso2),
+                onCreate: (country) => {
+                  setCountries((cs) => [...cs, country])
+                  setActive((s) => ({ ...s, [country.iso2]: true }))
+                },
+              })
+            }
+          >
+            <IconPlus />
+            Tambah negara
+          </Button>
+        }
       />
 
       <TableCard title="Negara" count={countries.length}>

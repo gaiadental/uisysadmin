@@ -21,6 +21,7 @@ import { conditionsFor, systemIdentityFor } from "@/data/tenant-detail"
 import { isoDateTime, relativeTime } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { PageBody } from "@/components/page-header"
+import { InfoTooltip } from "@/components/info-tooltip"
 import { MetricCard } from "@/components/metric-card"
 import {
   TenantStatusBadge,
@@ -101,6 +102,12 @@ export function TenantDetailPage() {
                 {tenant.name}
               </h1>
               <TenantStatusBadge status={tenant.status} />
+              <InfoTooltip>
+                Halaman ini dipakai saat menindaklanjuti satu tenant spesifik
+                — dari klik "Detail" di Daftar tenant, dari "Perlu ditangani"
+                di Dashboard, atau lewat ⌘K. Tab Fitur aktif mengontrol modul
+                per tenant ini saja, terpisah dari katalog Permission global.
+              </InfoTooltip>
             </div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               <span>
@@ -199,7 +206,14 @@ export function TenantDetailPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <Card className="gap-0 py-0">
               <CardHeader className="border-b bg-muted/40 py-3">
-                <CardTitle className="text-sm">Checklist kondisi</CardTitle>
+                <CardTitle className="flex items-center gap-1.5 text-sm">
+                  Checklist kondisi
+                  <InfoTooltip>
+                    5 syarat "tenant sehat" — dipakai untuk cek cepat sebelum
+                    eskalasi ke Tim Produk. Silang merah menandakan sesuatu
+                    yang butuh tindak lanjut.
+                  </InfoTooltip>
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <ul className="divide-y divide-border">
@@ -236,7 +250,15 @@ export function TenantDetailPage() {
 
             <Card className="gap-0 py-0">
               <CardHeader className="border-b bg-muted/40 py-3">
-                <CardTitle className="text-sm">Identitas sistem</CardTitle>
+                <CardTitle className="flex items-center gap-1.5 text-sm">
+                  Identitas sistem
+                  <InfoTooltip>
+                    Field teknis untuk dibacakan ke tim engineering saat
+                    troubleshooting (mis. sebut `tenant_id` saat lapor bug).
+                    Angka penyimpanan sengaja tidak ditampilkan — domainnya
+                    belum dirancang.
+                  </InfoTooltip>
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <dl className="divide-y divide-border text-sm">
@@ -265,7 +287,14 @@ export function TenantDetailPage() {
         <TabsContent value="profil" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-sm">Profil tenant</CardTitle>
+              <CardTitle className="flex items-center gap-1.5 text-sm">
+                Profil tenant
+                <InfoTooltip>
+                  Kode & mode penyimpanan terkunci sengaja — keduanya
+                  ditetapkan permanen saat wizard Tambah tenant dan tidak
+                  boleh berubah setelah provisioning.
+                </InfoTooltip>
+              </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <Field label="Nama tenant">

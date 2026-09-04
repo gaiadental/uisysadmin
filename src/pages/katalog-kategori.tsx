@@ -1,10 +1,16 @@
+import * as React from "react"
 import { toast } from "sonner"
-import { IconPencil, IconTrash } from "@tabler/icons-react"
+import { IconPencil, IconPlus, IconTrash } from "@tabler/icons-react"
 
-import { tenantCategories } from "@/data/tenant-categories"
+import {
+  tenantCategories as seedCategories,
+  type TenantCategory,
+} from "@/data/tenant-categories"
+import { useDialogs } from "@/components/dialogs/dialogs"
 import { PageBody, PageHeader } from "@/components/page-header"
 import { IconButton, IconButtonGroup } from "@/components/icon-button"
 import { TableCard } from "@/components/table-card"
+import { Button } from "@/components/ui/button"
 import {
   Table,
   TableBody,
@@ -15,14 +21,34 @@ import {
 } from "@/components/ui/table"
 
 export function KatalogKategoriPage() {
+  const dialogs = useDialogs()
+  const [categories, setCategories] =
+    React.useState<TenantCategory[]>(seedCategories)
+
   return (
     <PageBody>
       <PageHeader
         title="Kategori tenant"
         description="Klasifikasi jenis praktik klinik."
+        annotation="Dipakai saat mendaftarkan tenant baru dan sebagai filter di Daftar tenant. Kategori yang masih dipakai tenant tidak bisa dihapus."
+        actions={
+          <Button
+            onClick={() =>
+              dialogs.open({
+                kind: "category.create",
+                existingKeys: categories.map((c) => c.key),
+                onCreate: (category) =>
+                  setCategories((cs) => [...cs, category]),
+              })
+            }
+          >
+            <IconPlus />
+            Tambah kategori
+          </Button>
+        }
       />
 
-      <TableCard title="Kategori" count={tenantCategories.length}>
+      <TableCard title="Kategori" count={categories.length}>
         <Table>
           <TableHeader>
             <TableRow>
@@ -33,7 +59,7 @@ export function KatalogKategoriPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tenantCategories.map((c) => (
+            {categories.map((c) => (
               <TableRow key={c.id}>
                 <TableCell className="py-2">
                   <code className="font-mono text-xs font-medium">{c.key}</code>

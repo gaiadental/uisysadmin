@@ -1,10 +1,17 @@
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
+import { InfoTooltip } from "@/components/info-tooltip"
 
 type PageHeaderProps = {
   title: string
   description?: string
+  /**
+   * Catatan konteks untuk presentasi (hover ikon "i" di sebelah judul) —
+   * kenapa halaman ini ada, siapa pemakainya, aturan bisnis kuncinya.
+   * Beda dari `description`, yang tetap tampil sebagai teks biasa.
+   */
+  annotation?: React.ReactNode
   /** Tombol aksi tingkat halaman (mis. Tambah tenant, Cabut sesi). */
   actions?: React.ReactNode
   className?: string
@@ -13,6 +20,7 @@ type PageHeaderProps = {
 export function PageHeader({
   title,
   description,
+  annotation,
   actions,
   className,
 }: PageHeaderProps) {
@@ -24,7 +32,10 @@ export function PageHeader({
       )}
     >
       <div className="space-y-1">
-        <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
+        <h1 className="flex items-center gap-1.5 text-lg font-semibold tracking-tight">
+          {title}
+          {annotation ? <InfoTooltip>{annotation}</InfoTooltip> : null}
+        </h1>
         {description ? (
           <p className="text-sm text-muted-foreground">{description}</p>
         ) : null}

@@ -125,6 +125,7 @@ export function TenantCreatePage() {
       <PageHeader
         title="Tambah tenant"
         description="Buat tenant baru melalui wizard 5 langkah."
+        annotation="Kode tenant permanen setelah dibuat — tidak bisa diubah lagi setelah langkah ini selesai. Langkah 5 memicu proses provisioning asinkron (progress checklist)."
         actions={
           <Button variant="outline" onClick={() => navigate("/tenant")}>
             <IconArrowLeft />

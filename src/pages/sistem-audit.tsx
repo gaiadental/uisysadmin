@@ -53,6 +53,7 @@ export function SistemAuditPage() {
       <PageHeader
         title="Log audit"
         description="Catatan tindakan Tim IT pada konsol."
+        annotation="Jejak siapa melakukan apa, kapan, berhasil atau ditolak — dipakai untuk investigasi dan kepatuhan. Entri REJECTED artinya sistem menolak tindakan (mis. coba hapus negara yang masih dipakai)."
         actions={
           <Button
             variant="outline"

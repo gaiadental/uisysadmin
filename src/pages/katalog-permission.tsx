@@ -67,6 +67,7 @@ export function KatalogPermissionPage() {
       <PageHeader
         title="Permission"
         description="Kunci permission yang tersedia untuk dipetakan ke peran tenant."
+        annotation="Permission bertanda CORE atau yang masih dipakai peran di suatu tenant tidak bisa dimatikan dari sini — sistem menolak dan menjelaskan alasannya lewat dialog."
       />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

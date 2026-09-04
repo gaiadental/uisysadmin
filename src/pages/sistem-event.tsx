@@ -62,6 +62,7 @@ export function SistemEventPage() {
       <PageHeader
         title="Event"
         description="Antrean event domain beserta status pemrosesan."
+        annotation="Log kejadian teknis antar layanan (tenant dibuat, fitur diubah, sesi dicabut, dst). Baris FAILED bisa diproses ulang manual — badge merah di sidebar menghitung jumlahnya."
       />
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

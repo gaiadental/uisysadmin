@@ -33,6 +33,7 @@ export function SistemSesiPage() {
       <PageHeader
         title="Sesi aktif"
         description="Agregat sesi login per tenant dan sesi akun Tim IT. Sesi klinik hanya dihitung per tenant, bukan per pengguna."
+        annotation="Dua cakupan berbeda: agregat sesi klinik per tenant (bukan per pengguna — batasan yang sengaja dijaga) vs sesi akun Tim IT sendiri secara rinci (perangkat, IP)."
       />
 
       <div className="grid gap-4 sm:grid-cols-3">

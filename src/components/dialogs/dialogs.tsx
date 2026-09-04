@@ -18,6 +18,8 @@ import type { Tenant } from "@/data/tenants"
 import type { Permission } from "@/data/permissions"
 import { permissionGroups, permissions } from "@/data/permissions"
 import type { SystemRole } from "@/data/system-roles"
+import type { Country } from "@/data/countries"
+import type { TenantCategory } from "@/data/tenant-categories"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -62,6 +64,16 @@ type DialogRequest =
       kind: "role.permissions"
       role: SystemRole
       onSave: (permissionKeys: string[]) => void
+    }
+  | {
+      kind: "country.create"
+      existingIso2: string[]
+      onCreate: (country: Country) => void
+    }
+  | {
+      kind: "category.create"
+      existingKeys: string[]
+      onCreate: (category: TenantCategory) => void
     }
 
 type DialogsContextValue = {
@@ -141,6 +153,12 @@ function DialogHost({
           )}
           {req.kind === "role.permissions" && (
             <RolePermissions req={req} onClose={onClose} />
+          )}
+          {req.kind === "country.create" && (
+            <CreateCountry req={req} onClose={onClose} />
+          )}
+          {req.kind === "category.create" && (
+            <CreateCategory req={req} onClose={onClose} />
           )}
         </DialogContent>
       ) : null}
@@ -750,6 +768,235 @@ function RolePermissions({
         >
           <IconCheck />
           Simpan izin
+        </Button>
+      </DialogFooter>
+    </>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Tambah negara                                                      */
+/* ------------------------------------------------------------------ */
+
+function CreateCountry({
+  req,
+  onClose,
+}: {
+  req: Extract<DialogRequest, { kind: "country.create" }>
+  onClose: () => void
+}) {
+  const [iso2, setIso2] = React.useState("")
+  const [name, setName] = React.useState("")
+  const [dialCode, setDialCode] = React.useState("+")
+
+  const iso2Clean = iso2.trim().toUpperCase()
+  const iso2Valid = /^[A-Z]{2}$/.test(iso2Clean)
+  const iso2Taken = req.existingIso2.includes(iso2Clean)
+  const dialValid = /^\+\d{1,4}$/.test(dialCode.trim())
+  const nameValid = name.trim().length >= 2
+  const canSubmit = iso2Valid && !iso2Taken && dialValid && nameValid
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Tambah negara</DialogTitle>
+        <DialogDescription>
+          Negara baru langsung berstatus aktif dan dapat dipilih saat
+          mendaftarkan tenant.
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label className="text-xs" htmlFor="ctr-iso2">
+            Kode ISO2
+          </Label>
+          <Input
+            id="ctr-iso2"
+            value={iso2}
+            maxLength={2}
+            placeholder="ID"
+            className="font-mono uppercase"
+            onChange={(e) =>
+              setIso2(e.target.value.toUpperCase().replace(/[^A-Z]/g, ""))
+            }
+          />
+          {iso2Clean && !iso2Valid ? (
+            <p className="text-xs text-destructive">Harus 2 huruf.</p>
+          ) : iso2Taken ? (
+            <p className="text-xs text-destructive">
+              Kode <span className="font-mono">{iso2Clean}</span> sudah dipakai.
+            </p>
+          ) : null}
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs" htmlFor="ctr-dial">
+            Kode telepon
+          </Label>
+          <Input
+            id="ctr-dial"
+            value={dialCode}
+            placeholder="+62"
+            className="font-mono"
+            onChange={(e) => setDialCode(e.target.value)}
+          />
+          {dialCode.trim() && !dialValid ? (
+            <p className="text-xs text-destructive">
+              Format <span className="font-mono">+&lt;angka&gt;</span>.
+            </p>
+          ) : null}
+        </div>
+        <div className="space-y-1.5 sm:col-span-2">
+          <Label className="text-xs" htmlFor="ctr-name">
+            Nama negara
+          </Label>
+          <Input
+            id="ctr-name"
+            value={name}
+            placeholder="mis. Indonesia"
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>
+          Batal
+        </Button>
+        <Button
+          disabled={!canSubmit}
+          onClick={() => {
+            const country: Country = {
+              id: `ctr_${iso2Clean.toLowerCase()}`,
+              iso2: iso2Clean,
+              name: name.trim(),
+              dialCode: dialCode.trim(),
+              tenantCount: 0,
+              active: true,
+            }
+            req.onCreate(country)
+            toast.success(`Negara ${iso2Clean} ditambahkan`, {
+              description: country.name,
+            })
+            onClose()
+          }}
+        >
+          <IconCheck />
+          Tambah negara
+        </Button>
+      </DialogFooter>
+    </>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Tambah kategori tenant                                             */
+/* ------------------------------------------------------------------ */
+
+function slugifyKey(label: string) {
+  return label
+    .toUpperCase()
+    .trim()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 32)
+}
+
+function CreateCategory({
+  req,
+  onClose,
+}: {
+  req: Extract<DialogRequest, { kind: "category.create" }>
+  onClose: () => void
+}) {
+  const [label, setLabel] = React.useState("")
+  const [key, setKey] = React.useState("")
+  const [keyEdited, setKeyEdited] = React.useState(false)
+
+  const keyClean = key.trim().toUpperCase()
+  const keyValid = /^[A-Z][A-Z0-9_]{1,31}$/.test(keyClean)
+  const keyTaken = req.existingKeys.includes(keyClean)
+  const labelValid = label.trim().length >= 2
+  const canSubmit = keyValid && !keyTaken && labelValid
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Tambah kategori tenant</DialogTitle>
+        <DialogDescription>
+          Kategori baru langsung tersedia di formulir Tambah tenant.
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <Label className="text-xs" htmlFor="cat-label">
+            Label
+          </Label>
+          <Input
+            id="cat-label"
+            value={label}
+            placeholder="mis. Klinik gigi umum"
+            onChange={(e) => {
+              const v = e.target.value
+              setLabel(v)
+              if (!keyEdited) setKey(slugifyKey(v))
+            }}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs" htmlFor="cat-key">
+            Key
+          </Label>
+          <Input
+            id="cat-key"
+            value={key}
+            placeholder="GENERAL_DENTAL"
+            className="font-mono uppercase"
+            onChange={(e) => {
+              setKeyEdited(true)
+              setKey(slugifyKey(e.target.value))
+            }}
+          />
+          {keyClean && !keyValid ? (
+            <p className="text-xs text-destructive">
+              Huruf besar/angka/underscore, diawali huruf.
+            </p>
+          ) : keyTaken ? (
+            <p className="text-xs text-destructive">
+              Key <span className="font-mono">{keyClean}</span> sudah dipakai.
+            </p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Dipakai sebagai <span className="font-mono">categoryKey</span>{" "}
+              tenant, permanen setelah dibuat.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>
+          Batal
+        </Button>
+        <Button
+          disabled={!canSubmit}
+          onClick={() => {
+            const category: TenantCategory = {
+              id: `cat_${keyClean.toLowerCase()}`,
+              key: keyClean,
+              label: label.trim(),
+              tenantCount: 0,
+            }
+            req.onCreate(category)
+            toast.success(`Kategori ${keyClean} ditambahkan`, {
+              description: category.label,
+            })
+            onClose()
+          }}
+        >
+          <IconCheck />
+          Tambah kategori
         </Button>
       </DialogFooter>
     </>

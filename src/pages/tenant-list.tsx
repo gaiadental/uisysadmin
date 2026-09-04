@@ -59,6 +59,7 @@ export function TenantListPage() {
       <PageHeader
         title="Daftar tenant"
         description="Seluruh tenant klinik pada platform, lintas negara dan kategori."
+        annotation="Nonaktifkan memulai hitung mundur housekeeping 180 hari. Sengaja tidak ada tombol hapus manual di sini — lihat catatan di bawah tabel."
         actions={
           <Button onClick={() => navigate("/tenant/tambah")}>
             <IconPlus />

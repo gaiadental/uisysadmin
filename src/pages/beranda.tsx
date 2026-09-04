@@ -36,6 +36,7 @@ export function BerandaPage() {
       <PageHeader
         title="Dashboard"
         description="Ringkasan kondisi platform dan hal yang perlu ditangani."
+        annotation="Titik masuk harian Tim IT — ringkasan lintas semua tenant. 'Perlu ditangani' menggabungkan event gagal dan setup yang belum tuntas supaya tidak perlu buka satu per satu."
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

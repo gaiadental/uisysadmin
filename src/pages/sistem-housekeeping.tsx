@@ -56,6 +56,7 @@ export function SistemHousekeepingPage() {
       <PageHeader
         title="Housekeeping"
         description="Antrean penghapusan permanen terjadwal dan riwayat scheduler."
+        annotation="Tenant nonaktif >180 hari masuk antrean dan dihapus permanen otomatis oleh scheduler terjadwal — bukan dipicu manual. Riwayat tiap run scheduler ada di tab kedua."
       />
 
       <Tabs defaultValue="antrean">

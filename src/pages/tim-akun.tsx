@@ -46,6 +46,7 @@ export function TimAkunPage() {
       <PageHeader
         title="Akun"
         description="Akun anggota Tim IT dengan akses lintas tenant."
+        annotation="Ini akun internal Tim IT, bukan pengguna klinik. Akun yang sedang login (badge [Anda]) tidak bisa menonaktifkan dirinya sendiri, sebagai proteksi."
         actions={
           <Button
             onClick={() =>

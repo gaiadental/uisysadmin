@@ -31,6 +31,7 @@ export function TimPeranPage() {
       <PageHeader
         title="Peran"
         description="Peran Tim IT dan pemetaan permission per peran — menggantikan enum peran tetap."
+        annotation="Peran menentukan permission apa saja yang dimiliki akun Tim IT. Peran bawaan (OWNER/OPERATOR/VIEWER) tidak bisa dihapus — hanya izinnya yang bisa diubah."
         actions={
           <Button
             onClick={() =>

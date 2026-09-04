@@ -32,6 +32,7 @@ export function SistemPengaturanPage() {
       <PageHeader
         title="Pengaturan platform"
         description="Masa berlaku token, batas sesi bersamaan, dan retensi housekeeping — Token Domain spec §26."
+        annotation="Parameter keamanan tingkat platform, bukan per tenant. Retensi housekeeping di sini adalah angka yang sama dipakai di aturan hapus otomatis 180 hari."
         actions={
           <Button onClick={save} disabled={!dirty}>
             <IconDeviceFloppy />
