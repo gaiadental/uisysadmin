@@ -3,7 +3,7 @@ id: PROGRESS-TRACKER
 title: Progress Tracker — System Principal Web (Frontend)
 owner: project_manager
 status: Approved
-version: 1.6
+version: 1.7
 last_updated: 2026-10-12
 source_requirements: [RAG-FE-SP-001, ARCH-FE-001]
 related_artifacts: [IMPLEMENTATION-PLAN, MASTER-TODO, ARCH-FE-001, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007]
@@ -16,7 +16,7 @@ Owner: project_manager
 
 Status: Approved
 
-Version: 1.6
+Version: 1.7
 
 Last Updated: 2026-10-12
 
@@ -48,6 +48,8 @@ Change: 2026-10-12 — TODO-020 added (user decision 2026-10-12, frontend fix: t
 
 Change: 2026-10-12 — TODO-020 Completed (Unit Test Report `execution_overall: PASS`, 890/890, 70 files; user confirmed the live `social_links` key on 2026-10-12). Progress 19 of 20 (95.0%). TODO-018 remains Not Started (deferred). The QA finding on `tenants.get` (OQ-P-63) stays open until the QA re-check is recorded. Status unchanged (Approved).
 
+Change: 2026-10-12 — TODO-021 added (user decision 2026-10-12: Katalog > Permission read-only; ARCH-FE-001 v1.0.4). TODO-021 is Not Started, gated by Pending Approval of ARCH-FE-001 v1.0.4; total becomes 21 TODOs; progress 19 of 21 (90.5%). No TODO status changed (TODO-013 remains Completed). Status unchanged (Approved).
+
 Source Requirements:
 - REQ-FE-001 to REQ-FE-051 (ARCH-FE-001 v1.0)
 
@@ -58,7 +60,7 @@ Related Artifacts:
 
 ## At a Glance
 
-- 19 of 20 TODOs Completed (95.0%). TODO-018 is `Not Started` (deferred). TODO-019 is `Completed` (added after QA, 2026-10-12; QA D-1 remediated pending the QA C-10 re-run). TODO-020 is `Completed` (2026-10-12, Critical; live tenant detail contract; QA re-check of `tenants.get` pending). Phase 3 is complete.
+- 19 of 21 TODOs Completed (90.5%). TODO-018 is `Not Started` (deferred). TODO-021 is `Not Started` (user-approved 2026-10-12; gate cleared: ARCH-FE-001 v1.0.4 Approved). TODO-019 is `Completed` (added after QA, 2026-10-12; QA D-1 remediated pending the QA C-10 re-run). TODO-020 is `Completed` (2026-10-12, Critical; live tenant detail contract; QA re-check of `tenants.get` pending). Phase 3 is complete.
 - Active phase: Phase 0 — Foundation. OQ-P-01 and OQ-P-02 are answered (2026-10-10). It starts when Checkpoint B clears and the orchestrator records the gate.
 - Blocking open questions: 0. OQ-P-01 and OQ-P-02 were answered on 2026-10-10 (see `implementation-plan.md` -> Open Questions).
 
@@ -68,7 +70,7 @@ Track overall progress, the active phase and the status of every TODO in `master
 
 ## Scope
 
-Frontend TODOs in this repository (TODO-001 to TODO-020; TODO-019 and TODO-020 added after QA, 2026-10-12). Platform work is external and is not tracked here.
+Frontend TODOs in this repository (TODO-001 to TODO-021; TODO-019, TODO-020 and TODO-021 added after QA, 2026-10-12). Platform work is external and is not tracked here.
 
 ## References
 
@@ -78,7 +80,7 @@ Frontend TODOs in this repository (TODO-001 to TODO-020; TODO-019 and TODO-020 a
 
 ## Overall Progress
 
-Percentage: 95.0% (19 of 20 TODOs Completed)
+Percentage: 90.5% (19 of 21 TODOs Completed)
 
 | Phase | TODOs | Completed | Status |
 |-------|-------|-----------|--------|
@@ -88,6 +90,7 @@ Percentage: 95.0% (19 of 20 TODOs Completed)
 | Phase 3 — Retirement and acceptance | TODO-017 | 1 of 1 | Completed |
 | Phase 4 — Deferred E2E | TODO-018 | 0 of 1 | Not Started (deferred) |
 | Post-QA remediation (added 2026-10-12) | TODO-019, TODO-020 | 2 of 2 | Completed (QA re-checks for D-1 and `tenants.get` pending) |
+| User decision change (added 2026-10-12) | TODO-021 | 0 of 1 | Not Started (approved 2026-10-12; ARCH-FE-001 v1.0.4 Approved) |
 
 ## Active Phase
 
@@ -124,6 +127,7 @@ Entry conditions: OQ-P-01 and OQ-P-02 answered (done); Checkpoint B gate cleared
 ## Not Started
 
 - TODO-018 Playwright E2E (Low, deferred)
+- TODO-021 Katalog > Permission read-only (High; user-approved 2026-10-12, gate cleared (ARCH-FE-001 v1.0.4 Approved); external BG-12 / SP-BG-13 not blocking)
 
 ## Blocked
 

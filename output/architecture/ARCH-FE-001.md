@@ -3,7 +3,7 @@ id: ARCH-FE-001
 title: System Principal Web — Frontend Architecture
 owner: architect_frontend
 status: Approved
-version: 1.0.3
+version: 1.0.4
 last_updated: 2026-10-12
 artifact_kind: target
 source_requirements: [RAG-FE-SP-001]
@@ -17,7 +17,7 @@ Owner: architect_frontend
 
 Status: Approved
 
-Version: 1.0.3
+Version: 1.0.4
 
 Last Updated: 2026-10-12
 
@@ -38,14 +38,15 @@ Version History:
 - v1.0 (Approved, 2026-10-10): approved by the user at the Checkpoint A gate, 2026-10-10.
 - v1.0.1 (Approved, 2026-10-10): wording-only corrections: FE-OQ-37 answered (History API path routes, no routing library; Checkpoint B gate, ADR-001 v1.0.1 OQ2); D15 and RK-FE-10 cite OQ-P-09 for the dependency audit; version history rows added; SD-01 and A-10 updated to the FE-OQ-37 answer; non-blocking count changed from 24 to 23 (At a Glance and Blocking summary).
 - v1.0.3 (Approved, 2026-10-12): user-approved design change: SYS_PRINCIPAL role locked statically in the UI (no deactivate, delete or permission change), replacing refusal-driven disable; own account offers no deactivate or delete. Sections: REQ-FE-033, D6.6, Table 2 (tim-peran), BG-06 (SP-BG-13).
+- v1.0.4 (Approved, 2026-10-12; user approval "Setuju ARCH-FE-001 v1.0.4 dan TODO-021"): user product decision 2026-10-12: Katalog > Permission (`/master-permissions`) becomes read-only. Create, activate/deactivate and delete of master permissions are removed; list, detail and edit of name and description stay. Tenant permission activate/deactivate (`tenant_permissions:*`) is not affected. Sections: REQ-FE-035, D5.3, D6.4, D7, D8 Table 2 (katalog-permission), D9, D12.1, BG-12 (new), FE-OQ-32, FE-OQ-38 (new).
 
 ## At a Glance
 
 - Frontend architecture for the System Principal (SP) web app in this repository: a Vite + React single-page app that talks only to the GAIA API Gateway. Covers topology, auth and session, gating, the API layer, server state, forms, tests, the mock-to-contract replacement plan, errors, security and accessibility.
 - Accepted base stack: Vite 8 SPA, React 19, TypeScript 6, npm, Tailwind 4, Base UI under shadcn/ui, Zod 4. Mandatory tools adopted: TanStack Query 5, React Hook Form with the Zod resolver, Vitest with React Testing Library, MSW 2.x. Accepted deviations: fetch client (no Axios) and first-party login (no NextAuth).
-- Status: Approved v1.0 at Checkpoint A (user approval 2026-10-10). 0 Blocking open questions. 23 non-blocking open questions, with documented defaults. FE-OQ-01 to FE-OQ-13 are answered. The seven ADR candidates are Pending Approval for /decision.
+- Status: Approved v1.0 at Checkpoint A (user approval 2026-10-10); v1.0.4 (master permissions read-only) is Approved (user approval 2026-10-12). 0 Blocking open questions. 24 non-blocking open questions, with documented defaults. FE-OQ-01 to FE-OQ-13 are answered. The seven ADR candidates are Pending Approval for /decision.
 - Topology: same-origin path routing. One SP host per environment serves the static FE and sends `/api/*` to the gateway. Same-site sibling subdomains are the second option. Cross-site is not supported.
-- Platform impact: none. No platform artifact is modified. Backend needs are listed in Table 3 (BG-01 to BG-11) for routing only.
+- Platform impact: none. No platform artifact is modified. Backend needs are listed in Table 3 (BG-01 to BG-12) for routing only.
 - Scope: the platform frontend Domain Scope is Cancelled by design (split decision). See C-07.
 
 ## Purpose
@@ -122,7 +123,7 @@ Greenfield repository: this table is the requirement source for the SP web. Each
 | REQ-FE-032 | Another user's sessions: view and force logout on the user detail page. | FE doc 5.6 | D4.10 |
 | REQ-FE-033 | System roles: list, create, edit, delete. The SYS_PRINCIPAL role is locked statically in the UI (no deactivate, delete or permission change). | FE doc 5.2 | D6.6 |
 | REQ-FE-034 | Role permission checklist from the master permission catalogue, saved with one PUT. | FE doc 5.2 | D7 |
-| REQ-FE-035 | Master permissions: list, create, edit, delete. | FE doc 5.3 | D7 |
+| REQ-FE-035 | Master permissions are read-only in the UI: list, detail, and edit of name and description only. No create, no activate/deactivate, no delete (user decision 2026-10-12; catalogue changes ship as Flyway migrations with the feature that uses them). Tenant permission activate/deactivate (`tenant_permissions:*`) is unaffected. | FE doc 5.3 | D6.4, D7 |
 | REQ-FE-036 | Pagination model: master-data server-side (`page`, `limit`); auth-service lists client-side. | FE doc 2.1, 2.2, 8 | D5.4 |
 | REQ-FE-037 | Dashboard counts come from `pagination.total`. | FE doc 8 | D7 |
 | REQ-FE-038 | Every async operation has loading, empty and error states. No automatic retry of reads or writes. | FE doc 7; tech-stack-frontend API Integration Standard | D3.1, D13 |
@@ -446,7 +447,7 @@ Each write has its own input type. Fields that the contract marks immutable are 
 | System user create | loginId, systemRoleId | `loginId` is an e-mail |
 | System user role change | systemRoleId | PATCH `/api/v1/system-users/{id}` |
 | System role create or edit | key, name, description?, active? | Edit sends all current values (FE-OQ-17 for `key`) |
-| Master permission create or edit | key, name, description?, category, module, active?, customerPermitted? | Edit sends all current values |
+| Master permission edit (name and description only; no create) | key, name, description?, category, module, active?, customerPermitted? | PATCH sends all current values, with only `name` and `description` editable; `key`, `category`, `module`, `active` and `customerPermitted` are sent unchanged (FE-OQ-38). User rule (2026-10-12): fields other than `name` and `description` (`key`, `category`, `module`, `active`, `customerPermitted`) are read-only; before the PATCH the FE re-fetches the permission from the server and sends those fields unchanged with the edited `name` and `description` |
 | Tenant permissions replace | masterPermissionIds[] | PUT, full replacement |
 | Tenant permission toggle | enabled | PATCH `/api/v1/tenants/{tenantId}/permissions/{id}` |
 
@@ -508,7 +509,8 @@ Gates combine with AND. The route guard maps `LOGIN` to `/login`, `PASSWORD_CHAN
 | System role edit, permissions save | `system_roles:update` (checklist also needs `master_permissions:view`) |
 | System role delete | `system_roles:delete` |
 | Master permissions list | `master_permissions:view` |
-| Master permission create, edit, delete | `master_permissions:create`, `:update`, `:delete` |
+| Master permission edit (name and description) | `master_permissions:update` |
+| Master permission create, activate/deactivate, delete | No UI action (read-only page, REQ-FE-035; BG-12). `master_permissions:create`, `:delete` and the `active` toggle are not offered |
 | Admin sessions view, force logout | `sessions:view`, `sessions:revoke` |
 | Own sessions, change password | Authenticated only |
 
@@ -539,7 +541,7 @@ Table 1 — endpoint usage map (FE doc section 8, with gates and section referen
 | `/tenants/:id/permissions` | Tenant permissions | SYS_PRINCIPAL and `tenant_permissions:view` and `master_permissions:view` | GET `/api/v1/master-permissions`; GET, PUT `/api/v1/tenants/{id}/permissions`; PATCH `/api/v1/tenants/{id}/permissions/{permissionId}` (5.4) |
 | `/tenant-categories` | Tenant categories | SYS_PRINCIPAL | GET, POST `/api/v1/tenant-categories`; GET, PUT, DELETE `/api/v1/tenant-categories/{id}` (6.1) |
 | `/countries` | Countries | SYS_PRINCIPAL | GET, POST `/api/v1/countries`; GET, PUT, DELETE `/api/v1/countries/{code}` (6.2) |
-| `/master-permissions` | Master permissions | `master_permissions:view` | GET, POST `/api/v1/master-permissions`; GET, PATCH, DELETE `/api/v1/master-permissions/{id}` (5.3) |
+| `/master-permissions` | Master permissions (read-only) | `master_permissions:view`; edit `master_permissions:update` | GET `/api/v1/master-permissions`; GET, PATCH `/api/v1/master-permissions/{id}` (name and description only; no POST, no DELETE, no active toggle) (5.3) |
 | `/system-users` | System users (Tim IT > Akun) | `system_users:view` | GET, POST `/api/v1/system-users`; GET `/api/v1/system-roles` (role options; needs `system_roles:view`) (5.1) |
 | `/system-users/:id` | System user detail (tabs: Detail, Sesi aktif) | `system_users:view`; sessions tab `sessions:view` | GET, PATCH, DELETE `/api/v1/system-users/{id}`; PATCH `/api/v1/system-users/{id}/status`; POST `/api/v1/system-users/{id}/reset-password`; GET, DELETE `/api/v1/admin/users/{userId}/sessions` (5.1, 5.6) |
 | `/system-roles` | System roles (Tim IT > Peran) | `system_roles:view` | GET, POST `/api/v1/system-roles` (5.2) |
@@ -588,7 +590,7 @@ Table 2 — mock file and page replacement. Dispositions: REPLACE (contract endp
 | (Tenant detail tab "Fitur aktif") | REPLACE | Tenant permissions (5.4) | Mock flags REMOVE (see `data/tenant-features.ts`) |
 | `pages/katalog-kategori.tsx` | UPDATE | `/tenant-categories` CRUD (6.1) | `key` becomes `code` (immutable after create); `label` becomes `name`; `is_active` added to edit; per-category count DERIVE or REMOVE-V1 (FE-OQ-35) |
 | `pages/katalog-negara.tsx` | UPDATE | `/countries` CRUD (6.2) | `iso2` becomes `code`; `dialCode` becomes `phone_code`; `nationality_name` added; `active` becomes `is_active`; count as above |
-| `pages/katalog-permission.tsx` | UPDATE | `/master-permissions` CRUD (5.3) | Enable switch maps to `active` (PATCH with full body); `core` and bound-tenant count REMOVE-V1 (BG-07). Mock keys (`patient.view` style) are replaced by the catalogue's `resource:action` keys |
+| `pages/katalog-permission.tsx` | UPDATE | `/master-permissions` read plus name/description edit (5.3) | Read-only (REQ-FE-035): create button, enable switch and delete REMOVE; edit of name and description stays (PATCH with full current body, FE-OQ-38); `active` shown as a read-only status. `core` and bound-tenant count REMOVE-V1 (BG-07); server guard BG-12. Mock keys (`patient.view` style) are replaced by the catalogue's `resource:action` keys |
 | `pages/tim-akun.tsx` (Akun) | UPDATE | `/system-users` (5.1); `/system-roles` for options | Name and last-active REMOVE-V1 (BG-04; show `loginId`). Status `INACTIVE` maps to `DEACTIVATED` (BG-05). `PENDING_APPROVAL` REMOVE-V1 (BG-05). Self badge = `id === me.userId`. Per-user session count only on detail |
 | `pages/tim-peran.tsx` (Peran) | UPDATE | `/system-roles` and `/permissions` (5.2) | `isSystem` replaced by a static lock on `SYS_PRINCIPAL` (D6.6; BG-06, SP-BG-13). Member count DERIVE from the user list. Mock role keys (OWNER, OPERATOR, VIEWER) are stale: contract keys are SYS_PRINCIPAL, SYS_ADMIN, SYS_SUPPORT and others |
 | `pages/sistem-sesi.tsx` (Sesi aktif) | UPDATE | Own sessions (3.4); admin sessions (5.6) | Tenant session aggregate REMOVE-V1 (BG-03). Cross-account list is REMOVE-V1; per-user sessions appear on user detail |
@@ -625,14 +627,14 @@ Components (kept unless marked):
 
 - Every form uses React Hook Form (adopted, FE-OQ-10) with the Zod resolver from `@hookform/resolvers` (zod adapter). The resolver version must support Zod 4; it is pinned in the TODO that adds it.
 - Each form has a Zod 4 schema in `features/<name>/schema.ts`. Schemas mirror the FE doc rules and are the client check. The server is authoritative.
-- Forms in scope: login, forgot password, reset password, change password, tenant create, tenant edit (PATCH), tenant category create and edit, country create and edit, system user create, system user role change, system role create and edit, master permission create and edit. The tenant permission checklist and the role permission checklist are controlled checkbox groups (React Hook Form `Controller`), not free-text forms.
+- Forms in scope: login, forgot password, reset password, change password, tenant create, tenant edit (PATCH), tenant category create and edit, country create and edit, system user create, system user role change, system role create and edit, master permission edit (name and description). The tenant permission checklist and the role permission checklist are controlled checkbox groups (React Hook Form `Controller`), not free-text forms.
 - Rules to encode (FE doc reference):
   - Tenant: `code` required, max 50 (no transform); `name` required, max 100; `tenantCategoryId` required; `deploymentType` required, one of two values; `multiBranchEnabled` boolean, default true; `tenantAdminEmail` required e-mail, max 100; `countryCode` optional, `^[A-Z]{2}$`; `logoUrl` optional, `http` or `https` URL, max 500.
   - Category: `code` required, max 50, immutable after create; `name` required, max 100.
   - Country: `code` `^[A-Z]{2}$` (uppercased on input); `name` required, max 100; `nationalityName` max 100; `phoneCode` max 10.
   - System user: `loginId` required, e-mail; `systemRoleId` required.
   - System role: `key` required, max 100; `name` required, max 100; `description` optional; `active` boolean.
-  - Master permission: `key` required, max 100; `name` required, max 100; `category` required, max 50; `module` required, max 50.
+  - Master permission (edit only): `key` read-only; `name` required, max 100; `description` optional; `category` required, max 50; `module` required, max 50.
   - Login: `loginId` required; `password` required.
   - Change password: current, new and confirmation required; confirmation equals new.
   - Reset password: new and confirmation required; confirmation equals new.
@@ -688,7 +690,7 @@ A mutation invalidates, in addition to its own resource, everything the table li
 | Force logout (admin) | `['admin','sessions', userId]` |
 | System role create, update, delete | `['system','roles']`, `['system','role', id]`, `['system','users']` (role labels) |
 | Role permissions replace (PUT) | `['system','rolePermissions', id]`, `['system','role', id]` |
-| Master permission create, update, delete | `['system','masterPermissions']`, `['system','tenantPermissions']` (all tenants), `['system','rolePermissions']` (checklists) |
+| Master permission update (name, description) | `['system','masterPermissions']`, `['system','tenantPermissions']` (all tenants), `['system','rolePermissions']` (checklists) |
 | Tenant permissions replace (PUT) or toggle (PATCH) | `['system','tenantPermissions', tenantId]` |
 
 #### D12.2 Logout and query client defaults
@@ -894,6 +896,7 @@ Table 3 — backend gaps (for routing only; not designed here). None of these bl
 | BG-09 | Free-text tenant search by name | Tenant list | Contract supports exact `code` only (FE doc 11) | master-data-service (only if product requires) |
 | BG-10 | `Access-Control-Expose-Headers` for `X-Correlation-ID` on cross-origin SP origins | Error reference ids | Gateway is the single CORS authority and removes `Access-Control-*` from downstream responses (SC2-HDR-13); no expose list is defined. Not needed in the recommended same-origin topology | apigateway architect_backend (ARCH-SEC-002 owner); only if the fallback topology is chosen |
 | BG-11 | Idempotency key for non-idempotent public writes (tenant create, system user create, reset-password e-mail trigger, master-data and role creates). The FE doc defines none | Tenant create, system user create, reset password | `tech-stack-backend.md` Idempotency Standard applies to retryable writes; FE does not retry (D3.1) | architect_backend of each service and platform ARCH-BE-001 owner (conformance question) |
+| BG-12 | Server-side guard: auth-service must refuse deactivate and delete of master permissions still used by active system roles (at least the core keys `system_users:*`, `system_roles:*`, `master_permissions:*`, `sessions:*`). Reason: `PermissionResolutionService` uses only active, non-deleted master permissions, so deactivating or deleting a core key revokes it from every role including SYS_PRINCIPAL and can lock out all admins. The FE removes these actions (REQ-FE-035) but the API still allows them | Katalog permission (defence in depth; same family as BG-06) | User decision 2026-10-12; handled in the platform repository as an addition to SP-BG-13 | auth-service architect_backend |
 
 Table 4 — stack decision register (`tech-stack-frontend.md`). Version 0.2 records the coordinator's decisions. Every row is an ADR candidate for `/decision` (Pending Approval). No row is Blocking.
 
@@ -975,14 +978,15 @@ Items not in Table 4 or 5 (conformance, non-blocking): client error reporting is
 | FE-OQ-29 | Minimum supported viewport and whether the console supports phone widths | Layout and accessibility (D16) | Responsive scope | user, product | No | Open | Documented default: desktop-first; no phone layout commitment |
 | FE-OQ-30 | Global state library: React context (default) or Zustand or Redux Toolkit | Standard requires a documented project decision (D12, A-09) | Global state code | architect_frontend, user | No | Open | Documented default: React context for auth view state only |
 | FE-OQ-31 | Verify the master-data and auth-service E-01 and E-02 paths end to end. master-data `api-reference.md` v1.3 still lists B-02 as Open | Tenant create outcomes (RK-FE-06) | Integration test planning | architect_frontend, master-data and auth-service architects | No | Open | Documented default: FE handles all outcomes (D8.2); verify before integration test |
-| FE-OQ-32 | Routing of backend gaps BG-01 to BG-11 to platform TODOs | Table 3 | Backend backlog | solution_architect | No | Open | Documented default: routed as shown in Table 3; not designed here |
+| FE-OQ-32 | Routing of backend gaps BG-01 to BG-12 to platform TODOs | Table 3 | Backend backlog | solution_architect | No | Open | Documented default: routed as shown in Table 3; not designed here |
 | FE-OQ-33 | Expose `X-Correlation-ID` to cross-origin SP pages (BG-10) | Reference ids (D3.2) | Only if the fallback topology is chosen (FE-OQ-01) | apigateway architect_backend | No | Open | Documented default: not needed in the recommended topology; the request id is shown as fallback (D3.2) |
 | FE-OQ-34 | Automated accessibility checks and E2E tests: when and where? | Conditional standard items (D16, D19) | Test automation | architect_frontend, qa | No | Open | Documented default: Playwright planned after Tenants integration works (not initial phase); accessibility checked manually in QA until automated checks are decided |
 | FE-OQ-35 | Show per-category and per-country tenant counts (derived with one call per row, or removed)? | Mock `tenantCount` (Table 2) | N+1 requests | user, product | No | Open | Documented default: removed in v1 |
 | FE-OQ-36 | Domain names for the staging and production SP hosts and the gateway host | Same-origin host (D1.2, REQ-FE-047) | Operator edge file and certificates | ops | No | Open | Documented default: `system.<env-domain>` per environment. Infrastructure decision, not a design blocker |
 | FE-OQ-37 | Routing library for path routes (or custom History API routing) | Route table (D10); the mock uses hash routes | Routing code | architect_frontend, user | No | Answered | History API path routes, with no routing library (Checkpoint B gate, 2026-10-10; ADR-001 v1.0.1 OQ2) |
+| FE-OQ-38 | Does PATCH `/api/v1/master-permissions/{id}` for name and description accept a partial body, or must it carry the full current body including `active` and `customerPermitted`? FE doc 5.3 is not explicit about partial bodies | Master permission edit (D5.3, D7) | Request body shape | auth-service architect_backend | No | Open | Documented default: send the full current body with `key`, `category`, `module`, `active`, `customerPermitted` unchanged (existing D5.3 rule "Edit sends all current values") |
 
-Blocking summary: Blocking open questions = 0. Answered: FE-OQ-01 to FE-OQ-13. 23 non-blocking open questions, with documented defaults (FE-OQ-14 to FE-OQ-37 except answered rows; FE-OQ-14 to FE-OQ-31 keep their v0.1 defaults). Platform blocking questions: none added.
+Blocking summary: Blocking open questions = 0. Answered: FE-OQ-01 to FE-OQ-13. 24 non-blocking open questions, with documented defaults (FE-OQ-14 to FE-OQ-38 except answered rows; FE-OQ-14 to FE-OQ-31 keep their v0.1 defaults). Platform blocking questions: none added.
 
 ## ADR Candidates for /decision
 

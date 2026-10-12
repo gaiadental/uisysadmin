@@ -69,3 +69,7 @@ None. TODO-008 failed on an intermittent timeout (unclear, Path B, 2026-10-11). 
 ## Open Questions
 
 FE-OQ-36 (domain names, ops) and FE-OQ-37 (routing library), both non-blocking. See `output/clarifications.md`.
+
+## Gate Cleared (2026-10-12)
+
+Approved by the user, 2026-10-12: ARCH-FE-001 v1.0.4 (Katalog > Permission read-only) and TODO-021, with the added acceptance that `key`, `category`, `module`, `active` and `customerPermitted` are read-only, re-fetched from the server before the PATCH and sent unchanged, with tests. ARCH-FE-001 reads Approved; master-todo TODO-021 reads Not Started (approved). `/build TODO-021` may start. Platform side: SP-BG-13 extended in the platform `clarifications.md` (not committed there).

@@ -3,7 +3,7 @@ id: MASTER-TODO
 title: Master TODO — System Principal Web (Frontend)
 owner: project_manager
 status: Approved
-version: 1.7
+version: 1.8
 last_updated: 2026-10-12
 source_requirements: [REQ-FE-001, REQ-FE-002, REQ-FE-003, REQ-FE-004, REQ-FE-005, REQ-FE-006, REQ-FE-007, REQ-FE-008, REQ-FE-009, REQ-FE-010, REQ-FE-011, REQ-FE-012, REQ-FE-013, REQ-FE-014, REQ-FE-015, REQ-FE-016, REQ-FE-017, REQ-FE-018, REQ-FE-019, REQ-FE-020, REQ-FE-021, REQ-FE-022, REQ-FE-023, REQ-FE-024, REQ-FE-025, REQ-FE-026, REQ-FE-028, REQ-FE-029, REQ-FE-030, REQ-FE-031, REQ-FE-032, REQ-FE-033, REQ-FE-034, REQ-FE-035, REQ-FE-036, REQ-FE-037, REQ-FE-038, REQ-FE-039, REQ-FE-040, REQ-FE-041, REQ-FE-042, REQ-FE-043, REQ-FE-045, REQ-FE-046, REQ-FE-047, REQ-FE-048, REQ-FE-049, REQ-FE-050, REQ-FE-051]
 related_artifacts: [ARCH-FE-001, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, IMPLEMENTATION-PLAN, PROGRESS-TRACKER]
@@ -16,13 +16,15 @@ Owner: project_manager
 
 Status: Approved
 
-Version: 1.7
+Version: 1.8
 
 Last Updated: 2026-10-12
 
 Approved: 2026-10-10 (user, Checkpoint B gate)
 
 Change: 2026-10-10 — amendment: @testing-library/dom (ADR-007 v1.2)
+
+Change: 2026-10-12 — TODO-021 added (user decision 2026-10-12: Katalog > Permission read-only; ARCH-FE-001 v1.0.4 Pending Approval). TODO-021 is Not Started and may not start `/build` until v1.0.4 is Approved. TODO-013 stays Completed. Status unchanged (Approved).
 
 Change: 2026-10-12 — amendment (v1.3, user approved): TODO-010 File scope adds `src/lib/routes-meta.ts` and `src/features/tenants/list/` and records the TODO-009 regression gate and the five-combination classifier tests; TODO-015 Gate rewritten as two tests; TODO-017 note on `tenant.list`. Statuses unchanged. Status unchanged (Approved).
 
@@ -1117,6 +1119,59 @@ Architecture note: ARCH-FE-001 v1.0 D5.2 is not edited here. The derivation rule
 QA record: the QA report `output/reports/qa-report-validate.md` (last written 10:39) does not record this finding. Its C-8 row records `GET /api/v1/tenants/{id}` 200, and its summary records the tenant detail reads as working on the live stack. The finding is cited here as reported on 2026-10-12. QA owner to record it. This does not block the unit gate.
 
 Gate: unit tests for the tenants module PASS, including the three cases above; `TODO-009` tenant list and `TODO-010` create and detail tests PASS as regressions; `npm run build` PASS (`tsc -b`). QA re-check after Completed (not part of the unit gate): `/tenants/:id` loads with no `[contract]` line on the live stack.
+
+# TODO-021
+
+Description:
+
+Make Katalog > Permission (`/master-permissions`) read-only (user product decision 2026-10-12; ARCH-FE-001 v1.0.4, Pending Approval). Remove from the UI: the create button and create dialog path, the activate/deactivate (`active`) switch, and the delete action including its confirmation dialog and the `RowDeleteButton` usage on this page. Keep: list, detail, and edit of `name` and `description` only. The edit PATCH sends the full current body (`key`, `category`, `module`, `active`, `customerPermitted` unchanged; FE-OQ-38 default); `key` is read-only and `active` is shown as a read-only status. Gates per D6.4: the page needs `master_permissions:view`; the edit action needs `master_permissions:update`; no control is offered for `:create`, `:delete` or the `active` toggle, even when the session holds all `master_permissions:*` keys. Invalidation after edit per D12.1 (`['system','masterPermissions']`, all `['system','tenantPermissions']`, `['system','rolePermissions']`). Remove code that becomes unused in the page and form dialog (create mode, delete handler, `active` switch field, create-only schema parts). The API functions `createMasterPermission` and `deleteMasterPermission` in `master-permissions.ts`: ARCH-FE-001 v1.0.4 does not say to remove them, so they are left in place unless the implementer verifies by grep that nothing else uses them and records that as a proposal for approval; do not delete on assumption. Tenant permission activate/deactivate (`tenant_permissions:*`) is not affected.
+
+Owner:
+
+developer_frontend
+
+Status:
+
+Not Started (approved by the user 2026-10-12; gate cleared: ARCH-FE-001 v1.0.4 now Approved; `/build` may start but the TODO is not yet In Progress)
+
+Priority:
+
+High
+
+Dependencies:
+
+TODO-013 (Completed; this TODO is new and does not reopen it). Gate: ARCH-FE-001 v1.0.4 Approved (cleared 2026-10-12). External, not blocking: BG-12 / SP-BG-13 (server-side guard against deactivate/delete of core master permissions; platform repository, auth-service architect_backend); FE-OQ-38 (partial vs full PATCH body; documented default: full body).
+
+Related Requirement:
+
+REQ-FE-035, REQ-FE-018, REQ-FE-036, REQ-FE-040, REQ-FE-048
+
+Related ADR:
+
+ADR-003, ADR-002, ADR-005
+
+Related Architecture:
+
+ARCH-FE-001 v1.0.4 REQ-FE-035, D5.3, D6.4, D7, D8 Table 2 (`katalog-permission`), D9, D12.1, BG-12, FE-OQ-38
+
+File scope:
+
+- `src/features/catalog/master-permissions/permission-list-page.tsx`
+- `src/features/catalog/master-permissions/permission-list-page.test.tsx`
+- `src/features/catalog/master-permissions/permission-form-dialog.tsx`
+- `src/features/catalog/master-permissions/schema.ts`
+- `src/features/catalog/master-permissions/schema.test.ts`
+- `src/lib/api/modules/master-permissions.ts` (add `getMasterPermission(id)` for GET `/api/v1/master-permissions/{id}`, verified absent today; removal of create/delete only if approved, see Description)
+- `src/lib/api/modules/master-permissions.test.ts`
+- `src/test/handlers/catalog.ts` (POST and DELETE `/master-permissions` handlers removed; PATCH handler stays; add GET `/master-permissions/:id` handler, verified absent today)
+- `src/lib/query/invalidation.ts` and `src/lib/query/invalidation.test.ts` (verify only: event `masterPermissionWrite` is still used by edit; change only if the D12.1 set differs)
+- `src/features/team/roles/refused-roles.test.tsx` (verify only: it fires `masterPermissionWrite`; no change expected)
+
+Notes:
+
+Decision: user decision 2026-10-12. Amendment: added as v1.8 of this artifact; TODO-013 stays Completed. Files verified by grep: all use of `createMasterPermission`, `deleteMasterPermission` and `RowDeleteButton` for master permissions is in the files listed above; `RowDeleteButton` itself (`src/components/delete-button.tsx`) is still used by tenant categories and countries and is not changed. `src/app/router.tsx`, `src/app/navigation.ts` and the route guard keep `master_permissions:view` and are not changed. Added acceptance criterion (user, 2026-10-12): fields other than `name` and `description` (`key`, `category`, `module`, `active`, `customerPermitted`) are read-only in the edit dialog. The FE re-fetches the permission from the server (GET `/api/v1/master-permissions/{id}`) just before the PATCH and sends those fields unchanged together with the edited `name` and `description`. Tests must cover: (1) the PATCH body carries the freshly fetched values of the read-only fields, not the stale list values (e.g. the server changed `active` or `customerPermitted` after the list loaded); (2) those fields are not editable controls in the dialog; (3) a failed re-fetch blocks the PATCH and shows the error. Acceptance: component tests show no create control, no active switch and no delete control render even when the session holds `master_permissions:view`, `:create`, `:update`, `:delete` and `:activate`/`:deactivate` keys; the edit of name/description sends exactly one PATCH with the full current body and `key` unchanged; the edit action is hidden without `master_permissions:update`; invalidation after edit matches D12.1; `tsc`, `eslint` and `vitest` PASS, with TODO-011, TODO-013 and TODO-015 related regressions (tenant permissions tab, role permission checklist) PASS. File-provenance rows are added at `/build`, not here.
+
+---
 
 ---
 
