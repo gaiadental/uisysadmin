@@ -77,3 +77,13 @@ Approved by the user, 2026-10-12: ARCH-FE-001 v1.0.4 (Katalog > Permission read-
 ## Checkpoint C — TODO-021 (2026-10-12)
 
 TODO-021 Completed in `master-todo.md` and `progress-tracker.md` (20 of 21; TODO-018 deferred). Unit Test Report `execution_overall: PASS` (909 passed in 75 files). `file-provenance-register.md` FP-230 to FP-237. User checked the page in the browser and ordered the commit and `/validate` ("sudah dicek di browser, commit TODO-021"); commit `34ab93c`. Checkpoint D (`/validate TODO-021`) started.
+
+## Checkpoint D — TODO-021 (2026-10-12)
+
+Code Review Report `code-review-report-TODO-021.md`: Approved (0 Critical, 0 High). QA Report `qa-report-TODO-021.md` v1.1: Go; M1 (missing `active` or `customerPermitted` on re-fetch) and M2 Resolved on re-check (912 tests passed in 75 files). Signed off by the user's order of 2026-10-12 ("Setelah itu QA ulang singkat untuk M1, lalu lanjut /document"). Not verified live: real GET/PATCH bodies (OQ1, OQ2), server-side `:update` enforcement, BG-12. Checkpoint E (`/document TODO-021`) started.
+
+## Checkpoint E — TODO-021 (2026-10-12)
+
+Blocked / Pending Approval. `technical-writer` produced `output/docs/tech-doc-TODO-021.md` and `output/docs/release-notes-TODO-021.md` (both `Status: Pending Approval`, 0 blocking OQs). Waiting for explicit user approval; not self-approved.
+
+Gate Cleared (2026-10-12): Checkpoint E for TODO-021 approved by the user. `tech-doc-TODO-021.md` v1.2 and `release-notes-TODO-021.md` v1.2 read Approved (front-matter and body, verified 2026-10-12). V4 pattern verified by the user. Open non-blocking: OQ5 (release version, project-manager), 909 vs 912 wording in the QA report (qa).
