@@ -43,3 +43,12 @@ export function UserStatusBadge({
 export function SelfBadge() {
   return <Badge variant="secondary">self</Badge>
 }
+
+/** Marks an account whose role was deleted. The account must be given a new role. */
+export function RoleInactiveBadge() {
+  return (
+    <Badge variant="outline" className="border-destructive/40 text-destructive">
+      Peran tidak aktif
+    </Badge>
+  )
+}

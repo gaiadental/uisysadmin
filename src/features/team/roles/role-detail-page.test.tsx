@@ -17,6 +17,7 @@ import { server } from "@/test/server"
 
 import { ALL_ROLE_PERMISSIONS, renderWithClient } from "./test-support"
 import { RoleDetailPage } from "./role-detail-page"
+import { confirmPermanent } from "@/test/confirm"
 
 const authMock = vi.hoisted(() => ({ permissions: [] as readonly string[] }))
 vi.mock("@/app/providers/auth-provider", () => ({
@@ -124,7 +125,7 @@ describe("refusal-driven disable for other roles (D6.6)", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Hapus System Admin" }))
     const dialog = await screen.findByRole("dialog")
-    fireEvent.click(within(dialog).getByRole("button", { name: "Hapus" }))
+    confirmPermanent(dialog, "Hapus")
 
     expect(await screen.findByText(PROTECTED_MESSAGE)).toBeInTheDocument()
     await waitFor(() => {
@@ -172,11 +173,7 @@ describe("refusal-driven disable for other roles (D6.6)", () => {
     const first = renderDetail(ADMIN_ID)
     await readyFor("System Admin")
     fireEvent.click(screen.getByRole("button", { name: "Hapus System Admin" }))
-    fireEvent.click(
-      within(await screen.findByRole("dialog")).getByRole("button", {
-        name: "Hapus",
-      })
-    )
+    confirmPermanent(await screen.findByRole("dialog"), "Hapus")
     await waitFor(() => {
       expect(button("Ubah System Admin")).toBeDisabled()
     })
@@ -197,11 +194,7 @@ describe("refusal-driven disable for other roles (D6.6)", () => {
     const first = renderDetail(ADMIN_ID)
     await readyFor("System Admin")
     fireEvent.click(screen.getByRole("button", { name: "Hapus System Admin" }))
-    fireEvent.click(
-      within(await screen.findByRole("dialog")).getByRole("button", {
-        name: "Hapus",
-      })
-    )
+    confirmPermanent(await screen.findByRole("dialog"), "Hapus")
     await waitFor(() => {
       expect(button("Hapus System Admin")).toBeDisabled()
     })
@@ -363,11 +356,7 @@ describe("edit and states", () => {
     await readyFor("System Admin")
 
     fireEvent.click(screen.getByRole("button", { name: "Hapus System Admin" }))
-    fireEvent.click(
-      within(await screen.findByRole("dialog")).getByRole("button", {
-        name: "Hapus",
-      })
-    )
+    confirmPermanent(await screen.findByRole("dialog"), "Hapus")
 
     await waitFor(() => {
       expect(toastMock.success).toHaveBeenCalledWith("Peran dihapus.")

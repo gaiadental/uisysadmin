@@ -33,22 +33,33 @@ export function NavUser() {
     }
   }
 
+  const initial = me.loginId.trim().charAt(0).toUpperCase()
+
   return (
-    <div className="flex items-center gap-2 rounded-lg p-2">
-      <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
-        <span className="truncate font-medium">{me.loginId}</span>
-        <span className="truncate font-mono text-xs text-muted-foreground">
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 p-2.5">
+      <span
+        aria-hidden="true"
+        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 font-heading text-sm font-semibold text-primary"
+      >
+        {initial}
+      </span>
+      <div className="grid min-w-0 flex-1 text-left leading-tight">
+        <span className="truncate text-sm font-medium" title={me.loginId}>
+          {me.loginId}
+        </span>
+        <span className="truncate text-xs text-muted-foreground">
           {me.role}
         </span>
       </div>
       <Button
         variant="ghost"
-        size="sm"
+        size="icon"
+        aria-label="Keluar"
+        title="Keluar"
         disabled={pending}
         onClick={() => void handleLogout()}
       >
         <IconLogout />
-        Keluar
       </Button>
     </div>
   )

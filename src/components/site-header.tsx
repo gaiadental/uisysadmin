@@ -54,7 +54,7 @@ export function SiteHeader() {
           <button
             type="button"
             onClick={palette.open}
-            className="flex h-9 w-full items-center gap-2 rounded-lg border border-input bg-transparent px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted/50 sm:w-88 lg:w-104 dark:bg-input/30"
+            className="flex h-10 w-full items-center gap-2 rounded-xl border border-input bg-card px-3 text-sm text-muted-foreground shadow-xs transition-colors hover:bg-muted/50 sm:w-88 lg:w-104"
           >
             <IconSearch className="size-4 shrink-0" />
             <span className="hidden truncate sm:inline">Cari halaman</span>

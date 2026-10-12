@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest"
 import {
   adminStepSchema,
   identityStepSchema,
-  isOptionalHttpUrl,
+  isOptionalHttpsUrl,
   storageStepSchema,
   tenantCreateSchema,
   tenantProfileSchema,
@@ -108,7 +108,7 @@ describe("adminStepSchema", () => {
     ).toBe(false)
   })
 
-  it("accepts http and https logo URLs and rejects other schemes", () => {
+  it("accepts https logo URLs and rejects http and other schemes", () => {
     const base = { tenantAdminEmail: "a@b.co" }
     expect(
       adminStepSchema.safeParse({ ...base, logoUrl: "https://x.test/l.png" })
@@ -117,7 +117,7 @@ describe("adminStepSchema", () => {
     expect(
       adminStepSchema.safeParse({ ...base, logoUrl: "http://x.test/l.png" })
         .success
-    ).toBe(true)
+    ).toBe(false)
     expect(
       adminStepSchema.safeParse({ ...base, logoUrl: "javascript:alert(1)" })
         .success
@@ -170,10 +170,11 @@ describe("tenantProfileSchema", () => {
   })
 })
 
-describe("isOptionalHttpUrl", () => {
-  it("accepts empty, http and https only", () => {
-    expect(isOptionalHttpUrl("")).toBe(true)
-    expect(isOptionalHttpUrl("https://a.test")).toBe(true)
-    expect(isOptionalHttpUrl("data:text/html,x")).toBe(false)
+describe("isOptionalHttpsUrl", () => {
+  it("accepts empty and https only", () => {
+    expect(isOptionalHttpsUrl("")).toBe(true)
+    expect(isOptionalHttpsUrl("https://a.test")).toBe(true)
+    expect(isOptionalHttpsUrl("http://a.test")).toBe(false)
+    expect(isOptionalHttpsUrl("data:text/html,x")).toBe(false)
   })
 })

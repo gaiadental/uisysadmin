@@ -10,6 +10,7 @@
 
 import { useEffect, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { IconChevronLeft } from "@tabler/icons-react"
 import { toast } from "sonner"
 
 import { useAuth } from "@/app/providers/auth-provider"
@@ -35,6 +36,7 @@ import {
 import { useZodForm } from "@/lib/forms/zod-form"
 import { applyInvalidation } from "@/lib/query/invalidation"
 import { queryKeys } from "@/lib/query/keys"
+import { cn } from "@/lib/utils"
 import type { TenantDetail } from "@/types/tenant"
 
 import { canViewTenantPermissions } from "../permissions/access"
@@ -71,8 +73,18 @@ function formatDateTime(iso: string): string {
   return Number.isNaN(date.getTime()) ? "—" : DATE_TIME.format(date)
 }
 
+type DetailTab = "summary" | "profile" | "permissions"
+
+function isDetailTab(value: unknown): value is DetailTab {
+  return value === "summary" || value === "profile" || value === "permissions"
+}
+
 export function TenantDetailPage() {
-  const { pathname } = splitHref(useLocationHref())
+  const { pathname, search } = splitHref(useLocationHref())
+  // Leaving the Permissions route remounts this page, so the tab to open comes in the query.
+  const requestedTab = new URLSearchParams(search).get("tab")
+  const initialTab: DetailTab =
+    requestedTab === "profile" ? "profile" : "summary"
   const permissionsTenantId = permissionsTenantIdOfPath(pathname)
   const tenantId = permissionsTenantId ?? tenantIdOfPath(pathname)
   if (tenantId === null) return <NotFound />
@@ -80,6 +92,7 @@ export function TenantDetailPage() {
     <TenantDetailLoader
       tenantId={tenantId}
       onPermissionsPath={permissionsTenantId !== null}
+      initialTab={initialTab}
     />
   )
 }
@@ -87,9 +100,11 @@ export function TenantDetailPage() {
 function TenantDetailLoader({
   tenantId,
   onPermissionsPath,
+  initialTab,
 }: {
   readonly tenantId: string
   readonly onPermissionsPath: boolean
+  readonly initialTab: DetailTab
 }) {
   const query = useQuery({
     queryKey: queryKeys.tenants.detail(tenantId),
@@ -102,9 +117,10 @@ function TenantDetailLoader({
         <span role="status" className="sr-only">
           Memuat tenant...
         </span>
-        <div aria-hidden="true" className="flex flex-col gap-3">
-          <Skeleton className="h-7 w-64" />
-          <Skeleton className="h-40 w-full" />
+        <div aria-hidden="true" className="flex flex-col gap-4">
+          <Skeleton className="h-28 w-full rounded-2xl" />
+          <Skeleton className="h-9 w-72" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
         </div>
       </PageBody>
     )
@@ -140,6 +156,7 @@ function TenantDetailLoader({
     <TenantDetailView
       tenant={query.data}
       onPermissionsPath={onPermissionsPath}
+      initialTab={initialTab}
     />
   )
 }
@@ -149,7 +166,12 @@ function NotFound() {
     <PageBody>
       <Card>
         <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-          <p className="text-sm">Data tidak ditemukan.</p>
+          <p className="font-heading text-lg font-semibold">
+            Data tidak ditemukan.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Periksa tautannya, atau kembali ke daftar tenant.
+          </p>
           <Button
             variant="outline"
             onClick={() => navigateTo(TENANT_LIST_PATH)}
@@ -162,22 +184,29 @@ function NotFound() {
   )
 }
 
-type DetailTab = "summary" | "profile" | "permissions"
-
-function isDetailTab(value: unknown): value is DetailTab {
-  return value === "summary" || value === "profile" || value === "permissions"
+function initialsOf(name: string): string {
+  const letters = name
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word !== "")
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join("")
+  return letters === "" ? "?" : letters
 }
 
 function TenantDetailView({
   tenant,
   onPermissionsPath,
+  initialTab,
 }: {
   readonly tenant: TenantDetail
   readonly onPermissionsPath: boolean
+  readonly initialTab: DetailTab
 }) {
   const { me } = useAuth()
   const showPermissions = canViewTenantPermissions(me?.permissions ?? [])
-  const [localTab, setLocalTab] = useState<DetailTab>("summary")
+  const [localTab, setLocalTab] = useState<DetailTab>(initialTab)
   // The Permissions tab is a route (D7), so the path decides when it is open.
   const activeTab: DetailTab =
     onPermissionsPath && showPermissions ? "permissions" : localTab
@@ -189,28 +218,48 @@ function TenantDetailView({
       return
     }
     setLocalTab(value)
-    if (onPermissionsPath) navigateTo(detailPathOf(tenant.id))
+    if (onPermissionsPath) {
+      navigateTo(`${detailPathOf(tenant.id)}?tab=${value}`)
+    }
   }
 
   return (
     <PageBody>
-      <div className="flex flex-col gap-3 border-b border-border pb-4">
+      <div className="flex flex-col gap-3">
         <button
           type="button"
           onClick={() => navigateTo(TENANT_LIST_PATH)}
-          className="w-fit text-xs text-muted-foreground hover:text-foreground"
+          className="inline-flex w-fit items-center gap-1 rounded-lg text-sm text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
         >
+          <IconChevronLeft aria-hidden="true" className="size-4" />
           Daftar tenant
         </button>
-        <div className="flex items-center gap-2">
-          <h1 className="text-lg font-semibold tracking-tight">
-            {tenant.name}
-          </h1>
-          <TenantStatusBadge status={tenant.isActive ? "ACTIVE" : "INACTIVE"} />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Kode <code className="font-mono text-foreground">{tenant.code}</code>
-        </p>
+        <Card className="gap-0 py-0">
+          <div className="flex items-center gap-4 p-5 sm:p-6">
+            <span
+              aria-hidden="true"
+              className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 font-heading text-xl font-semibold text-primary"
+            >
+              {initialsOf(tenant.name)}
+            </span>
+            <div className="flex min-w-0 flex-col gap-1.5">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h1 className="font-heading text-2xl font-semibold tracking-tight">
+                  {tenant.name}
+                </h1>
+                <TenantStatusBadge
+                  status={tenant.isActive ? "ACTIVE" : "INACTIVE"}
+                />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Kode{" "}
+                <code className="font-mono font-medium text-foreground">
+                  {tenant.code}
+                </code>
+              </p>
+            </div>
+          </div>
+        </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={changeTab}>
@@ -221,14 +270,14 @@ function TenantDetailView({
             <TabsTrigger value="permissions">Permissions</TabsTrigger>
           ) : null}
         </TabsList>
-        <TabsContent value="summary" className="flex flex-col gap-4">
+        <TabsContent value="summary" className="flex flex-col gap-6 pt-2">
           <SummaryTab tenant={tenant} />
         </TabsContent>
-        <TabsContent value="profile" className="flex flex-col gap-4">
+        <TabsContent value="profile" className="flex flex-col gap-6 pt-2">
           <ProfileTab tenant={tenant} />
         </TabsContent>
         {showPermissions ? (
-          <TabsContent value="permissions" className="flex flex-col gap-4">
+          <TabsContent value="permissions" className="flex flex-col gap-6 pt-2">
             <TenantPermissionsTab tenantId={tenant.id} />
           </TabsContent>
         ) : null}
@@ -243,14 +292,12 @@ function SummaryTab({ tenant }: { readonly tenant: TenantDetail }) {
   const logoSrc = safeLogoSrc(tenant.logoUrl)
   return (
     <>
-      <StatusCard tenant={tenant} />
-      <AdminAccountCard tenantId={tenant.id} />
       <Card>
         <CardHeader>
-          <CardTitle>Ringkasan</CardTitle>
+          <CardTitle className="text-base">Ringkasan</CardTitle>
         </CardHeader>
         <CardContent>
-          <dl className="grid gap-3 text-sm sm:grid-cols-2">
+          <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
             <SummaryItem label="Kategori" value={tenant.tenantCategory.name} />
             <SummaryItem
               label="Negara"
@@ -268,16 +315,8 @@ function SummaryTab({ tenant }: { readonly tenant: TenantDetail }) {
               label="E-mail admin tenant"
               value={tenant.tenantAdminEmail}
             />
-            <SummaryItem
-              label="Dibuat"
-              value={formatDateTime(tenant.createdAt)}
-            />
-            <SummaryItem
-              label="Diubah"
-              value={formatDateTime(tenant.updatedAt)}
-            />
             <div className="flex flex-col gap-1">
-              <dt className="text-xs text-muted-foreground">Logo</dt>
+              <dt className="text-sm text-muted-foreground">Logo</dt>
               <dd>
                 {logoSrc === null ? (
                   "—"
@@ -286,14 +325,26 @@ function SummaryTab({ tenant }: { readonly tenant: TenantDetail }) {
                     src={logoSrc}
                     alt={`Logo ${tenant.name}`}
                     referrerPolicy="no-referrer"
-                    className="h-12 w-auto max-w-40 rounded border border-border object-contain"
+                    className="h-12 w-auto max-w-40 rounded-lg border border-border bg-card object-contain"
                   />
                 )}
               </dd>
             </div>
+            <SummaryItem
+              label="Dibuat"
+              value={formatDateTime(tenant.createdAt)}
+            />
+            <SummaryItem
+              label="Diubah"
+              value={formatDateTime(tenant.updatedAt)}
+            />
           </dl>
         </CardContent>
       </Card>
+      <div className="grid items-stretch gap-6 lg:grid-cols-2">
+        <StatusCard tenant={tenant} />
+        <AdminAccountCard tenantId={tenant.id} />
+      </div>
     </>
   )
 }
@@ -306,9 +357,9 @@ function SummaryItem({
   readonly value: string
 }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd>{value}</dd>
+    <div className="flex min-w-0 flex-col gap-1">
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className="text-base font-medium break-words">{value}</dd>
     </div>
   )
 }
@@ -353,11 +404,13 @@ function StatusCard({ tenant }: { readonly tenant: TenantDetail }) {
 
   return (
     <Card>
-      <CardContent className="flex flex-col gap-3">
+      <CardContent className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
-          <div>
-            <Label htmlFor="tenant-active">Status tenant</Label>
-            <p className="text-xs text-muted-foreground">
+          <div className="flex flex-col gap-1">
+            <Label htmlFor="tenant-active" className="text-base">
+              Status tenant
+            </Label>
+            <p className="text-sm text-muted-foreground">
               Menonaktifkan tenant menghentikan akses semua penggunanya.
             </p>
           </div>
@@ -423,11 +476,11 @@ function AdminAccountCard({ tenantId }: { readonly tenantId: string }) {
 
   return (
     <Card>
-      <CardContent className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium">Akun admin tenant</p>
-            <p className="text-xs text-muted-foreground">
+      <CardContent className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <p className="text-base font-medium">Akun admin tenant</p>
+            <p className="text-sm text-muted-foreground">
               Gunakan jika admin belum menerima e-mail akun atau status tenant
               belum tersinkron.
             </p>
@@ -435,6 +488,7 @@ function AdminAccountCard({ tenantId }: { readonly tenantId: string }) {
           <Button
             type="button"
             variant="outline"
+            className="w-fit"
             disabled={pending}
             onClick={() => void retry()}
           >
@@ -444,7 +498,7 @@ function AdminAccountCard({ tenantId }: { readonly tenantId: string }) {
         {warning !== null ? (
           <p
             role="alert"
-            className="rounded-lg border border-amber-600/40 bg-amber-500/10 px-3 py-2 text-sm"
+            className="rounded-xl border border-amber-600/40 bg-amber-500/10 px-4 py-3 text-sm"
           >
             {warning}
           </p>
@@ -507,7 +561,7 @@ function ProfileTab({ tenant }: { readonly tenant: TenantDetail }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Profil</CardTitle>
+        <CardTitle className="text-base">Profil</CardTitle>
       </CardHeader>
       <CardContent>
         <form
@@ -516,76 +570,87 @@ function ProfileTab({ tenant }: { readonly tenant: TenantDetail }) {
             event.preventDefault()
             void save()
           }}
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-6"
         >
           <FormAlert
             message={failure?.message ?? null}
             referenceId={failure?.referenceId ?? null}
           />
-          <p className="text-xs text-muted-foreground">
-            Kode, nama, kategori, tipe penyebaran, multi cabang, dan e-mail
-            admin tidak dapat diubah.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <ReadOnlyField
-              id="ro-code"
-              label="Kode tenant"
-              value={tenant.code}
-              mono
-            />
-            <ReadOnlyField
-              id="ro-name"
-              label="Nama tenant"
-              value={tenant.name}
-            />
-            <ReadOnlyField
-              id="ro-category"
-              label="Kategori tenant"
-              value={tenant.tenantCategory.name}
-            />
-            <ReadOnlyField
-              id="ro-deployment"
-              label="Tipe penyebaran"
-              value={DEPLOYMENT_LABELS[tenant.deploymentType]}
-            />
-            <ReadOnlyField
-              id="ro-branch"
-              label="Multi cabang"
-              value={tenant.multiBranchEnabled ? "Aktif" : "Tidak aktif"}
-            />
-            <ReadOnlyField
-              id="ro-email"
-              label="E-mail admin tenant"
-              value={tenant.tenantAdminEmail}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="profile-country">Negara</Label>
-            <SelectField
-              id="profile-country"
-              placeholder="Tanpa negara"
-              options={countryOptions}
-              {...form.register("countryCode")}
-            />
-          </div>
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="profile-logo">URL logo</Label>
-            <Input
-              id="profile-logo"
-              type="url"
-              autoComplete="off"
-              maxLength={LOGO_URL_MAX}
-              aria-invalid={errors.logoUrl !== undefined}
-              aria-describedby="profile-logo-error"
-              {...form.register("logoUrl")}
-            />
-            <FieldError
-              id="profile-logo-error"
-              message={errors.logoUrl?.message}
-            />
-          </div>
-          <div>
-            <Button type="submit" disabled={!changed || isSubmitting}>
+          <section className="flex flex-col gap-4 rounded-2xl bg-muted/60 p-4 sm:p-5">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-sm font-semibold">Tidak dapat diubah</h2>
+              <p className="text-sm text-muted-foreground">
+                Kode, nama, kategori, tipe penyebaran, multi cabang, dan e-mail
+                admin tetap sama setelah tenant dibuat.
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ReadOnlyField
+                id="ro-code"
+                label="Kode tenant"
+                value={tenant.code}
+                mono
+              />
+              <ReadOnlyField
+                id="ro-name"
+                label="Nama tenant"
+                value={tenant.name}
+              />
+              <ReadOnlyField
+                id="ro-category"
+                label="Kategori tenant"
+                value={tenant.tenantCategory.name}
+              />
+              <ReadOnlyField
+                id="ro-deployment"
+                label="Tipe penyebaran"
+                value={DEPLOYMENT_LABELS[tenant.deploymentType]}
+              />
+              <ReadOnlyField
+                id="ro-branch"
+                label="Multi cabang"
+                value={tenant.multiBranchEnabled ? "Aktif" : "Tidak aktif"}
+              />
+              <ReadOnlyField
+                id="ro-email"
+                label="E-mail admin tenant"
+                value={tenant.tenantAdminEmail}
+              />
+            </div>
+          </section>
+          <section className="flex flex-col gap-4">
+            <h2 className="text-sm font-semibold">Dapat diubah</h2>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="profile-country">Negara</Label>
+                <SelectField
+                  id="profile-country"
+                  placeholder="Tanpa negara"
+                  options={countryOptions}
+                  {...form.register("countryCode")}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="profile-logo">URL logo</Label>
+                <Input
+                  id="profile-logo"
+                  type="url"
+                  autoComplete="off"
+                  maxLength={LOGO_URL_MAX}
+                  placeholder="https://"
+                  aria-invalid={errors.logoUrl !== undefined}
+                  aria-describedby="profile-logo-error"
+                  {...form.register("logoUrl")}
+                />
+                <FieldError
+                  id="profile-logo-error"
+                  message={errors.logoUrl?.message}
+                />
+              </div>
+            </div>
+          </section>
+          <div className="flex justify-end border-t border-border pt-5">
+            <Button type="submit" size="lg" disabled={!changed || isSubmitting}>
               {isSubmitting ? "Menyimpan..." : "Simpan perubahan"}
             </Button>
           </div>
@@ -607,13 +672,13 @@ function ReadOnlyField({
   readonly mono?: boolean
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       <Label htmlFor={id}>{label}</Label>
       <Input
         id={id}
         readOnly
         value={value}
-        className={mono ? "font-mono" : undefined}
+        className={cn("bg-card/60 text-muted-foreground", mono && "font-mono")}
       />
     </div>
   )

@@ -29,6 +29,7 @@ import { server } from "@/test/server"
 
 import { ALL_USER_PERMISSIONS, renderWithClient } from "./test-support"
 import { UserDetailPage } from "./user-detail-page"
+import { confirmPermanent } from "@/test/confirm"
 
 const authMock = vi.hoisted(() => ({ permissions: [] as readonly string[] }))
 vi.mock("@/app/providers/auth-provider", () => ({
@@ -248,7 +249,7 @@ describe("actions on the detail page", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Hapus/ }))
     const dialog = await screen.findByRole("dialog")
-    fireEvent.click(within(dialog).getByRole("button", { name: "Hapus" }))
+    confirmPermanent(dialog, "Hapus")
 
     await waitFor(() =>
       expect(toastMock.success).toHaveBeenCalledWith("Akun dihapus.")
@@ -376,7 +377,9 @@ describe("Sesi aktif tab (D4.10)", () => {
       http.delete(`${API}/admin/users/:userId/sessions`, ({ request }) => {
         deletes += 1
         path = new URL(request.url).pathname
-        return HttpResponse.json({ data: null })
+        return HttpResponse.json({
+          data: { status: "SESSIONS_REVOKED", count: 1 },
+        })
       })
     )
     renderDetail(FIXTURE_USER_ACTIVE.id)

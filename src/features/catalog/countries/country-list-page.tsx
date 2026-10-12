@@ -9,7 +9,11 @@
  */
 
 import { useState, type ReactNode } from "react"
-import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query"
 import { toast } from "sonner"
 
 import { FormAlert } from "@/components/custom/form-alert"
@@ -18,6 +22,7 @@ import { PageBody, PageHeader } from "@/components/page-header"
 import { TableCard } from "@/components/table-card"
 import { TablePagination } from "@/components/table-pagination"
 import { TenantStatusBadge } from "@/components/tenant-bits"
+import { RowDeleteButton } from "@/components/delete-button"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -38,7 +43,10 @@ import { queryKeys } from "@/lib/query/keys"
 import { routeMeta } from "@/lib/routes-meta"
 import type { Country } from "@/types/country"
 
-import { CountryFormDialog, type CountryDialogState } from "./country-form-dialog"
+import {
+  CountryFormDialog,
+  type CountryDialogState,
+} from "./country-form-dialog"
 
 const META = routeMeta["catalog.countries"]
 const PAGE_SIZE = 20
@@ -52,8 +60,12 @@ const SEARCH_DEFAULTS = { page: "1" } as const
  * reused (409), and a country used by a tenant cannot be deleted (409). The
  * text says so, and suggests deactivating instead.
  */
-function deleteDescription(country: Country): string {
-  return `Menghapus negara ${country.name} (${country.code}) bersifat permanen untuk kodenya: kode ${country.code} tidak dapat dipakai lagi untuk negara baru. Negara yang dipakai tenant tidak dapat dihapus. Jika negara ini hanya tidak dipakai lagi, sebaiknya nonaktifkan saja lewat Ubah.`
+function deleteImpact(country: Country): readonly string[] {
+  return [
+    `Kode ${country.code} tidak dapat dipakai lagi untuk negara baru.`,
+    "Negara yang dipakai tenant tidak dapat dihapus.",
+    "Jika negara ini hanya tidak dipakai lagi, sebaiknya nonaktifkan saja lewat Ubah.",
+  ]
 }
 
 interface DeleteFailure {
@@ -80,7 +92,8 @@ export function CountryListPage() {
   const items = result?.data ?? EMPTY_ITEMS
   const pagination = result?.pagination
   const pageCount = Math.max(1, pagination?.totalPages ?? 1)
-  const from = items.length === 0 ? 0 : (page - 1) * (pagination?.limit ?? 0) + 1
+  const from =
+    items.length === 0 ? 0 : (page - 1) * (pagination?.limit ?? 0) + 1
   const view = {
     page,
     setPage: (next: number) => setSearch({ page: String(next) }),
@@ -95,9 +108,11 @@ export function CountryListPage() {
     setDeleteFailure(null)
     const confirmed = await confirm({
       title: `Hapus negara ${country.code}?`,
-      description: deleteDescription(country),
+      description: `Negara ${country.name} (${country.code}) akan dihapus.`,
+      impact: deleteImpact(country),
       confirmLabel: "Hapus permanen",
       tone: "destructive",
+      permanent: true,
     })
     if (!confirmed) return
     setDeletingId(country.code)
@@ -214,16 +229,11 @@ export function CountryListPage() {
                         >
                           Ubah
                         </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          aria-label={`Hapus negara ${country.name}`}
+                        <RowDeleteButton
+                          label={`Hapus negara ${country.name}`}
                           disabled={deletingId !== null}
                           onClick={() => void handleDelete(country)}
-                        >
-                          {deletingId === country.code ? "Menghapus..." : "Hapus"}
-                        </Button>
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

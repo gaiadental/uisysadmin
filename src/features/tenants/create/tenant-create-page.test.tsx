@@ -127,6 +127,76 @@ describe("TenantCreatePage steps (D9)", () => {
     expect(screen.queryByText("Tipe penyebaran")).not.toBeInTheDocument()
   })
 
+  it("blocks the first step when the code is already taken, until the code is changed", async () => {
+    const bodies = recordCreateBodies()
+    renderPage()
+
+    type("Kode tenant", "smile")
+    type("Nama tenant", "Another Smile")
+    await screen.findByRole("option", { name: "Dental Clinic" })
+    fireEvent.change(screen.getByLabelText("Kategori tenant"), {
+      target: { value: FIXTURE_CATEGORY.id },
+    })
+    await next()
+
+    expect(
+      await screen.findByText(/Kode SMILE sudah dipakai tenant lain/)
+    ).toBeInTheDocument()
+    expect(screen.queryByText("Tipe penyebaran")).not.toBeInTheDocument()
+    expect(bodies).toHaveLength(0)
+
+    type("Kode tenant", "NEWCO")
+    expect(screen.queryByText(/sudah dipakai tenant lain/)).toBeNull()
+    await next()
+    expect(await screen.findByText("Tipe penyebaran")).toBeInTheDocument()
+  })
+
+  it("blocks the admin step when the logo URL is not https", async () => {
+    renderPage()
+    await fillIdentity("NEWCO")
+    await next()
+    await screen.findByLabelText("E-mail admin tenant")
+    type("E-mail admin tenant", "admin@newco.example.com")
+    type("URL logo (opsional)", "http://newco.example.com/logo.png")
+
+    await next()
+
+    expect(
+      await screen.findByText("URL logo harus diawali https://.")
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Buat tenant" })
+    ).not.toBeInTheDocument()
+
+    type("URL logo (opsional)", "https://newco.example.com/logo.png")
+    await next()
+    expect(
+      await screen.findByRole("button", { name: "Buat tenant" })
+    ).toBeInTheDocument()
+  })
+
+  it("shows the review first: the create button is a new element, focus moves to the heading, nothing is saved", async () => {
+    const bodies = recordCreateBodies()
+    renderPage()
+    await fillIdentity("NEWCO")
+    await next()
+    await screen.findByLabelText("E-mail admin tenant")
+    type("E-mail admin tenant", "admin@newco.example.com")
+    const lanjut = screen.getByRole("button", { name: "Lanjut" })
+
+    fireEvent.click(lanjut)
+    const create = await screen.findByRole("button", { name: "Buat tenant" })
+
+    // A different node, so a key held on "Lanjut" cannot press "Buat tenant".
+    expect(lanjut).not.toBeInTheDocument()
+    expect(create).not.toBe(lanjut)
+    expect(
+      screen.getByRole("heading", { name: "Tinjau sebelum membuat" })
+    ).toHaveFocus()
+    await waitFor(() => undefined)
+    expect(bodies).toHaveLength(0)
+  })
+
   it("does not create the tenant when Enter is pressed before the review step", async () => {
     const bodies = recordCreateBodies()
     renderPage()
@@ -149,12 +219,12 @@ describe("TenantCreatePage steps (D9)", () => {
     const bodies = recordCreateBodies()
     renderPage()
 
-    await reachReview("SMILE")
+    await reachReview("NEWCO")
     submit()
 
     await waitFor(() => expect(bodies).toHaveLength(1))
     expect(bodies[0]).toEqual({
-      code: "SMILE",
+      code: "NEWCO",
       name: "Smile Dental Group",
       tenant_category_id: FIXTURE_CATEGORY.id,
       deployment_type: "MULTI_TENANT",
@@ -168,7 +238,7 @@ describe("TenantCreatePage outcomes (D8.2)", () => {
   it("CREATED + SYNCED: success toast, then the detail page", async () => {
     renderPage()
 
-    await reachReview("SMILE")
+    await reachReview("NEWCO")
     submit()
 
     await waitFor(() => expect(window.location.pathname).toBe(DETAIL_PATH))
@@ -317,7 +387,7 @@ describe("TenantCreatePage errors (D8.2, D13)", () => {
     )
     renderPage()
 
-    await reachReview("SMILE")
+    await reachReview("NEWCO")
     submit()
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -342,7 +412,7 @@ describe("TenantCreatePage submit (SP-BG-11)", () => {
     )
     renderPage()
 
-    await reachReview("SMILE")
+    await reachReview("NEWCO")
     submit()
 
     const button = await screen.findByRole("button", {

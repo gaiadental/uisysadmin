@@ -8,7 +8,11 @@
  */
 
 import { useState, type ReactNode } from "react"
-import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query"
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query"
 import { toast } from "sonner"
 
 import { FormAlert } from "@/components/custom/form-alert"
@@ -17,6 +21,7 @@ import { PageBody, PageHeader } from "@/components/page-header"
 import { TableCard } from "@/components/table-card"
 import { TablePagination } from "@/components/table-pagination"
 import { TenantStatusBadge } from "@/components/tenant-bits"
+import { RowDeleteButton } from "@/components/delete-button"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -76,7 +81,8 @@ export function TenantCategoryListPage() {
   const items = result?.data ?? EMPTY_ITEMS
   const pagination = result?.pagination
   const pageCount = Math.max(1, pagination?.totalPages ?? 1)
-  const from = items.length === 0 ? 0 : (page - 1) * (pagination?.limit ?? 0) + 1
+  const from =
+    items.length === 0 ? 0 : (page - 1) * (pagination?.limit ?? 0) + 1
   const view = {
     page,
     setPage: (next: number) => setSearch({ page: String(next) }),
@@ -91,9 +97,14 @@ export function TenantCategoryListPage() {
     setDeleteFailure(null)
     const confirmed = await confirm({
       title: `Hapus kategori ${category.name}?`,
-      description: `Kategori ${category.name} (${category.code}) akan dihapus. Kategori yang dipakai tenant tidak bisa dihapus. Jika kategori ini hanya tidak dipakai lagi, nonaktifkan saja lewat Ubah.`,
+      description: `Kategori ${category.name} (${category.code}) akan dihapus.`,
+      impact: [
+        "Kategori yang dipakai tenant tidak bisa dihapus.",
+        "Jika kategori ini hanya tidak dipakai lagi, nonaktifkan saja lewat Ubah.",
+      ],
       confirmLabel: "Hapus",
       tone: "destructive",
+      permanent: true,
     })
     if (!confirmed) return
     setDeletingId(category.id)
@@ -204,16 +215,11 @@ export function TenantCategoryListPage() {
                         >
                           Ubah
                         </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          aria-label={`Hapus kategori ${category.name}`}
+                        <RowDeleteButton
+                          label={`Hapus kategori ${category.name}`}
                           disabled={deletingId !== null}
                           onClick={() => void handleDelete(category)}
-                        >
-                          {deletingId === category.id ? "Menghapus..." : "Hapus"}
-                        </Button>
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

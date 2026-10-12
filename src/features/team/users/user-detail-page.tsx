@@ -6,7 +6,7 @@
  * to the list.
  */
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { useQuery } from "@tanstack/react-query"
 
 import { useAuth } from "@/app/providers/auth-provider"
@@ -27,9 +27,10 @@ import { canViewUserSessions, userActionAccess } from "./access"
 import { formatDateTime } from "./format"
 import { UserActionButtons } from "./user-action-buttons"
 import { USER_LIST_PATH, userIdOfPath } from "./user-paths"
+import { isRoleInactive } from "./role-state"
 import { UserRoleDialog } from "./user-role-dialog"
 import { UserSessionsTab } from "./user-sessions-tab"
-import { SelfBadge, UserStatusBadge } from "./user-status"
+import { RoleInactiveBadge, SelfBadge, UserStatusBadge } from "./user-status"
 import { useRoleOptions } from "./use-role-options"
 import { useUserActions } from "./use-user-actions"
 
@@ -122,6 +123,7 @@ function UserDetailView({ user }: { readonly user: SystemUser }) {
   })
   const roles = useRoleOptions()
   const role = roles.query.data?.find((item) => item.id === user.systemRoleId)
+  const roleInactive = isRoleInactive(roles.query.data, user)
 
   return (
     <PageBody>
@@ -182,6 +184,7 @@ function UserDetailView({ user }: { readonly user: SystemUser }) {
                       ? user.systemRoleKey
                       : `${role.name} (${role.key})`
                   }
+                  {...(roleInactive ? { badge: <RoleInactiveBadge /> } : {})}
                 />
                 <Item label="Dibuat" value={formatDateTime(user.createdAt)} />
                 <Item label="Diubah" value={formatDateTime(user.updatedAt)} />
@@ -201,7 +204,11 @@ function UserDetailView({ user }: { readonly user: SystemUser }) {
       </Tabs>
 
       {changingRole && access.canChangeRole ? (
-        <UserRoleDialog user={user} onClose={() => setChangingRole(false)} />
+        <UserRoleDialog
+          user={user}
+          roleInactive={roleInactive}
+          onClose={() => setChangingRole(false)}
+        />
       ) : null}
     </PageBody>
   )
@@ -210,14 +217,19 @@ function UserDetailView({ user }: { readonly user: SystemUser }) {
 function Item({
   label,
   value,
+  badge,
 }: {
   readonly label: string
   readonly value: string
+  readonly badge?: ReactNode
 }) {
   return (
     <div className="flex flex-col gap-0.5">
       <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd>{value}</dd>
+      <dd className="flex flex-wrap items-center gap-2">
+        {value}
+        {badge}
+      </dd>
     </div>
   )
 }

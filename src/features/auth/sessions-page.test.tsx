@@ -58,12 +58,15 @@ function serveSessions(initial: readonly Session[]) {
       sessions = sessions.filter(
         (session) => session.sessionId !== params.sessionId
       )
-      return HttpResponse.json({ data: null })
+      return HttpResponse.json({ data: { status: "SESSION_REVOKED" } })
     }),
     http.delete(`${API}/sessions`, () => {
       revokeAllCalls += 1
+      const revoked = sessions.filter((session) => !session.isCurrent).length
       sessions = sessions.filter((session) => session.isCurrent)
-      return HttpResponse.json({ data: null })
+      return HttpResponse.json({
+        data: { status: "SESSIONS_REVOKED", count: revoked },
+      })
     })
   )
   return {

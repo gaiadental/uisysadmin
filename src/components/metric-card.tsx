@@ -30,37 +30,36 @@ export function MetricCard({
     <Card
       size="sm"
       className={cn(
-        "gap-2 p-4",
+        "gap-3 p-5",
         tone === "destructive" && "ring-destructive/30 bg-destructive/5"
       )}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        {Icon ? (
+          <span
+            className={cn(
+              "flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary",
+              tone === "destructive" && "bg-destructive/10 text-destructive"
+            )}
+          >
+            <Icon className="size-5" />
+          </span>
+        ) : null}
         <span className="text-sm font-medium text-muted-foreground">
           {label}
         </span>
-        {Icon ? (
-          <Icon
-            className={cn(
-              "size-4 text-muted-foreground",
-              tone === "destructive" && "text-destructive"
-            )}
-          />
-        ) : null}
       </div>
       {state === "ready" ? (
         <div
           className={cn(
-            "font-mono text-2xl font-semibold tabular-nums",
+            "font-heading text-3xl font-semibold tabular-nums",
             tone === "destructive" && "text-destructive"
           )}
         >
           {value}
         </div>
       ) : state === "loading" ? (
-        <div
-          role="status"
-          className="text-sm text-muted-foreground"
-        >
+        <div role="status" className="text-sm text-muted-foreground">
           Memuat...
         </div>
       ) : (

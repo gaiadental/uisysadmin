@@ -32,10 +32,18 @@ import { useRoleOptions } from "./use-role-options"
 
 interface UserRoleDialogProps {
   readonly user: SystemUser
+  /** The current role was deleted: the old value is not preselected and cannot be kept. */
+  readonly roleInactive?: boolean
   readonly onClose: () => void
 }
 
-export function UserRoleDialog({ user, onClose }: UserRoleDialogProps) {
+const OLD_ROLE_CHOSEN = "Peran lama sudah dihapus. Pilih peran yang lain."
+
+export function UserRoleDialog({
+  user,
+  roleInactive = false,
+  onClose,
+}: UserRoleDialogProps) {
   const [busy, setBusy] = useState(false)
   return (
     <Dialog
@@ -49,7 +57,12 @@ export function UserRoleDialog({ user, onClose }: UserRoleDialogProps) {
           <DialogTitle>Ubah peran</DialogTitle>
           <DialogDescription>Peran untuk {user.loginId}.</DialogDescription>
         </DialogHeader>
-        <RoleForm user={user} onClose={onClose} onBusyChange={setBusy} />
+        <RoleForm
+          user={user}
+          roleInactive={roleInactive}
+          onClose={onClose}
+          onBusyChange={setBusy}
+        />
       </DialogContent>
     </Dialog>
   )
@@ -57,17 +70,19 @@ export function UserRoleDialog({ user, onClose }: UserRoleDialogProps) {
 
 function RoleForm({
   user,
+  roleInactive,
   onClose,
   onBusyChange,
 }: {
   readonly user: SystemUser
+  readonly roleInactive: boolean
   readonly onClose: () => void
   readonly onBusyChange: (busy: boolean) => void
 }) {
   const queryClient = useQueryClient()
   const roles = useRoleOptions()
   const form = useZodForm(userRoleChangeSchema, {
-    systemRoleId: String(user.systemRoleId),
+    systemRoleId: roleInactive ? "" : String(user.systemRoleId),
   })
   const { errors, isSubmitting } = form.formState
   const [alert, setAlert] = useState<WriteFailure | null>(null)
@@ -75,6 +90,10 @@ function RoleForm({
   const submit = form.handleSubmit(async (values) => {
     setAlert(null)
     if (values.systemRoleId === user.systemRoleId) {
+      if (roleInactive) {
+        form.setError("systemRoleId", { message: OLD_ROLE_CHOSEN })
+        return
+      }
       onClose()
       return
     }
@@ -103,6 +122,15 @@ function RoleForm({
       }}
       className="flex flex-col gap-4"
     >
+      {roleInactive ? (
+        <p
+          role="note"
+          className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm"
+        >
+          Peran lama ({user.systemRoleKey}) sudah dihapus. Pilih peran baru agar
+          akun ini punya akses yang jelas.
+        </p>
+      ) : null}
       <FormAlert
         message={alert?.message ?? null}
         referenceId={alert?.referenceId ?? null}

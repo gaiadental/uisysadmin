@@ -21,6 +21,7 @@ import { TableCard } from "@/components/table-card"
 import { TablePagination } from "@/components/table-pagination"
 import { TenantStatusBadge } from "@/components/tenant-bits"
 import { Badge } from "@/components/ui/badge"
+import { RowDeleteButton } from "@/components/delete-button"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -93,9 +94,14 @@ export function PermissionListPage() {
     setDeleteFailure(null)
     const confirmed = await confirm({
       title: `Hapus permission ${permission.key}?`,
-      description: `Permission ${permission.key} akan dihapus dari katalog. Pemetaan ke tenant dan peran ikut terpengaruh. Tindakan ini tidak bisa dibatalkan.`,
+      description: `Permission ${permission.key} akan dihapus dari katalog.`,
+      impact: [
+        "Pemetaan ke tenant dan peran ikut terpengaruh.",
+        "Tindakan ini tidak bisa dibatalkan.",
+      ],
       confirmLabel: "Hapus",
       tone: "destructive",
+      permanent: true,
     })
     if (!confirmed) return
     setDeletingId(permission.id)
@@ -246,18 +252,11 @@ export function PermissionListPage() {
                             </Button>
                           ) : null}
                           {canDelete ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              aria-label={`Hapus permission ${permission.key}`}
+                            <RowDeleteButton
+                              label={`Hapus permission ${permission.key}`}
                               disabled={deletingId !== null}
                               onClick={() => void handleDelete(permission)}
-                            >
-                              {deletingId === permission.id
-                                ? "Menghapus..."
-                                : "Hapus"}
-                            </Button>
+                            />
                           ) : null}
                         </div>
                       </TableCell>

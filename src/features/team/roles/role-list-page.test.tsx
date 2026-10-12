@@ -19,6 +19,7 @@ import { server } from "@/test/server"
 
 import { RoleListPage } from "./role-list-page"
 import { ALL_ROLE_PERMISSIONS, renderWithClient } from "./test-support"
+import { confirmPermanent } from "@/test/confirm"
 
 const authMock = vi.hoisted(() => ({ permissions: [] as readonly string[] }))
 vi.mock("@/app/providers/auth-provider", () => ({
@@ -191,9 +192,7 @@ describe("gates per key (D6.4)", () => {
     await screen.findByRole("link", { name: "System Admin" })
 
     fireEvent.click(screen.getByRole("button", { name: "Hapus System Admin" }))
-    fireEvent.click(
-      within(await screen.findByRole("dialog")).getByRole("button", { name: "Hapus" })
-    )
+    confirmPermanent(await screen.findByRole("dialog"), "Hapus")
 
     expect(await screen.findByText("Operation not permitted.")).toBeInTheDocument()
     await waitFor(() => {

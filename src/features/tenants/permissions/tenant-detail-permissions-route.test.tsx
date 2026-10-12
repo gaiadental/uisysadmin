@@ -28,10 +28,7 @@ beforeEach(() => {
   vi.stubEnv("VITE_API_BASE_URL", "http://sp.test")
   setAccessToken(null)
   queryClient = createQueryClient()
-  authMock.permissions = [
-    "tenant_permissions:view",
-    "master_permissions:view",
-  ]
+  authMock.permissions = ["tenant_permissions:view", "master_permissions:view"]
   vi.spyOn(console, "error").mockImplementation(() => undefined)
 })
 
@@ -77,6 +74,31 @@ describe("Permissions tab on the detail page (D7)", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "Ringkasan" }))
     expect(window.location.pathname).toBe(`/tenants/${FIXTURE_TENANT.id}`)
+  })
+
+  it("carries the chosen tab in the address, so Profil survives the route change from Permissions", async () => {
+    renderAt(`/tenants/${FIXTURE_TENANT.id}/permissions`)
+
+    fireEvent.click(await screen.findByRole("tab", { name: "Profil" }))
+    expect(window.location.pathname).toBe(`/tenants/${FIXTURE_TENANT.id}`)
+    expect(window.location.search).toBe("?tab=profile")
+
+    // The router remounts the page on a route change. Mount it again at the new address.
+    cleanup()
+    renderAt(`${window.location.pathname}${window.location.search}`)
+
+    expect(await screen.findByRole("tab", { name: "Profil" })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    )
+  })
+
+  it("opens Ringkasan when the address has no tab", async () => {
+    renderAt(`/tenants/${FIXTURE_TENANT.id}`)
+
+    expect(
+      await screen.findByRole("tab", { name: "Ringkasan" })
+    ).toHaveAttribute("aria-selected", "true")
   })
 
   it("does not render the Permissions tab without both view keys", async () => {

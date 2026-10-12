@@ -28,6 +28,7 @@ import { server } from "@/test/server"
 import { ALL_USER_PERMISSIONS, renderWithClient } from "./test-support"
 import { ROLE_NOT_FOUND_MESSAGE } from "./user-failure"
 import { UserListPage } from "./user-list-page"
+import { confirmPermanent } from "@/test/confirm"
 
 const authMock = vi.hoisted(() => ({ permissions: [] as readonly string[] }))
 vi.mock("@/app/providers/auth-provider", () => ({
@@ -384,7 +385,7 @@ describe("confirm dialogs (REQ-FE-039)", () => {
     const dialog = await open("Hapus ops@gaia.com")
     expect(deletes).toBe(0)
 
-    fireEvent.click(within(dialog).getByRole("button", { name: "Hapus" }))
+    confirmPermanent(dialog, "Hapus")
 
     await waitFor(() =>
       expect(toastMock.success).toHaveBeenCalledWith("Akun dihapus.")
@@ -609,11 +610,14 @@ describe("create dialog (REQ-FE-030)", () => {
   })
 
   it("shows a role-list error with a retry and keeps the submit off", async () => {
+    // The list page reads the roles too (for the inactive-role marker), so the
+    // failure is switched off by hand instead of by call count.
     let calls = 0
+    let failing = true
     server.use(
       http.get(`${API}/system-roles`, () => {
         calls += 1
-        return calls === 1
+        return failing
           ? errorResponse(500, "INTERNAL_ERROR", "boom")
           : HttpResponse.json({ data: [] })
       })
@@ -627,7 +631,9 @@ describe("create dialog (REQ-FE-030)", () => {
     expect(
       within(dialog).getByRole("button", { name: "Buat akun" })
     ).toBeDisabled()
+    failing = false
+    const before = calls
     fireEvent.click(within(dialog).getByRole("button", { name: "Coba lagi" }))
-    await waitFor(() => expect(calls).toBe(2))
+    await waitFor(() => expect(calls).toBeGreaterThan(before))
   })
 })

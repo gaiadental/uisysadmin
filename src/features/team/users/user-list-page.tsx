@@ -39,7 +39,9 @@ import { UserActionButtons } from "./user-action-buttons"
 import { UserCreateDialog } from "./user-create-dialog"
 import { userDetailPathOf } from "./user-paths"
 import { USER_STATUS_LABELS } from "./status-labels"
-import { SelfBadge, UserStatusBadge } from "./user-status"
+import { isRoleInactive } from "./role-state"
+import { RoleInactiveBadge, SelfBadge, UserStatusBadge } from "./user-status"
+import { useRoleOptions } from "./use-role-options"
 import { useUserActions } from "./use-user-actions"
 
 const META = routeMeta["team.users"]
@@ -69,6 +71,7 @@ export function UserListPage() {
     queryKey: queryKeys.systemUsers.all(),
     queryFn: listSystemUsers,
   })
+  const roles = useRoleOptions()
   const users = query.data ?? EMPTY_USERS
   const list = useClientPagedList(users, { matches: matchesQuery })
   const failure = query.isError ? describeReadFailure(query.error) : null
@@ -166,8 +169,15 @@ export function UserListPage() {
                           {access.isSelf ? <SelfBadge /> : null}
                         </span>
                       </TableCell>
-                      <TableCell className="py-2 font-mono text-xs">
-                        {user.systemRoleKey}
+                      <TableCell className="py-2">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-xs">
+                            {user.systemRoleKey}
+                          </span>
+                          {isRoleInactive(roles.query.data, user) ? (
+                            <RoleInactiveBadge />
+                          ) : null}
+                        </span>
                       </TableCell>
                       <TableCell className="py-2">
                         <UserStatusBadge status={user.status} />

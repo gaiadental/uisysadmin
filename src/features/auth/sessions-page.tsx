@@ -9,6 +9,7 @@ import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { FormAlert } from "@/components/custom/form-alert"
+import { TableCard } from "@/components/table-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -111,143 +112,153 @@ export function SessionsPage() {
   return (
     <section className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6">
       <header className="flex flex-col gap-1">
-        <h1 className="font-heading text-xl font-semibold text-foreground">
+        <h1 className="font-heading text-2xl font-semibold text-foreground">
           {SESSIONS_META.title}
         </h1>
         <p className="text-sm text-muted-foreground">
           {SESSIONS_META.description}
         </p>
       </header>
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="session-search">Cari sesi</Label>
-        <Input
-          id="session-search"
-          type="search"
-          placeholder="IP atau perangkat"
-          value={list.query}
-          onChange={(event) => list.setQuery(event.target.value)}
-        />
-      </div>
-
       <FormAlert
         message={failure?.message ?? null}
         referenceId={failure?.referenceId ?? null}
       />
 
-      {sessionsQuery.isPending ? (
-        <p role="status" className="text-sm text-muted-foreground">
-          Memuat sesi...
-        </p>
-      ) : sessionsQuery.isError && loadFailure !== null ? (
-        <FormAlert
-          message={loadFailure.message}
-          referenceId={loadFailure.referenceId}
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            className="self-start"
-            onClick={() => void sessionsQuery.refetch()}
-          >
-            Coba lagi
-          </Button>
-        </FormAlert>
-      ) : (
-        <Table aria-busy={busy} aria-label="Daftar sesi">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Perangkat</TableHead>
-              <TableHead>IP</TableHead>
-              <TableHead>Aktivitas terakhir</TableHead>
-              <TableHead>Dibuat</TableHead>
-              <TableHead>
-                <span className="sr-only">Tindakan</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {list.pageItems.map((session) => (
-              <TableRow key={session.sessionId}>
-                <TableCell
-                  className="max-w-56 truncate"
-                  title={session.userAgent}
-                >
-                  {session.userAgent}
-                </TableCell>
-                <TableCell>{session.ipAddress}</TableCell>
-                <TableCell>{formatDateTime(session.lastActivityAt)}</TableCell>
-                <TableCell>{formatDateTime(session.createdAt)}</TableCell>
-                <TableCell>
-                  {session.isCurrent ? (
-                    <Badge variant="secondary">Sesi ini</Badge>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={busy}
-                      aria-label={`Cabut sesi dari ${session.ipAddress}`}
-                      onClick={() => revokeSession(session)}
-                    >
-                      Cabut
-                    </Button>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-            {list.total === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="text-center text-muted-foreground"
-                >
-                  {list.query === ""
-                    ? "Tidak ada sesi."
-                    : "Tidak ada sesi yang cocok dengan pencarian."}
-                </TableCell>
-              </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      )}
-
-      {sessionsQuery.isSuccess && list.total > 0 ? (
-        <nav
-          aria-label="Halaman sesi"
-          className="flex flex-wrap items-center justify-between gap-2"
-        >
-          <p className="text-sm text-muted-foreground">
-            Menampilkan {list.from}–{list.to} dari {list.total}
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={list.page <= 1}
-              onClick={() => list.setPage(list.page - 1)}
-            >
-              Sebelumnya
-            </Button>
-            <span className="text-sm">
-              Halaman {list.page} dari {list.pageCount}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={list.page >= list.pageCount}
-              onClick={() => list.setPage(list.page + 1)}
-            >
-              Berikutnya
-            </Button>
+      <TableCard>
+        <TableCard.Toolbar>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="session-search">Cari sesi</Label>
+            <Input
+              id="session-search"
+              type="search"
+              placeholder="IP atau perangkat"
+              value={list.query}
+              onChange={(event) => list.setQuery(event.target.value)}
+            />
           </div>
-        </nav>
-      ) : null}
+        </TableCard.Toolbar>
+        <TableCard.Body>
+          {sessionsQuery.isPending ? (
+            <p role="status" className="p-4 text-sm text-muted-foreground">
+              Memuat sesi...
+            </p>
+          ) : sessionsQuery.isError && loadFailure !== null ? (
+            <div className="p-4">
+              <FormAlert
+                message={loadFailure.message}
+                referenceId={loadFailure.referenceId}
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="self-start"
+                  onClick={() => void sessionsQuery.refetch()}
+                >
+                  Coba lagi
+                </Button>
+              </FormAlert>
+            </div>
+          ) : (
+            <Table aria-busy={busy} aria-label="Daftar sesi">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Perangkat</TableHead>
+                  <TableHead>IP</TableHead>
+                  <TableHead>Aktivitas terakhir</TableHead>
+                  <TableHead>Dibuat</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Tindakan</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {list.pageItems.map((session) => (
+                  <TableRow key={session.sessionId}>
+                    <TableCell
+                      className="max-w-56 truncate"
+                      title={session.userAgent}
+                    >
+                      {session.userAgent}
+                    </TableCell>
+                    <TableCell>{session.ipAddress}</TableCell>
+                    <TableCell>
+                      {formatDateTime(session.lastActivityAt)}
+                    </TableCell>
+                    <TableCell>{formatDateTime(session.createdAt)}</TableCell>
+                    <TableCell>
+                      {session.isCurrent ? (
+                        <Badge variant="secondary">Sesi ini</Badge>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={busy}
+                          aria-label={`Cabut sesi dari ${session.ipAddress}`}
+                          onClick={() => revokeSession(session)}
+                        >
+                          Cabut
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {list.total === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="text-center text-muted-foreground"
+                    >
+                      {list.query === ""
+                        ? "Tidak ada sesi."
+                        : "Tidak ada sesi yang cocok dengan pencarian."}
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
+          )}
+        </TableCard.Body>
+        <TableCard.Footer>
+          {sessionsQuery.isSuccess && list.total > 0 ? (
+            <nav
+              aria-label="Halaman sesi"
+              className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3"
+            >
+              <p className="text-sm text-muted-foreground">
+                Menampilkan {list.from}–{list.to} dari {list.total}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={list.page <= 1}
+                  onClick={() => list.setPage(list.page - 1)}
+                >
+                  Sebelumnya
+                </Button>
+                <span className="text-sm">
+                  Halaman {list.page} dari {list.pageCount}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={list.page >= list.pageCount}
+                  onClick={() => list.setPage(list.page + 1)}
+                >
+                  Berikutnya
+                </Button>
+              </div>
+            </nav>
+          ) : null}
+        </TableCard.Footer>
+      </TableCard>
 
       {sessionsQuery.isSuccess ? (
         confirmRevokeAll ? (
           <div
             role="group"
             aria-labelledby="revoke-all-title"
-            className="flex flex-col gap-3 rounded-lg border border-border p-3"
+            className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-xs"
           >
             <p id="revoke-all-title" className="text-sm">
               Cabut semua sesi lain? Sesi di perangkat ini tetap aktif.

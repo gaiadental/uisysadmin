@@ -11,7 +11,7 @@
  * Retry button for the admin account (D8.2).
  */
 
-import { useState, type FormEvent } from "react"
+import { useEffect, useRef, useState, type FormEvent } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Controller } from "react-hook-form"
 import { toast } from "sonner"
@@ -21,8 +21,11 @@ import { navigateTo } from "@/app/router"
 import { FormAlert } from "@/components/custom/form-alert"
 import { PageBody, PageHeader } from "@/components/page-header"
 import { WizardSteps, type WizardStep } from "@/components/wizard-steps"
+import { IconAlertTriangle } from "@tabler/icons-react"
+
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { ChoiceChip } from "@/components/ui/choice-chip"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
@@ -31,6 +34,7 @@ import { retryAdminAccount, createTenant } from "@/lib/api/modules/tenants"
 import { useZodForm } from "@/lib/forms/zod-form"
 import { applyInvalidation } from "@/lib/query/invalidation"
 import { routeMeta } from "@/lib/routes-meta"
+import { cn } from "@/lib/utils"
 import type { TenantCreateInput } from "@/types/tenant"
 
 import { detailPathOf } from "../detail/tenant-paths"
@@ -55,6 +59,7 @@ import {
   classifyAdminAccount,
   type AdminAccountOutcome,
 } from "./classify-admin-account"
+import { isTenantCodeTaken } from "./code-availability"
 import { SelectField } from "./select-field"
 import {
   describeWriteFailure,
@@ -64,11 +69,13 @@ import {
 
 const META = routeMeta["tenant.new"]
 
+const STEP_TITLE_ID = "wizard-step-title"
+
 const STEPS: WizardStep[] = [
-  { id: "identitas", title: "Identitas", key: "identity" },
-  { id: "penyimpanan", title: "Penyimpanan", key: "storage" },
-  { id: "admin", title: "Admin awal", key: "initial_admin" },
-  { id: "tinjau", title: "Tinjau dan buat", key: "review" },
+  { id: "identitas", title: "Identitas" },
+  { id: "penyimpanan", title: "Penyimpanan" },
+  { id: "admin", title: "Admin awal" },
+  { id: "tinjau", title: "Tinjau" },
 ]
 const STEP_FIELDS: ReadonlyArray<ReadonlyArray<keyof TenantCreateFormValues>> =
   [
@@ -115,6 +122,7 @@ export function TenantCreatePage() {
   const form = useZodForm(tenantCreateSchema, DEFAULT_VALUES)
   const { errors, isSubmitting } = form.formState
   const [step, setStep] = useState(0)
+  const [checking, setChecking] = useState(false)
   const [alert, setAlert] = useState<WriteFailure | null>(null)
   const [created, setCreated] = useState<CreatedTenant | null>(null)
 
@@ -130,9 +138,40 @@ export function TenantCreatePage() {
     .map((item) => ({ value: item.code, label: `${item.name} (${item.code})` }))
 
   const goNext = async () => {
+    if (checking) return
     const valid = await form.trigger([...(STEP_FIELDS[step] ?? [])])
-    if (valid) setStep((current) => Math.min(current + 1, LAST_STEP))
+    if (!valid) return
+    if (step === 0) {
+      // A taken code blocks the step. The user must change it to continue.
+      const code = form.getValues("code")
+      setChecking(true)
+      const taken = await isTenantCodeTaken(code)
+      setChecking(false)
+      if (taken) {
+        form.setError(
+          "code",
+          {
+            type: "duplicate",
+            message: `Kode ${code} sudah dipakai tenant lain. Ubah kode untuk melanjutkan.`,
+          },
+          { shouldFocus: true }
+        )
+        return
+      }
+    }
+    setStep((current) => Math.min(current + 1, LAST_STEP))
   }
+
+  // Each step moves focus to its heading. That keeps a held Enter or Space from
+  // landing on the button that replaces "Lanjut" on the last step.
+  const firstRender = useRef(true)
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false
+      return
+    }
+    document.getElementById(STEP_TITLE_ID)?.focus()
+  }, [step])
 
   const submit = form.handleSubmit(async (values) => {
     setAlert(null)
@@ -185,6 +224,15 @@ export function TenantCreatePage() {
   }
 
   const values = form.watch()
+  const categoryName =
+    values.tenantCategoryId === ""
+      ? null
+      : (categoryNameOf(categories, values.tenantCategoryId) ??
+        values.tenantCategoryId)
+  const countryName =
+    values.countryCode === ""
+      ? null
+      : (countryNameOf(countries, values.countryCode) ?? values.countryCode)
 
   return (
     <PageBody>
@@ -205,20 +253,23 @@ export function TenantCreatePage() {
         referenceId={alert?.referenceId ?? null}
       />
 
-      <Card>
-        <CardHeader className="border-b bg-muted/40">
-          <WizardSteps
-            steps={STEPS}
-            current={step}
-            onStepClick={(index) => setStep(index)}
-          />
-        </CardHeader>
-        <form noValidate onSubmit={onSubmit}>
-          <CardContent className="flex flex-col gap-5 py-2">
+      <Card className="mx-auto w-full max-w-xl gap-0 rounded-3xl py-0 shadow-sm">
+        <form noValidate onSubmit={onSubmit} className="flex flex-col">
+          <div className="flex flex-col gap-6 px-6 pt-6 pb-2 sm:px-8 sm:pt-8">
+            <WizardSteps steps={STEPS} current={step} />
+
             {step === 0 ? (
-              <fieldset className="flex flex-col gap-4">
-                <legend className="sr-only">Identitas</legend>
-                <div className="flex flex-col gap-1.5">
+              <fieldset
+                aria-labelledby={STEP_TITLE_ID}
+                className="flex flex-col gap-5"
+              >
+                <StepHeading
+                  id={STEP_TITLE_ID}
+
+                  title="Identitas tenant"
+                  description="Data dasar yang tampil di daftar tenant."
+                />
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="tenant-code">Kode tenant</Label>
                   <Controller
                     control={form.control}
@@ -230,21 +281,24 @@ export function TenantCreatePage() {
                         autoCapitalize="characters"
                         spellCheck={false}
                         maxLength={CODE_MAX}
+                        placeholder="SMILE"
+                        className="font-mono placeholder:font-sans"
                         aria-invalid={errors.code !== undefined}
                         aria-describedby="tenant-code-hint tenant-code-error"
                         name={field.name}
                         ref={field.ref}
                         value={field.value}
                         onBlur={field.onBlur}
-                        onChange={(event) =>
+                        onChange={(event) => {
+                          form.clearErrors("code")
                           field.onChange(event.target.value.toUpperCase())
-                        }
+                        }}
                       />
                     )}
                   />
                   <p
                     id="tenant-code-hint"
-                    className="text-xs text-muted-foreground"
+                    className="text-sm text-muted-foreground"
                   >
                     Gunakan huruf besar, misalnya SMILE. Kode tidak bisa diubah
                     setelah tenant dibuat.
@@ -254,12 +308,13 @@ export function TenantCreatePage() {
                     message={errors.code?.message}
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="tenant-name">Nama tenant</Label>
                   <Input
                     id="tenant-name"
                     autoComplete="off"
                     maxLength={NAME_MAX}
+                    placeholder="Nama yang dikenal pelanggan"
                     aria-invalid={errors.name !== undefined}
                     aria-describedby="tenant-name-error"
                     {...form.register("name")}
@@ -269,7 +324,7 @@ export function TenantCreatePage() {
                     message={errors.name?.message}
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="tenant-category">Kategori tenant</Label>
                   <SelectField
                     id="tenant-category"
@@ -284,7 +339,7 @@ export function TenantCreatePage() {
                     message={errors.tenantCategoryId?.message}
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="tenant-country">Negara (opsional)</Label>
                   <SelectField
                     id="tenant-country"
@@ -297,29 +352,42 @@ export function TenantCreatePage() {
             ) : null}
 
             {step === 1 ? (
-              <fieldset className="flex flex-col gap-4">
-                <legend className="mb-1 text-sm font-medium">
-                  Tipe penyebaran
-                </legend>
-                {(["MULTI_TENANT", "DEDICATED"] as const).map((type) => (
-                  <label key={type} className="flex items-start gap-2 text-sm">
-                    <input
-                      type="radio"
-                      value={type}
-                      className="mt-1"
-                      {...form.register("deploymentType")}
-                    />
-                    <span>
-                      {DEPLOYMENT_LABELS[type]}
-                      <span className="block text-xs text-muted-foreground">
-                        {type === "DEDICATED"
-                          ? "Hanya satu tenant DEDICATED yang boleh aktif per penyebaran."
-                          : "Berbagi infrastruktur dengan tenant lain."}
-                      </span>
-                    </span>
-                  </label>
-                ))}
-                <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-6">
+                <StepHeading
+                  id={STEP_TITLE_ID}
+                  title="Penyimpanan dan cabang"
+                  description="Tentukan apakah tenant berbagi infrastruktur dan boleh punya banyak cabang."
+                />
+                <fieldset className="flex flex-col gap-3">
+                  <legend className="mb-1 text-sm font-medium">
+                    Tipe penyebaran
+                  </legend>
+                  <div className="flex flex-wrap gap-2">
+                    {(["MULTI_TENANT", "DEDICATED"] as const).map((type) => (
+                      <ChoiceChip
+                        key={type}
+                        value={type}
+                        {...form.register("deploymentType")}
+                      >
+                        {DEPLOYMENT_LABELS[type]}
+                      </ChoiceChip>
+                    ))}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {values.deploymentType === "DEDICATED"
+                      ? "Hanya satu tenant DEDICATED yang boleh aktif per penyebaran."
+                      : "Berbagi infrastruktur dengan tenant lain."}
+                  </p>
+                </fieldset>
+                <div className="flex items-center justify-between gap-4 rounded-2xl border border-border p-4">
+                  <div className="flex flex-col gap-1">
+                    <Label htmlFor="tenant-multi-branch">
+                      Multi cabang aktif
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Izinkan tenant ini mengelola lebih dari satu cabang.
+                    </p>
+                  </div>
                   <Switch
                     id="tenant-multi-branch"
                     checked={values.multiBranchEnabled}
@@ -329,17 +397,22 @@ export function TenantCreatePage() {
                       })
                     }
                   />
-                  <Label htmlFor="tenant-multi-branch">
-                    Multi cabang aktif
-                  </Label>
                 </div>
-              </fieldset>
+              </div>
             ) : null}
 
             {step === 2 ? (
-              <fieldset className="flex flex-col gap-4">
-                <legend className="sr-only">Admin awal</legend>
-                <div className="flex flex-col gap-1.5">
+              <fieldset
+                aria-labelledby={STEP_TITLE_ID}
+                className="flex flex-col gap-5"
+              >
+                <StepHeading
+                  id={STEP_TITLE_ID}
+
+                  title="Admin awal"
+                  description="Akun admin pertama untuk tenant ini."
+                />
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="tenant-admin-email">
                     E-mail admin tenant
                   </Label>
@@ -348,6 +421,7 @@ export function TenantCreatePage() {
                     type="email"
                     autoComplete="off"
                     maxLength={EMAIL_MAX}
+                    placeholder="email@example.com"
                     aria-invalid={errors.tenantAdminEmail !== undefined}
                     aria-describedby="tenant-admin-email-error"
                     {...form.register("tenantAdminEmail")}
@@ -357,13 +431,14 @@ export function TenantCreatePage() {
                     message={errors.tenantAdminEmail?.message}
                   />
                 </div>
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="tenant-logo-url">URL logo (opsional)</Label>
                   <Input
                     id="tenant-logo-url"
                     type="url"
                     autoComplete="off"
                     maxLength={LOGO_URL_MAX}
+                    placeholder="https://"
                     aria-invalid={errors.logoUrl !== undefined}
                     aria-describedby="tenant-logo-url-error"
                     {...form.register("logoUrl")}
@@ -377,66 +452,123 @@ export function TenantCreatePage() {
             ) : null}
 
             {step === LAST_STEP ? (
-              <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                <ReviewItem label="Kode tenant" value={values.code} mono />
-                <ReviewItem label="Nama tenant" value={values.name} />
-                <ReviewItem
-                  label="Kategori"
-                  value={
-                    categoryNameOf(categories, values.tenantCategoryId) ??
-                    values.tenantCategoryId
-                  }
+              <div className="flex flex-col gap-4">
+                <StepHeading
+                  id={STEP_TITLE_ID}
+                  title="Tinjau sebelum membuat"
+                  description="Periksa data di bawah. Pilih Ubah untuk kembali ke langkahnya."
                 />
-                <ReviewItem
-                  label="Negara"
-                  value={
-                    values.countryCode === ""
-                      ? "—"
-                      : (countryNameOf(countries, values.countryCode) ??
-                        values.countryCode)
-                  }
-                />
-                <ReviewItem
-                  label="Tipe penyebaran"
-                  value={DEPLOYMENT_LABELS[values.deploymentType]}
-                />
-                <ReviewItem
-                  label="Multi cabang"
-                  value={values.multiBranchEnabled ? "Aktif" : "Tidak aktif"}
-                />
-                <ReviewItem
-                  label="E-mail admin tenant"
-                  value={values.tenantAdminEmail}
-                />
-                <ReviewItem
-                  label="URL logo"
-                  value={values.logoUrl === "" ? "—" : values.logoUrl}
-                />
-              </dl>
+                <ReviewSection title="Identitas" onEdit={() => setStep(0)}>
+                  <ReviewItem label="Kode tenant" value={values.code} mono />
+                  <ReviewItem label="Nama tenant" value={values.name} />
+                  <ReviewItem
+                    label="Kategori"
+                    value={categoryName ?? values.tenantCategoryId}
+                  />
+                  <ReviewItem label="Negara" value={countryName ?? "—"} />
+                </ReviewSection>
+                <ReviewSection title="Penyimpanan" onEdit={() => setStep(1)}>
+                  <ReviewItem
+                    label="Tipe penyebaran"
+                    value={DEPLOYMENT_LABELS[values.deploymentType]}
+                  />
+                  <ReviewItem
+                    label="Multi cabang"
+                    value={values.multiBranchEnabled ? "Aktif" : "Tidak aktif"}
+                  />
+                </ReviewSection>
+                <ReviewSection title="Admin awal" onEdit={() => setStep(2)}>
+                  <ReviewItem
+                    label="E-mail admin tenant"
+                    value={values.tenantAdminEmail}
+                  />
+                  <ReviewItem
+                    label="URL logo"
+                    value={values.logoUrl === "" ? "—" : values.logoUrl}
+                  />
+                </ReviewSection>
+                <BeforeCreateNotes />
+              </div>
             ) : null}
-          </CardContent>
-          <CardFooter className="justify-between border-t bg-muted/40">
+          </div>
+
+          <div className="flex justify-end gap-3 px-6 pt-4 pb-6 sm:px-8 sm:pb-8">
             <Button
               type="button"
-              variant="outline"
-              disabled={step === 0 || isSubmitting}
+              variant="secondary"
+              disabled={step === 0 || isSubmitting || checking}
               onClick={() => setStep((current) => Math.max(current - 1, 0))}
             >
               Kembali
             </Button>
+            {/* Separate keys: React must not reuse one DOM button and flip its
+                type from "button" to "submit" while the user is still pressing it.
+                That made the last step save on its own. */}
             {step < LAST_STEP ? (
-              <Button type="button" onClick={() => void goNext()}>
-                Lanjut
+              <Button
+                key="next"
+                type="button"
+                disabled={checking}
+                onClick={() => void goNext()}
+              >
+                {checking ? "Memeriksa kode..." : "Lanjut"}
               </Button>
             ) : (
-              <Button type="submit" disabled={isSubmitting}>
+              <Button key="create" type="submit" disabled={isSubmitting}>
                 {isSubmitting ? "Membuat tenant..." : "Buat tenant"}
               </Button>
             )}
-          </CardFooter>
+          </div>
         </form>
       </Card>
     </PageBody>
+  )
+}
+
+/** Title and one line of context at the top of a step. A fieldset points to it with aria-labelledby. */
+function StepHeading({
+  id,
+  title,
+  description,
+}: {
+  readonly id?: string
+  readonly title: string
+  readonly description: string
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <h2
+        id={id}
+        tabIndex={-1}
+        className="font-heading text-2xl font-semibold outline-none"
+      >
+        {title}
+      </h2>
+      <p className="text-base text-muted-foreground">{description}</p>
+    </div>
+  )
+}
+
+function ReviewSection({
+  title,
+  onEdit,
+  children,
+}: {
+  readonly title: string
+  readonly onEdit: () => void
+  readonly children: React.ReactNode
+}) {
+  return (
+    <section className="rounded-xl border border-border">
+      <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-2.5">
+        <h3 className="text-sm font-semibold">{title}</h3>
+        <Button type="button" variant="ghost" size="sm" onClick={onEdit}>
+          Ubah
+          <span className="sr-only"> {title}</span>
+        </Button>
+      </header>
+      <dl className="grid gap-x-6 gap-y-4 p-4 sm:grid-cols-2">{children}</dl>
+    </section>
   )
 }
 
@@ -450,10 +582,31 @@ function ReviewItem({
   readonly mono?: boolean
 }) {
   return (
-    <div className="flex flex-col gap-0.5">
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className={mono ? "font-mono" : undefined}>{value}</dd>
+    <div className="flex min-w-0 flex-col gap-0.5">
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd
+        className={cn("text-sm font-medium break-words", mono && "font-mono")}
+      >
+        {value}
+      </dd>
     </div>
+  )
+}
+
+/** What the user should know before the POST, which is never retried on its own (SP-BG-11). */
+function BeforeCreateNotes() {
+  return (
+    <ul className="flex flex-col gap-2 rounded-2xl bg-muted/60 p-4 text-sm text-muted-foreground">
+      <li>Kode tenant tidak bisa diubah setelah tenant dibuat.</li>
+      <li>
+        Tombol dinonaktifkan selama proses dan permintaan tidak diulang
+        otomatis. Tunggu sampai selesai.
+      </li>
+      <li>
+        Jika akun admin gagal dibuat, tenant tetap ada dan Anda bisa mengirim
+        ulang akun admin.
+      </li>
+    </ul>
   )
 }
 
@@ -497,15 +650,23 @@ function CreatedPanel({ created, onChange }: CreatedPanelProps) {
   }
 
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-3">
-        <p className="text-sm">
-          Tenant <span className="font-mono font-medium">{created.code}</span>{" "}
+    <Card className="mx-auto w-full max-w-2xl gap-0 py-0">
+      <CardHeader className="flex-row items-center gap-3 border-b border-border px-6 py-5">
+        <span
+          aria-hidden="true"
+          className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400"
+        >
+          <IconAlertTriangle className="size-6" />
+        </span>
+        <p className="text-base">
+          Tenant <span className="font-mono font-semibold">{created.code}</span>{" "}
           sudah dibuat.
         </p>
+      </CardHeader>
+      <CardContent className="flex flex-col gap-4 px-6 py-5">
         <div
           role="alert"
-          className="rounded-lg border border-amber-600/40 bg-amber-500/10 px-3 py-2 text-sm"
+          className="rounded-xl border border-amber-600/40 bg-amber-500/10 px-4 py-3 text-sm"
         >
           {created.outcome.message}
         </div>
@@ -513,7 +674,7 @@ function CreatedPanel({ created, onChange }: CreatedPanelProps) {
           message={failure?.message ?? null}
           referenceId={failure?.referenceId ?? null}
         />
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-4">
           <Button
             type="button"
             disabled={retrying}

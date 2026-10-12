@@ -27,6 +27,7 @@ import {
 import { server } from "@/test/server"
 
 import { CountryListPage } from "./country-list-page"
+import { confirmPermanent } from "@/test/confirm"
 
 const toastMock = vi.hoisted(() => ({
   success: vi.fn(),
@@ -219,8 +220,7 @@ describe("delete", () => {
     fireEvent.click(screen.getByRole("button", { name: "Hapus negara Singapore" }))
     const dialog = await screen.findByRole("dialog")
     expect(dialog).toHaveTextContent("Hapus negara SG?")
-    expect(dialog).toHaveTextContent("bersifat permanen untuk kodenya")
-    expect(dialog).toHaveTextContent("tidak dapat dipakai lagi")
+    expect(dialog).toHaveTextContent("Kode SG tidak dapat dipakai lagi untuk negara baru")
     expect(dialog).toHaveTextContent("Negara yang dipakai tenant tidak dapat dihapus")
     expect(dialog).toHaveTextContent("sebaiknya nonaktifkan saja")
     fireEvent.click(within(dialog).getByRole("button", { name: "Batal" }))
@@ -240,7 +240,7 @@ describe("delete", () => {
     await screen.findByText("Singapore")
     fireEvent.click(screen.getByRole("button", { name: "Hapus negara Singapore" }))
     const dialog = await screen.findByRole("dialog")
-    fireEvent.click(within(dialog).getByRole("button", { name: "Hapus permanen" }))
+    confirmPermanent(dialog, "Hapus permanen")
     await waitFor(() => expect(deletedCode).toBe("SG"))
     await waitFor(() => expect(toastMock.success).toHaveBeenCalledWith("Negara dihapus."))
   })
@@ -250,7 +250,7 @@ describe("delete", () => {
     await screen.findByText("Indonesia")
     fireEvent.click(screen.getByRole("button", { name: "Hapus negara Indonesia" }))
     const dialog = await screen.findByRole("dialog")
-    fireEvent.click(within(dialog).getByRole("button", { name: "Hapus permanen" }))
+    confirmPermanent(dialog, "Hapus permanen")
     const alert = await screen.findByRole("alert")
     expect(alert).toHaveTextContent(COUNTRY_IN_USE_MESSAGE)
     expect(alert).toHaveTextContent("Indonesia")

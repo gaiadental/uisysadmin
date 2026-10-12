@@ -19,6 +19,7 @@ import { server } from "@/test/server"
 import { RoleDetailPage } from "./role-detail-page"
 import { RoleListPage } from "./role-list-page"
 import { ALL_ROLE_PERMISSIONS, renderWithClient } from "./test-support"
+import { confirmPermanent } from "@/test/confirm"
 
 const authMock = vi.hoisted(() => ({ permissions: [] as readonly string[] }))
 vi.mock("@/app/providers/auth-provider", () => ({
@@ -105,11 +106,7 @@ function threeRoles() {
 
 async function confirmDelete(name: string) {
   fireEvent.click(screen.getByRole("button", { name: `Hapus ${name}` }))
-  fireEvent.click(
-    within(await screen.findByRole("dialog")).getByRole("button", {
-      name: "Hapus",
-    })
-  )
+  confirmPermanent(await screen.findByRole("dialog"), "Hapus")
 }
 
 describe("list: refusal isolation and non-refusal failures", () => {

@@ -59,10 +59,14 @@ function confirmFor(
     case "delete":
       return {
         title: `Hapus akun ${user.loginId}?`,
-        description:
-          "Akun akan dihapus dari platform. Tindakan ini tidak bisa dibatalkan.",
+        description: "Akun akan dihapus dari platform.",
+        impact: [
+          "Tindakan ini tidak bisa dibatalkan.",
+          "Untuk menahan akses sementara, gunakan Tangguhkan atau Nonaktifkan. Keduanya bisa diaktifkan kembali.",
+        ],
         confirmLabel: "Hapus",
         tone: "destructive",
+        permanent: true,
       }
     case "resetPassword":
       return {

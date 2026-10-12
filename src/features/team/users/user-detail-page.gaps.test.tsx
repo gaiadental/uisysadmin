@@ -36,6 +36,7 @@ import { server } from "@/test/server"
 import { ALL_USER_PERMISSIONS, renderWithClient } from "./test-support"
 import { ROLE_NOT_FOUND_MESSAGE, USER_NOT_FOUND_MESSAGE } from "./user-failure"
 import { UserDetailPage } from "./user-detail-page"
+import { confirmPermanent } from "@/test/confirm"
 
 const authMock = vi.hoisted(() => ({ permissions: [] as readonly string[] }))
 vi.mock("@/app/providers/auth-provider", () => ({
@@ -97,7 +98,11 @@ function headerActions(loginId: string): string[] {
 async function confirmFlow(openName: string, confirmLabel: string) {
   fireEvent.click(screen.getByRole("button", { name: openName }))
   const dialog = await screen.findByRole("dialog")
-  fireEvent.click(within(dialog).getByRole("button", { name: confirmLabel }))
+  if (confirmLabel === "Hapus") {
+    confirmPermanent(dialog, confirmLabel)
+  } else {
+    fireEvent.click(within(dialog).getByRole("button", { name: confirmLabel }))
+  }
 }
 
 describe("each gate key independently (D6.4)", () => {
@@ -105,13 +110,18 @@ describe("each gate key independently (D6.4)", () => {
     ["system_users:update", ["Nonaktifkan", "Tangguhkan"]],
     ["system_users:delete", ["Hapus"]],
     ["system_users:reset_password", ["Reset password"]],
-  ])("%s alone gives exactly its buttons on an ACTIVE account", async (key, expected) => {
-    authMock.permissions = ["system_users:view", key]
-    renderDetail(FIXTURE_USER_ACTIVE.id)
-    await readyFor(FIXTURE_USER_ACTIVE.loginId)
+  ])(
+    "%s alone gives exactly its buttons on an ACTIVE account",
+    async (key, expected) => {
+      authMock.permissions = ["system_users:view", key]
+      renderDetail(FIXTURE_USER_ACTIVE.id)
+      await readyFor(FIXTURE_USER_ACTIVE.loginId)
 
-    expect(headerActions(FIXTURE_USER_ACTIVE.loginId)).toEqual([...expected].sort())
-  })
+      expect(headerActions(FIXTURE_USER_ACTIVE.loginId)).toEqual(
+        [...expected].sort()
+      )
+    }
+  )
 
   it("system_users:update plus system_roles:view adds Ubah peran", async () => {
     authMock.permissions = [
@@ -145,7 +155,9 @@ describe("each gate key independently (D6.4)", () => {
   it("the own account with a non-ACTIVE status gets reactivate only besides reset (OQ-P-31, OQ-P-32)", async () => {
     server.use(
       http.get(`${API}/system-users/:id`, () =>
-        HttpResponse.json({ data: { ...FIXTURE_USER_SELF, status: "SUSPENDED" } })
+        HttpResponse.json({
+          data: { ...FIXTURE_USER_SELF, status: "SUSPENDED" },
+        })
       )
     )
     renderDetail(FIXTURE_USER_SELF.id)
@@ -163,7 +175,13 @@ describe("status transition visibility", () => {
     await readyFor(FIXTURE_USER_SUSPENDED.loginId)
 
     expect(headerActions(FIXTURE_USER_SUSPENDED.loginId)).toEqual(
-      ["Aktifkan", "Hapus", "Nonaktifkan", "Reset password", "Ubah peran"].sort()
+      [
+        "Aktifkan",
+        "Hapus",
+        "Nonaktifkan",
+        "Reset password",
+        "Ubah peran",
+      ].sort()
     )
     expect(screen.getByText("Ditangguhkan")).toBeInTheDocument()
   })
@@ -211,44 +229,44 @@ describe("status transition visibility", () => {
 })
 
 describe("confirm dialogs on the detail page", () => {
-  it.each([
-    ["Tangguhkan"],
-    ["Nonaktifkan"],
-    ["Hapus"],
-    ["Reset password"],
-  ])("cancelling %s sends nothing", async (label) => {
-    const calls: string[] = []
-    server.use(
-      http.patch(`${API}/system-users/:id/status`, () => {
-        calls.push("patch")
-        return HttpResponse.json({ data: FIXTURE_USER_ACTIVE })
-      }),
-      http.delete(`${API}/system-users/:id`, () => {
-        calls.push("delete")
-        return HttpResponse.json({ data: null })
-      }),
-      http.post(`${API}/system-users/:id/reset-password`, () => {
-        calls.push("post")
-        return HttpResponse.json({ data: null })
-      })
-    )
-    renderDetail(FIXTURE_USER_ACTIVE.id)
-    await readyFor(FIXTURE_USER_ACTIVE.loginId)
-    fireEvent.click(
-      screen.getByRole("button", { name: `${label} ${FIXTURE_USER_ACTIVE.loginId}` })
-    )
-    const dialog = await screen.findByRole("dialog")
+  it.each([["Tangguhkan"], ["Nonaktifkan"], ["Hapus"], ["Reset password"]])(
+    "cancelling %s sends nothing",
+    async (label) => {
+      const calls: string[] = []
+      server.use(
+        http.patch(`${API}/system-users/:id/status`, () => {
+          calls.push("patch")
+          return HttpResponse.json({ data: FIXTURE_USER_ACTIVE })
+        }),
+        http.delete(`${API}/system-users/:id`, () => {
+          calls.push("delete")
+          return HttpResponse.json({ data: null })
+        }),
+        http.post(`${API}/system-users/:id/reset-password`, () => {
+          calls.push("post")
+          return HttpResponse.json({ data: null })
+        })
+      )
+      renderDetail(FIXTURE_USER_ACTIVE.id)
+      await readyFor(FIXTURE_USER_ACTIVE.loginId)
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: `${label} ${FIXTURE_USER_ACTIVE.loginId}`,
+        })
+      )
+      const dialog = await screen.findByRole("dialog")
 
-    fireEvent.click(within(dialog).getByRole("button", { name: "Batal" }))
+      fireEvent.click(within(dialog).getByRole("button", { name: "Batal" }))
 
-    await waitFor(() =>
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
-    )
-    expect(calls).toEqual([])
-    expect(window.location.pathname).toBe(
-      `/system-users/${FIXTURE_USER_ACTIVE.id}`
-    )
-  })
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument()
+      )
+      expect(calls).toEqual([])
+      expect(window.location.pathname).toBe(
+        `/system-users/${FIXTURE_USER_ACTIVE.id}`
+      )
+    }
+  )
 
   it("deactivate and reset confirm send DEACTIVATED and an empty reset POST", async () => {
     const seen: Array<{ path: string; body: unknown }> = []
@@ -268,7 +286,10 @@ describe("confirm dialogs on the detail page", () => {
     renderDetail(FIXTURE_USER_ACTIVE.id)
     await readyFor(FIXTURE_USER_ACTIVE.loginId)
 
-    await confirmFlow(`Nonaktifkan ${FIXTURE_USER_ACTIVE.loginId}`, "Nonaktifkan")
+    await confirmFlow(
+      `Nonaktifkan ${FIXTURE_USER_ACTIVE.loginId}`,
+      "Nonaktifkan"
+    )
     await waitFor(() => expect(seen).toHaveLength(1))
     await confirmFlow(
       `Reset password ${FIXTURE_USER_ACTIVE.loginId}`,
@@ -425,7 +446,9 @@ describe("error mapping on the detail page (D13)", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Simpan" }))
     await within(dialog).findByRole("alert")
 
-    expect(queryClient.getQueryState(queryKeys.systemUsers.all())?.isInvalidated).toBe(false)
+    expect(
+      queryClient.getQueryState(queryKeys.systemUsers.all())?.isInvalidated
+    ).toBe(false)
   })
 })
 
@@ -440,7 +463,9 @@ describe("in-flight double-send guard", () => {
       http.patch(`${API}/system-users/:id`, async () => {
         patches += 1
         await gate
-        return HttpResponse.json({ data: { ...FIXTURE_USER_ACTIVE, systemRoleId: 1 } })
+        return HttpResponse.json({
+          data: { ...FIXTURE_USER_ACTIVE, systemRoleId: 1 },
+        })
       })
     )
     renderDetail(FIXTURE_USER_ACTIVE.id)
@@ -484,12 +509,16 @@ describe("in-flight double-send guard", () => {
     await waitFor(() => expect(deletes).toBe(1))
     for (const label of ["Tangguhkan", "Nonaktifkan", "Reset password"]) {
       expect(
-        screen.getByRole("button", { name: `${label} ${FIXTURE_USER_ACTIVE.loginId}` })
+        screen.getByRole("button", {
+          name: `${label} ${FIXTURE_USER_ACTIVE.loginId}`,
+        })
       ).toBeDisabled()
     }
     expect(screen.getByRole("button", { name: "Ubah peran" })).toBeDisabled()
     release()
-    await waitFor(() => expect(toastMock.success).toHaveBeenCalledWith("Akun dihapus."))
+    await waitFor(() =>
+      expect(toastMock.success).toHaveBeenCalledWith("Akun dihapus.")
+    )
     expect(deletes).toBe(1)
   })
 })
@@ -505,8 +534,12 @@ describe("Sesi aktif tab gates and behaviour (D4.10)", () => {
     renderDetail(FIXTURE_USER_ACTIVE.id)
     await readyFor(FIXTURE_USER_ACTIVE.loginId)
 
-    expect(screen.queryByRole("tab", { name: "Sesi aktif" })).not.toBeInTheDocument()
-    expect(screen.queryByRole("button", { name: "Paksa keluar" })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("tab", { name: "Sesi aktif" })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Paksa keluar" })
+    ).not.toBeInTheDocument()
   })
 
   it("sessions:view alone shows the list without a request until the tab opens", async () => {
@@ -554,7 +587,9 @@ describe("Sesi aktif tab gates and behaviour (D4.10)", () => {
 
     const alert = await screen.findByRole("alert")
     expect(alert).toHaveTextContent("Anda tidak punya akses untuk aksi ini.")
-    expect(screen.queryByRole("table", { name: "Sesi aktif akun" })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("table", { name: "Sesi aktif akun" })
+    ).not.toBeInTheDocument()
   })
 
   it("pages 12 sessions as 10 then 2 with one GET", async () => {
@@ -606,25 +641,32 @@ describe("Sesi aktif tab gates and behaviour (D4.10)", () => {
       [404, "SYSTEM_USER_NOT_FOUND", USER_NOT_FOUND_MESSAGE],
       [409, "SESSION_CONFLICT", "Sessions changed."],
       [500, "INTERNAL_ERROR", GENERIC_WRITE_MESSAGE],
-    ])("maps %i to its copy and does not toast or refetch", async (status, code, expected) => {
-      let lists = 0
-      server.use(
-        http.get(`${API}/admin/users/:userId/sessions`, () => {
-          lists += 1
-          return HttpResponse.json({ data: [FIXTURE_OTHER_SESSION] })
-        }),
-        http.delete(`${API}/admin/users/:userId/sessions`, () =>
-          errorResponse(status, code, "Sessions changed.")
+    ])(
+      "maps %i to its copy and does not toast or refetch",
+      async (status, code, expected) => {
+        let lists = 0
+        server.use(
+          http.get(`${API}/admin/users/:userId/sessions`, () => {
+            lists += 1
+            return HttpResponse.json({ data: [FIXTURE_OTHER_SESSION] })
+          }),
+          http.delete(`${API}/admin/users/:userId/sessions`, () =>
+            errorResponse(status, code, "Sessions changed.")
+          )
         )
-      )
-      const dialog = await openForceLogout()
-      fireEvent.click(within(dialog).getByRole("button", { name: "Paksa keluar" }))
+        const dialog = await openForceLogout()
+        fireEvent.click(
+          within(dialog).getByRole("button", { name: "Paksa keluar" })
+        )
 
-      expect(await screen.findByRole("alert")).toHaveTextContent(expected)
-      expect(toastMock.success).not.toHaveBeenCalled()
-      expect(lists).toBe(1)
-      expect(screen.getByRole("button", { name: "Paksa keluar" })).toBeEnabled()
-    })
+        expect(await screen.findByRole("alert")).toHaveTextContent(expected)
+        expect(toastMock.success).not.toHaveBeenCalled()
+        expect(lists).toBe(1)
+        expect(
+          screen.getByRole("button", { name: "Paksa keluar" })
+        ).toBeEnabled()
+      }
+    )
 
     it("sends one DELETE while in flight and disables the button", async () => {
       let release: () => void = () => undefined
@@ -636,11 +678,15 @@ describe("Sesi aktif tab gates and behaviour (D4.10)", () => {
         http.delete(`${API}/admin/users/:userId/sessions`, async () => {
           deletes += 1
           await gate
-          return HttpResponse.json({ data: null })
+          return HttpResponse.json({
+            data: { status: "SESSIONS_REVOKED", count: 1 },
+          })
         })
       )
       const dialog = await openForceLogout()
-      fireEvent.click(within(dialog).getByRole("button", { name: "Paksa keluar" }))
+      fireEvent.click(
+        within(dialog).getByRole("button", { name: "Paksa keluar" })
+      )
 
       await waitFor(() => expect(deletes).toBe(1))
       const busy = screen.getByRole("button", { name: "Memproses..." })
@@ -648,25 +694,34 @@ describe("Sesi aktif tab gates and behaviour (D4.10)", () => {
       fireEvent.click(busy)
       release()
       await waitFor(() =>
-        expect(toastMock.success).toHaveBeenCalledWith("Semua sesi akun diakhiri.")
+        expect(toastMock.success).toHaveBeenCalledWith(
+          "Semua sesi akun diakhiri."
+        )
       )
       expect(deletes).toBe(1)
     })
 
     it("invalidates only ['admin','sessions', userId] (D12.1)", async () => {
-      queryClient.setQueryData(queryKeys.adminSessions.ofUser("someone-else"), [])
+      queryClient.setQueryData(
+        queryKeys.adminSessions.ofUser("someone-else"),
+        []
+      )
       queryClient.setQueryData(queryKeys.sessions.own(), [])
       queryClient.setQueryData(
         queryKeys.systemUsers.detail("unrelated-user"),
         FIXTURE_USER_SUSPENDED
       )
       const dialog = await openForceLogout()
-      fireEvent.click(within(dialog).getByRole("button", { name: "Paksa keluar" }))
+      fireEvent.click(
+        within(dialog).getByRole("button", { name: "Paksa keluar" })
+      )
       await waitFor(() => expect(toastMock.success).toHaveBeenCalled())
 
       const state = (key: readonly unknown[]) =>
         queryClient.getQueryState(key)?.isInvalidated
-      expect(state(queryKeys.adminSessions.ofUser(FIXTURE_USER_ACTIVE.id))).toBe(false)
+      expect(
+        state(queryKeys.adminSessions.ofUser(FIXTURE_USER_ACTIVE.id))
+      ).toBe(false)
       // The active key was refetched, so it is fresh; the others must not be touched.
       expect(state(queryKeys.adminSessions.ofUser("someone-else"))).toBe(false)
       expect(state(queryKeys.sessions.own())).toBe(false)

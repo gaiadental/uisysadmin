@@ -88,8 +88,10 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:p-1.5!"
               render={<a href="/" onClick={(event) => openInApp(event, "/")} />}
             >
-              <IconServerCog className="size-5!" />
-              <span className="font-heading text-base font-semibold">
+              <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+                <IconServerCog className="size-5!" />
+              </span>
+              <span className="font-heading text-lg font-semibold">
                 SysAdmin
               </span>
             </SidebarMenuButton>
@@ -100,7 +102,7 @@ export function AppSidebar({ ...props }: ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         {sections.map((section) => (
           <SidebarGroup key={section.id}>
-            <SidebarGroupLabel className="font-mono text-xs tracking-wider uppercase">
+            <SidebarGroupLabel className="px-3 text-xs font-medium tracking-wide text-muted-foreground uppercase">
               {section.label}
             </SidebarGroupLabel>
             <SidebarGroupContent>

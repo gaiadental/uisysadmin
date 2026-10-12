@@ -7,16 +7,18 @@
  */
 
 import { useCallback, useRef, useState } from "react"
-import { useQueryClient } from "@tanstack/react-query"
+import { useQueryClient, type QueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 
 import { useDialogs } from "@/components/dialogs/dialogs"
 import type { WriteFailure } from "@/features/tenants/create/write-failure"
 import { deleteSystemRole } from "@/lib/api/modules/system-roles"
+import { listSystemUsers } from "@/lib/api/modules/system-users"
 import { applyInvalidation } from "@/lib/query/invalidation"
 import { queryKeys } from "@/lib/query/keys"
 import type { SystemRole } from "@/types/system-role"
 
+import { countMembersByRole } from "./member-counts"
 import { describeRoleWriteFailure, isRoleRefusal } from "./role-failure"
 import { useRefusedRoles } from "./refused-roles"
 
@@ -31,6 +33,35 @@ export interface RoleActions {
   readonly pendingId: number | null
   readonly failure: WriteFailure | null
   readonly clearFailure: () => void
+}
+
+/**
+ * How many accounts still use the role. The user list is read fresh, because
+ * a stale count would understate the damage. Without `system_users:view` or
+ * on a failed read the count is unknown (null) and the dialog says to check.
+ */
+async function countAccountsUsing(
+  queryClient: QueryClient,
+  role: SystemRole
+): Promise<number | null> {
+  try {
+    const users = await queryClient.fetchQuery({
+      queryKey: queryKeys.systemUsers.all(),
+      queryFn: listSystemUsers,
+      staleTime: 0,
+    })
+    return countMembersByRole(users).get(role.id) ?? 0
+  } catch {
+    return null
+  }
+}
+
+export function accountImpact(count: number | null): string {
+  if (count === null) {
+    return "Cek dulu di daftar user apakah masih ada akun yang memakai peran ini."
+  }
+  if (count === 0) return "Tidak ada akun yang memakai peran ini."
+  return `${count} akun masih memakai peran ini. Akun itu akan ditandai "Peran tidak aktif" dan perlu diberi peran baru.`
 }
 
 export function useRoleActions(
@@ -48,12 +79,17 @@ export function useRoleActions(
     async (role: SystemRole) => {
       if (inFlight.current) return
       setFailure(null)
+      const accounts = await countAccountsUsing(queryClient, role)
       const confirmed = await confirm({
         title: `Hapus peran ${role.name}?`,
-        description:
-          "Peran akan dihapus dari platform. Tindakan ini tidak bisa dibatalkan.",
+        description: "Peran akan dihapus dari platform.",
+        impact: [
+          accountImpact(accounts),
+          "Tindakan ini tidak bisa dibatalkan.",
+        ],
         confirmLabel: "Hapus",
         tone: "destructive",
+        permanent: true,
       })
       if (!confirmed || inFlight.current) return
       inFlight.current = true

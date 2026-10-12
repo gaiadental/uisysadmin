@@ -27,6 +27,7 @@ import {
 import { server } from "@/test/server"
 
 import { TenantCategoryListPage } from "./tenant-category-list-page"
+import { confirmPermanent } from "@/test/confirm"
 
 const toastMock = vi.hoisted(() => ({
   success: vi.fn(),
@@ -251,7 +252,7 @@ describe("delete", () => {
     await screen.findByText("General Clinic")
     fireEvent.click(screen.getByRole("button", { name: "Hapus kategori General Clinic" }))
     const dialog = await screen.findByRole("dialog")
-    fireEvent.click(within(dialog).getByRole("button", { name: "Hapus" }))
+    confirmPermanent(dialog, "Hapus")
     await waitFor(() => expect(deletes).toBe(1))
     await waitFor(() => expect(lists).toBeGreaterThanOrEqual(2))
   })
@@ -261,7 +262,7 @@ describe("delete", () => {
     await screen.findByText("DENTAL")
     fireEvent.click(screen.getByRole("button", { name: "Hapus kategori Dental Clinic" }))
     const dialog = await screen.findByRole("dialog")
-    fireEvent.click(within(dialog).getByRole("button", { name: "Hapus" }))
+    confirmPermanent(dialog, "Hapus")
     const alert = await screen.findByRole("alert")
     expect(alert).toHaveTextContent(CATEGORY_IN_USE_MESSAGE)
     expect(alert).toHaveTextContent("Dental Clinic")

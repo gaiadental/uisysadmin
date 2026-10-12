@@ -5,6 +5,7 @@
  * button is disabled while any action is in flight (no double send).
  */
 
+import { RowDeleteButton } from "@/components/delete-button"
 import { Button } from "@/components/ui/button"
 import type { SystemUser } from "@/types/system-user"
 
@@ -72,7 +73,7 @@ export function UserActionButtons({
     },
   ]
   return (
-    <div className="flex flex-wrap justify-end gap-1.5">
+    <div className="flex flex-wrap items-center justify-end gap-1.5">
       {onChangeRole !== undefined && access.canChangeRole ? (
         <Button
           type="button"
@@ -87,6 +88,16 @@ export function UserActionButtons({
       {specs
         .filter((spec) => spec.allowed)
         .map((spec) => {
+          if (spec.destructive) {
+            return (
+              <RowDeleteButton
+                key={spec.kind}
+                label={`${spec.label} ${user.loginId}`}
+                disabled={busy}
+                onClick={() => void actions.run(spec.kind, user)}
+              />
+            )
+          }
           const isRunning =
             actions.pending?.userId === user.id &&
             actions.pending.kind === spec.kind
@@ -94,7 +105,7 @@ export function UserActionButtons({
             <Button
               key={spec.kind}
               type="button"
-              variant={spec.destructive ? "destructive" : "outline"}
+              variant="outline"
               size="sm"
               aria-label={`${spec.label} ${user.loginId}`}
               disabled={busy}

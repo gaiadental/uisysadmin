@@ -31,6 +31,7 @@ import { server } from "@/test/server"
 import { ALL_USER_PERMISSIONS, renderWithClient } from "./test-support"
 import { USER_NOT_FOUND_MESSAGE } from "./user-failure"
 import { UserListPage } from "./user-list-page"
+import { confirmPermanent } from "@/test/confirm"
 
 const authMock = vi.hoisted(() => ({ permissions: [] as readonly string[] }))
 vi.mock("@/app/providers/auth-provider", () => ({
@@ -299,7 +300,11 @@ describe("error mapping on row actions (D13)", () => {
   ) {
     server.use(handler)
     const dialog = await openDialogFor(name)
-    fireEvent.click(within(dialog).getByRole("button", { name: confirmLabel }))
+    if (confirmLabel === "Hapus") {
+      confirmPermanent(dialog, confirmLabel)
+    } else {
+      fireEvent.click(within(dialog).getByRole("button", { name: confirmLabel }))
+    }
     return screen.findByRole("alert")
   }
 
@@ -401,19 +406,11 @@ describe("error mapping on row actions (D13)", () => {
     renderWithClient(<UserListPage />, queryClient)
     await ready()
     fireEvent.click(screen.getByRole("button", { name: "Hapus ops@gaia.com" }))
-    fireEvent.click(
-      within(await screen.findByRole("dialog")).getByRole("button", {
-        name: "Hapus",
-      })
-    )
+    confirmPermanent(await screen.findByRole("dialog"), "Hapus")
     await screen.findByRole("alert")
 
     fireEvent.click(screen.getByRole("button", { name: "Hapus ops@gaia.com" }))
-    fireEvent.click(
-      within(await screen.findByRole("dialog")).getByRole("button", {
-        name: "Hapus",
-      })
-    )
+    confirmPermanent(await screen.findByRole("dialog"), "Hapus")
 
     await waitFor(() =>
       expect(toastMock.success).toHaveBeenCalledWith("Akun dihapus.")

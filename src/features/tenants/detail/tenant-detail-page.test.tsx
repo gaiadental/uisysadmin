@@ -226,7 +226,7 @@ describe("TenantDetailPage PATCH (D5.3)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Simpan perubahan" }))
 
     expect(
-      await screen.findByText("URL logo harus diawali http:// atau https://.")
+      await screen.findByText("URL logo harus diawali https://.")
     ).toBeInTheDocument()
     expect(bodies).toHaveLength(0)
   })

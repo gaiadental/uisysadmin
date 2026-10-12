@@ -7,6 +7,7 @@
  */
 
 import { Badge } from "@/components/ui/badge"
+import { RowDeleteButton } from "@/components/delete-button"
 import { Button } from "@/components/ui/button"
 import type { SystemRole } from "@/types/system-role"
 
@@ -31,9 +32,7 @@ export function RoleActionButtons({
     <div className="flex flex-wrap items-center justify-end gap-1.5">
       {access.locked ? <Badge variant="secondary">Terkunci</Badge> : null}
       {access.refused ? (
-        <span className="text-xs text-muted-foreground">
-          Ditolak server
-        </span>
+        <span className="text-xs text-muted-foreground">Ditolak server</span>
       ) : null}
       {access.canEdit ? (
         <Button
@@ -48,16 +47,11 @@ export function RoleActionButtons({
         </Button>
       ) : null}
       {access.canDelete ? (
-        <Button
-          type="button"
-          variant="destructive"
-          size="sm"
-          aria-label={`Hapus ${role.name}`}
+        <RowDeleteButton
+          label={`Hapus ${role.name}`}
           disabled={access.refused || deleting}
           onClick={onDelete}
-        >
-          {deleting ? "Menghapus..." : "Hapus"}
-        </Button>
+        />
       ) : null}
     </div>
   )

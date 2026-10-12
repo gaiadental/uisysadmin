@@ -60,7 +60,7 @@ function TableCardHeader({
 
   if (!hasTitle && actions === undefined) return null
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/40 px-4 py-3.5">
+    <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5">
       <div className="space-y-0.5">
         <div className="flex items-center gap-2">
           {hasTitle ? (

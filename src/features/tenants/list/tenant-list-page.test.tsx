@@ -177,10 +177,10 @@ describe("TenantListPage columns and joins (D8.1, D5.4)", () => {
     expect(
       within(row as HTMLElement).getByText("Multi-tenant")
     ).toBeInTheDocument()
-    expect(within(row as HTMLElement).getByText("ACTIVE")).toBeInTheDocument()
+    expect(within(row as HTMLElement).getByText("Aktif")).toBeInTheDocument()
 
     const inactive = screen.getByText("SMILE").closest("tr") as HTMLElement
-    expect(within(inactive).getByText("INACTIVE")).toBeInTheDocument()
+    expect(within(inactive).getByText("Nonaktif")).toBeInTheDocument()
     expect(within(inactive).getByText("Dedicated")).toBeInTheDocument()
     expect(
       within(inactive).getByLabelText("Tidak ada negara")

@@ -25,6 +25,7 @@ import { FIXTURE_MASTER_PERMISSION_BRANCHES } from "@/test/handlers/tenant-permi
 import { server } from "@/test/server"
 
 import { PermissionListPage } from "./permission-list-page"
+import { confirmPermanent } from "@/test/confirm"
 
 const authMock = vi.hoisted(() => ({ permissions: [] as string[] }))
 vi.mock("@/app/providers/auth-provider", () => ({
@@ -323,7 +324,7 @@ describe("delete", () => {
 
   it("deletes after confirmation and toasts", async () => {
     const dialog = await openDelete("reports:view")
-    fireEvent.click(within(dialog).getByRole("button", { name: "Hapus" }))
+    confirmPermanent(dialog, "Hapus")
     await waitFor(() =>
       expect(toastMock.success).toHaveBeenCalledWith("Permission dihapus.")
     )
@@ -331,7 +332,7 @@ describe("delete", () => {
 
   it("shows the 409 message next to the table when the permission is bound", async () => {
     const dialog = await openDelete("branches:view")
-    fireEvent.click(within(dialog).getByRole("button", { name: "Hapus" }))
+    confirmPermanent(dialog, "Hapus")
     expect(
       await screen.findByText(new RegExp(PERMISSION_IN_USE_MESSAGE))
     ).toBeInTheDocument()
@@ -461,7 +462,7 @@ describe("invalidation (D12.1)", () => {
       screen.getByRole("button", { name: "Hapus permission reports:view" })
     )
     const dialog = await screen.findByRole("dialog")
-    fireEvent.click(within(dialog).getByRole("button", { name: "Hapus" }))
+    confirmPermanent(dialog, "Hapus")
     await waitFor(() => expect(toastMock.success).toHaveBeenCalledWith("Permission dihapus."))
     expect(read().tenant).toBe(true)
     expect(read().role).toBe(true)
@@ -585,7 +586,7 @@ describe("error paths", () => {
       screen.getByRole("button", { name: "Hapus permission reports:view" })
     )
     const dialog = await screen.findByRole("dialog")
-    fireEvent.click(within(dialog).getByRole("button", { name: "Hapus" }))
+    confirmPermanent(dialog, "Hapus")
     expect(
       await screen.findByText(/tidak dihapus\. Permintaan gagal/)
     ).toBeInTheDocument()

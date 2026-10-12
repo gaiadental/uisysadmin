@@ -23,12 +23,11 @@ function notBlank(value: string): boolean {
   return value.trim().length > 0
 }
 
-/** True for an empty string or an absolute http or https URL. */
-export function isOptionalHttpUrl(value: string): boolean {
+/** True for an empty string or an absolute https URL. Plain http is refused. */
+export function isOptionalHttpsUrl(value: string): boolean {
   if (value === "") return true
   try {
-    const url = new URL(value)
-    return url.protocol === "https:" || url.protocol === "http:"
+    return new URL(value).protocol === "https:"
   } catch {
     return false
   }
@@ -38,7 +37,7 @@ const logoUrlField = z
   .string()
   .trim()
   .max(LOGO_URL_MAX, `URL logo paling banyak ${LOGO_URL_MAX} karakter.`)
-  .refine(isOptionalHttpUrl, "URL logo harus diawali http:// atau https://.")
+  .refine(isOptionalHttpsUrl, "URL logo harus diawali https://.")
 
 /** Step 1, Identitas. An empty `countryCode` means no country. */
 export const identityStepSchema = z.object({
