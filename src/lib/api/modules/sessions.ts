@@ -5,10 +5,14 @@
  * The admin functions are used first by the system user detail page (TODO-014).
  */
 
-import { z } from "zod"
-
 import { apiRequest } from "../client"
-import { SessionListSchema, type Session } from "@/types/session"
+import {
+  RevokeOthersResultSchema,
+  RevokeOwnResultSchema,
+  SessionListSchema,
+  type RevokeOthersResult,
+  type Session,
+} from "@/types/session"
 
 import { unwrapData } from "./auth"
 
@@ -23,22 +27,28 @@ export async function listOwnSessions(): Promise<Session[]> {
   return unwrapData(SessionListSchema, body)
 }
 
-/** DELETE /api/v1/sessions/{sessionId}. The caller never revokes the current session (D4.9). */
+/**
+ * DELETE /api/v1/sessions/{sessionId}. The caller never revokes the current session (D4.9).
+ * The live body is `{ status: "SESSION_REVOKED" }`; the result is validated, not returned.
+ */
 export async function revokeOwnSession(sessionId: string): Promise<void> {
   const body = await apiRequest<unknown>(
     `${OWN_SESSIONS_PATH}/${encodeURIComponent(sessionId)}`,
     { method: "DELETE", route: "sessions.revokeOwn" }
   )
-  unwrapData(z.null(), body)
+  unwrapData(RevokeOwnResultSchema, body)
 }
 
-/** DELETE /api/v1/sessions. Revokes every session except the current one. */
-export async function revokeOtherOwnSessions(): Promise<void> {
+/**
+ * DELETE /api/v1/sessions. Revokes every session except the current one.
+ * Resolves with the backend result (`status`, `count` revoked).
+ */
+export async function revokeOtherOwnSessions(): Promise<RevokeOthersResult> {
   const body = await apiRequest<unknown>(OWN_SESSIONS_PATH, {
     method: "DELETE",
     route: "sessions.revokeOthers",
   })
-  unwrapData(z.null(), body)
+  return unwrapData(RevokeOthersResultSchema, body)
 }
 
 /** GET /api/v1/admin/users/{userId}/sessions. Requires `sessions:view`. */
@@ -50,11 +60,14 @@ export async function listUserSessions(userId: string): Promise<Session[]> {
   return unwrapData(SessionListSchema, body)
 }
 
-/** DELETE /api/v1/admin/users/{userId}/sessions. Revokes all sessions of that user. Requires `sessions:revoke`. */
+/**
+ * DELETE /api/v1/admin/users/{userId}/sessions. Revokes all sessions of that user. Requires `sessions:revoke`.
+ * The live body is `{ status: "SESSIONS_REVOKED", count }` (platform auth-service SessionController); the result is validated, not returned.
+ */
 export async function forceLogoutUser(userId: string): Promise<void> {
   const body = await apiRequest<unknown>(
     `${ADMIN_USERS_PATH}/${encodeURIComponent(userId)}/sessions`,
     { method: "DELETE", route: "admin.sessions.forceLogout" }
   )
-  unwrapData(z.null(), body)
+  unwrapData(RevokeOthersResultSchema, body)
 }

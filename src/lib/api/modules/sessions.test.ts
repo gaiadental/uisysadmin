@@ -95,12 +95,24 @@ describe("own sessions (D4.9)", () => {
     server.use(
       http.delete(`${API}/sessions/:sessionId`, ({ request }) => {
         requestedPath = new URL(request.url).pathname
-        return HttpResponse.json({ data: null })
+        return HttpResponse.json({ data: { status: "SESSION_REVOKED" } })
       })
     )
 
     await expect(revokeOwnSession("a/b")).resolves.toBeUndefined()
     expect(requestedPath).toBe("/api/v1/sessions/a%2Fb")
+  })
+
+  it("throws CONTRACT when the single revoke answers with a null body", async () => {
+    server.use(
+      http.delete(`${API}/sessions/:sessionId`, () =>
+        HttpResponse.json({ data: null })
+      )
+    )
+
+    const error = await failureOf(() => revokeOwnSession(FIXTURE_OTHER_SESSION.sessionId))
+
+    expect(error).toMatchObject({ kind: "CONTRACT" })
   })
 
   it("revokes every other session with one DELETE on the collection", async () => {
@@ -110,19 +122,51 @@ describe("own sessions (D4.9)", () => {
       http.delete(`${API}/sessions`, ({ request }) => {
         method = request.method
         requestedPath = new URL(request.url).pathname
-        return HttpResponse.json({ data: null })
+        return HttpResponse.json({
+          data: { status: "SESSIONS_REVOKED", count: 0 },
+        })
       })
     )
 
-    await expect(revokeOtherOwnSessions()).resolves.toBeUndefined()
+    await expect(revokeOtherOwnSessions()).resolves.toEqual({
+      status: "SESSIONS_REVOKED",
+      count: 0,
+    })
     expect(method).toBe("DELETE")
     expect(requestedPath).toBe("/api/v1/sessions")
   })
 
-  it("throws CONTRACT when a revoke answers with a payload instead of null", async () => {
+  it("accepts a revoke-all result that revoked sessions (count greater than 0)", async () => {
+    server.use(
+      http.delete(`${API}/sessions`, () =>
+        HttpResponse.json({
+          data: { status: "SESSIONS_REVOKED", count: 3 },
+        })
+      )
+    )
+
+    await expect(revokeOtherOwnSessions()).resolves.toEqual({
+      status: "SESSIONS_REVOKED",
+      count: 3,
+    })
+  })
+
+  it("throws CONTRACT when a revoke answers with a body that is not the revoke result", async () => {
     server.use(
       http.delete(`${API}/sessions`, () =>
         HttpResponse.json({ data: { revoked: 2 } })
+      )
+    )
+
+    const error = await failureOf(() => revokeOtherOwnSessions())
+
+    expect(error).toMatchObject({ kind: "CONTRACT" })
+  })
+
+  it("throws CONTRACT when the revoke-all count is not a non-negative integer", async () => {
+    server.use(
+      http.delete(`${API}/sessions`, () =>
+        HttpResponse.json({ data: { status: "SESSIONS_REVOKED", count: -1 } })
       )
     )
 
@@ -167,7 +211,9 @@ describe("sessions of another user (D4.10, FE doc 5.6)", () => {
     server.use(
       http.delete(`${API}/admin/users/:userId/sessions`, ({ request }) => {
         method = request.method
-        return HttpResponse.json({ data: null })
+        return HttpResponse.json({
+          data: { status: "SESSIONS_REVOKED", count: 1 },
+        })
       })
     )
 

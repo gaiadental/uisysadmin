@@ -17,3 +17,24 @@ export const SessionSchema = z.object({
 export type Session = z.infer<typeof SessionSchema>
 
 export const SessionListSchema = z.array(SessionSchema)
+
+/**
+ * Body of the single-session revoke, DELETE /api/v1/sessions/{sessionId}. The live
+ * backend answers `{ status: "SESSION_REVOKED" }`, not `null`.
+ */
+export const RevokeOwnResultSchema = z.object({
+  status: z.string(),
+})
+export type RevokeOwnResult = z.infer<typeof RevokeOwnResultSchema>
+
+/**
+ * Body of DELETE /api/v1/sessions (revoke all other sessions). The live backend
+ * answers `{ status: "SESSIONS_REVOKED", count }`, not `null`; `count` is the
+ * number of sessions revoked (0 when there were none). The admin force logout,
+ * DELETE /api/v1/admin/users/{userId}/sessions, answers the same shape.
+ */
+export const RevokeOthersResultSchema = z.object({
+  status: z.string(),
+  count: z.number().int().nonnegative(),
+})
+export type RevokeOthersResult = z.infer<typeof RevokeOthersResultSchema>

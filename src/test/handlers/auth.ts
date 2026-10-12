@@ -103,13 +103,15 @@ export const sessionHandlers = [
     HttpResponse.json({ data: [FIXTURE_SESSION] })
   ),
   http.delete(`${API}/sessions/:sessionId`, () =>
-    HttpResponse.json({ data: null })
+    HttpResponse.json({ data: { status: "SESSION_REVOKED" } })
   ),
-  http.delete(`${API}/sessions`, () => HttpResponse.json({ data: null })),
+  http.delete(`${API}/sessions`, () =>
+    HttpResponse.json({ data: { status: "SESSIONS_REVOKED", count: 0 } })
+  ),
   http.get(`${API}/admin/users/:userId/sessions`, () =>
     HttpResponse.json({ data: [FIXTURE_SESSION] })
   ),
   http.delete(`${API}/admin/users/:userId/sessions`, () =>
-    HttpResponse.json({ data: null })
+    HttpResponse.json({ data: { status: "SESSIONS_REVOKED", count: 0 } })
   ),
 ]
