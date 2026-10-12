@@ -12,8 +12,7 @@ import { ApiError } from "../errors"
 import { setAccessToken } from "../refresh"
 
 import {
-  createMasterPermission,
-  deleteMasterPermission,
+  getMasterPermission,
   listMasterPermissions,
   updateMasterPermission,
   type MasterPermissionInput,
@@ -91,10 +90,58 @@ describe("listMasterPermissions (FE doc 5.3)", () => {
       )
     )
 
-    const error = await listMasterPermissions().catch((caught: unknown) => caught)
+    const error = await listMasterPermissions().catch(
+      (caught: unknown) => caught
+    )
 
     expect(error).toBeInstanceOf(ApiError)
     expect(error).toMatchObject({ kind: "HTTP", status: 403 })
+  })
+})
+
+describe("getMasterPermission (TODO-021)", () => {
+  it("sends GET /{id} and returns the parsed permission", async () => {
+    let seen: { method: string; path: string } | null = null
+    server.use(
+      http.get(`${API}/master-permissions/:id`, ({ request }) => {
+        seen = { method: request.method, path: new URL(request.url).pathname }
+        return HttpResponse.json({
+          data: {
+            ...FIXTURE_MASTER_PERMISSION_BRANCHES,
+            active: false,
+            future: "x",
+          },
+        })
+      })
+    )
+
+    const result = await getMasterPermission(1)
+
+    expect(seen).toEqual({
+      method: "GET",
+      path: "/api/v1/master-permissions/1",
+    })
+    expect(result).toMatchObject({ id: 1, key: "branches:view", active: false })
+    expect(result).not.toHaveProperty("future")
+  })
+
+  it("rejects a 404 as an HTTP ApiError", async () => {
+    const error = await getMasterPermission(999).catch(
+      (caught: unknown) => caught
+    )
+    expect(error).toBeInstanceOf(ApiError)
+    expect(error).toMatchObject({ kind: "HTTP", status: 404 })
+  })
+
+  it("rejects a body that breaks the contract as CONTRACT", async () => {
+    server.use(
+      http.get(`${API}/master-permissions/:id`, () =>
+        HttpResponse.json({ data: { id: "x" } })
+      )
+    )
+    await expect(getMasterPermission(1)).rejects.toMatchObject({
+      kind: "CONTRACT",
+    })
   })
 })
 
@@ -108,7 +155,7 @@ const INPUT: MasterPermissionInput = {
   customerPermitted: false,
 }
 
-function captureBody(method: "post" | "patch") {
+function captureBody(method: "patch") {
   const seen: { body: Record<string, unknown> | null; url: string } = {
     body: null,
     url: "",
@@ -125,34 +172,6 @@ function captureBody(method: "post" | "patch") {
   return seen
 }
 
-describe("createMasterPermission (TODO-013)", () => {
-  it("POSTs the whitelisted body and returns the permission", async () => {
-    const seen = captureBody("post")
-    const result = await createMasterPermission(INPUT)
-
-    expect(seen.url).toBe("/api/v1/master-permissions")
-    expect(seen.body).toEqual(INPUT)
-    expect(result.key).toBe("reports:view")
-  })
-
-  it("leaves an empty description out", async () => {
-    const seen = captureBody("post")
-    await createMasterPermission({ ...INPUT, description: "" })
-    expect(seen.body).not.toHaveProperty("description")
-  })
-
-  it("rejects with a 409 when the key exists", async () => {
-    server.use(
-      http.post(`${API}/master-permissions`, () =>
-        errorResponse(409, "MASTER_PERMISSION_KEY_EXISTS", "exists")
-      )
-    )
-    await expect(createMasterPermission(INPUT)).rejects.toMatchObject({
-      status: 409,
-    })
-  })
-})
-
 describe("updateMasterPermission (TODO-013)", () => {
   it("PATCHes /{id} with every current value and the key unchanged", async () => {
     const seen = captureBody("patch")
@@ -164,56 +183,23 @@ describe("updateMasterPermission (TODO-013)", () => {
   })
 })
 
-describe("deleteMasterPermission (TODO-013)", () => {
-  it("sends DELETE /{id} and resolves on { data: null }", async () => {
-    let method = ""
-    let path = ""
-    server.use(
-      http.delete(`${API}/master-permissions/:id`, ({ request }) => {
-        method = request.method
-        path = new URL(request.url).pathname
-        return HttpResponse.json({ data: null })
-      })
-    )
-    await expect(deleteMasterPermission(5)).resolves.toBeUndefined()
-    expect([method, path]).toEqual(["DELETE", "/api/v1/master-permissions/5"])
-  })
-})
-
-describe("master permission writes, additional cases (TODO-013)", () => {
-  it("create sends a non-empty description and both flags as given", async () => {
-    const seen = captureBody("post")
-    await createMasterPermission({ ...INPUT, active: false, customerPermitted: true })
-    expect(seen.body).toMatchObject({
-      description: "Lihat laporan",
-      active: false,
-      customerPermitted: true,
-    })
-  })
-
-  it("create omits description when it is undefined", async () => {
-    const seen = captureBody("post")
-    const rest: MasterPermissionInput = {
-      key: INPUT.key,
-      name: INPUT.name,
-      category: INPUT.category,
-      module: INPUT.module,
-      active: INPUT.active,
-      customerPermitted: INPUT.customerPermitted,
-    }
-    await createMasterPermission(rest)
-    expect(seen.body).not.toHaveProperty("description")
-  })
-
-  it("create and update drop keys outside the contract", async () => {
-    const seenPost = captureBody("post")
-    await createMasterPermission({ ...INPUT, id: 9, extra: "x" } as MasterPermissionInput)
-    expect(Object.keys(seenPost.body ?? {}).sort()).toEqual(
-      ["active", "category", "customerPermitted", "description", "key", "module", "name"]
-    )
-    const seenPatch = captureBody("patch")
-    await updateMasterPermission(3, { ...INPUT, id: 9 } as MasterPermissionInput)
-    expect(seenPatch.body).not.toHaveProperty("id")
+describe("updateMasterPermission, additional cases (TODO-013)", () => {
+  it("update drops keys outside the contract", async () => {
+    const seen = captureBody("patch")
+    await updateMasterPermission(3, {
+      ...INPUT,
+      id: 9,
+      extra: "x",
+    } as MasterPermissionInput)
+    expect(Object.keys(seen.body ?? {}).sort()).toEqual([
+      "active",
+      "category",
+      "customerPermitted",
+      "description",
+      "key",
+      "module",
+      "name",
+    ])
   })
 
   it("update sends description as an empty string when undefined", async () => {
@@ -260,31 +246,5 @@ describe("master permission writes, additional cases (TODO-013)", () => {
     await expect(updateMasterPermission(1, INPUT)).rejects.toMatchObject({
       status: 403,
     })
-  })
-
-  it("rejects a create response that breaks the contract", async () => {
-    server.use(
-      http.post(`${API}/master-permissions`, () =>
-        HttpResponse.json({ data: { id: "x" } })
-      )
-    )
-    await expect(createMasterPermission(INPUT)).rejects.toMatchObject({
-      kind: "CONTRACT",
-    })
-  })
-
-  it("delete rejects on 409 (bound) and 404", async () => {
-    server.use(
-      http.delete(`${API}/master-permissions/:id`, () =>
-        errorResponse(409, "RESOURCE_CONFLICT", "bound")
-      )
-    )
-    await expect(deleteMasterPermission(1)).rejects.toMatchObject({ status: 409 })
-    server.use(
-      http.delete(`${API}/master-permissions/:id`, () =>
-        errorResponse(404, "NOT_FOUND", "missing")
-      )
-    )
-    await expect(deleteMasterPermission(1)).rejects.toMatchObject({ status: 404 })
   })
 })

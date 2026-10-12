@@ -1,27 +1,24 @@
 /**
  * Master permissions catalogue (`/master-permissions`; REQ-FE-018, REQ-FE-035,
  * REQ-FE-036, REQ-FE-039, REQ-FE-040, REQ-FE-048; ARCH-FE-001 D5.3, D5.4, D6.4,
- * D7, D9, D12.1). auth-service returns the whole list, so search and paging
- * run on the client (`useClientPagedList`). The route needs
- * `master_permissions:view`; create, edit and delete show only with
- * `:create`, `:update` and `:delete` (UX only, the backend enforces). The
- * locked flag and the bound-tenant count are removed (BG-07, SP-BG-07).
- * Delete asks for confirmation.
+ * D7, D9, D12.1; TODO-021). The screen is read-only: list, search and paging
+ * only, plus "Ubah" for name and description. auth-service returns the whole
+ * list, so search and paging run on the client (`useClientPagedList`). The
+ * route needs `master_permissions:view`; "Ubah" shows only with
+ * `:update` (UX only, the backend enforces). There is no create, activate or
+ * delete control, whatever keys the session holds.
  */
 
 import { useState, type ReactNode } from "react"
-import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { toast } from "sonner"
+import { useQuery } from "@tanstack/react-query"
 
 import { useAuth } from "@/app/providers/auth-provider"
 import { FormAlert } from "@/components/custom/form-alert"
-import { useDialogs } from "@/components/dialogs/dialogs"
 import { PageBody, PageHeader } from "@/components/page-header"
 import { TableCard } from "@/components/table-card"
 import { TablePagination } from "@/components/table-pagination"
 import { TenantStatusBadge } from "@/components/tenant-bits"
 import { Badge } from "@/components/ui/badge"
-import { RowDeleteButton } from "@/components/delete-button"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -33,14 +30,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { describeWriteFailure } from "@/features/tenants/create/write-failure"
 import { describeReadFailure } from "@/features/tenants/shared/failure"
 import { useClientPagedList } from "@/hooks/use-client-paged-list"
-import {
-  deleteMasterPermission,
-  listMasterPermissions,
-} from "@/lib/api/modules/master-permissions"
-import { applyInvalidation } from "@/lib/query/invalidation"
+import { listMasterPermissions } from "@/lib/api/modules/master-permissions"
 import { queryKeys } from "@/lib/query/keys"
 import { routeMeta } from "@/lib/routes-meta"
 import type { MasterPermission } from "@/types/master-permission"
@@ -61,25 +53,13 @@ function matchesQuery(item: MasterPermission, query: string): boolean {
     .some((value) => value.toLocaleLowerCase().includes(query))
 }
 
-interface DeleteFailure {
-  readonly key: string
-  readonly message: string
-  readonly referenceId: string | null
-}
-
 export function PermissionListPage() {
-  const queryClient = useQueryClient()
-  const { confirm } = useDialogs()
   const { me } = useAuth()
   const granted = me?.permissions ?? []
-  const canCreate = granted.includes("master_permissions:create")
   const canUpdate = granted.includes("master_permissions:update")
-  const canDelete = granted.includes("master_permissions:delete")
-  const showActions = canUpdate || canDelete
+  const showActions = canUpdate
 
   const [dialog, setDialog] = useState<PermissionDialogState | null>(null)
-  const [deletingId, setDeletingId] = useState<number | null>(null)
-  const [deleteFailure, setDeleteFailure] = useState<DeleteFailure | null>(null)
 
   const query = useQuery({
     queryKey: queryKeys.masterPermissions.all(),
@@ -90,32 +70,6 @@ export function PermissionListPage() {
   const failure = query.isError ? describeReadFailure(query.error) : null
   const columnCount = showActions ? COLUMN_COUNT : COLUMN_COUNT - 1
 
-  const handleDelete = async (permission: MasterPermission) => {
-    setDeleteFailure(null)
-    const confirmed = await confirm({
-      title: `Hapus permission ${permission.key}?`,
-      description: `Permission ${permission.key} akan dihapus dari katalog.`,
-      impact: [
-        "Pemetaan ke tenant dan peran ikut terpengaruh.",
-        "Tindakan ini tidak bisa dibatalkan.",
-      ],
-      confirmLabel: "Hapus",
-      tone: "destructive",
-      permanent: true,
-    })
-    if (!confirmed) return
-    setDeletingId(permission.id)
-    try {
-      await deleteMasterPermission(permission.id)
-      await applyInvalidation(queryClient, { kind: "masterPermissionWrite" })
-      toast.success("Permission dihapus.")
-    } catch (error) {
-      setDeleteFailure({ key: permission.key, ...describeWriteFailure(error) })
-    } finally {
-      setDeletingId(null)
-    }
-  }
-
   return (
     <PageBody>
       <PageHeader
@@ -123,21 +77,7 @@ export function PermissionListPage() {
         {...(META.description !== undefined
           ? { description: META.description }
           : {})}
-        actions={
-          canCreate ? (
-            <Button type="button" onClick={() => setDialog({ mode: "create" })}>
-              Tambah permission
-            </Button>
-          ) : null
-        }
       />
-
-      {deleteFailure !== null ? (
-        <FormAlert
-          message={`Permission ${deleteFailure.key} tidak dihapus. ${deleteFailure.message}`}
-          referenceId={deleteFailure.referenceId}
-        />
-      ) : null}
 
       <TableCard>
         <TableCard.Header
@@ -170,7 +110,7 @@ export function PermissionListPage() {
                 <TableHead className="w-28">Status</TableHead>
                 <TableHead className="w-36">Tenant</TableHead>
                 {showActions ? (
-                  <TableHead className="w-44 text-right">Aksi</TableHead>
+                  <TableHead className="w-28 text-right">Aksi</TableHead>
                 ) : null}
               </TableRow>
             </TableHeader>
@@ -243,20 +183,10 @@ export function PermissionListPage() {
                               variant="outline"
                               size="sm"
                               aria-label={`Ubah permission ${permission.key}`}
-                              disabled={deletingId !== null}
-                              onClick={() =>
-                                setDialog({ mode: "edit", permission })
-                              }
+                              onClick={() => setDialog({ permission })}
                             >
                               Ubah
                             </Button>
-                          ) : null}
-                          {canDelete ? (
-                            <RowDeleteButton
-                              label={`Hapus permission ${permission.key}`}
-                              disabled={deletingId !== null}
-                              onClick={() => void handleDelete(permission)}
-                            />
                           ) : null}
                         </div>
                       </TableCell>

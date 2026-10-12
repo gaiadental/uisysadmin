@@ -10,20 +10,20 @@
  * - DELETE country: `ID` is used by a tenant (409); others 204.
  *
  * TODO-013 (master permissions, auth-service camelCase, `{ data }` envelope):
- * - POST: key `reports:view` exists (409 MASTER_PERMISSION_KEY_EXISTS), any
- *   other key gives 200 with the sent fields.
+ * TODO-021 (master permissions are read-only except name and description):
+ * - GET /:id: the fixture with that id, 404 for an unknown id.
  * - PATCH: answers with the sent fields on the fixture id.
- * - DELETE: id 1 (`branches:view`) is still bound (409); others 200 `{ data: null }`.
+ * POST and DELETE have no default handler; a test that needs them overrides.
  */
 
 import { http, HttpResponse } from "msw"
 
 import { API, errorResponse } from "./auth"
-import { FIXTURE_MASTER_PERMISSION_BRANCHES } from "./tenant-permissions"
 import {
-  FIXTURE_CATEGORY,
-  FIXTURE_COUNTRY,
-} from "./tenants"
+  FIXTURE_MASTER_PERMISSION_BRANCHES,
+  FIXTURE_MASTER_PERMISSIONS,
+} from "./tenant-permissions"
+import { FIXTURE_CATEGORY, FIXTURE_COUNTRY } from "./tenants"
 
 export const CATEGORY_CODE_DUPLICATE = "DUPLICATE"
 export const CATEGORY_IN_USE_MESSAGE =
@@ -31,12 +31,6 @@ export const CATEGORY_IN_USE_MESSAGE =
 export const COUNTRY_CODE_TAKEN_MESSAGE = "Country code already exists."
 export const COUNTRY_IN_USE_MESSAGE =
   "Country is used by one or more tenants and cannot be deleted."
-
-export const PERMISSION_KEY_TAKEN = "reports:view"
-export const PERMISSION_KEY_TAKEN_MESSAGE = "Master permission key already exists."
-export const PERMISSION_IN_USE_ID = FIXTURE_MASTER_PERMISSION_BRANCHES.id
-export const PERMISSION_IN_USE_MESSAGE =
-  "Master permission is bound to tenants or roles and cannot be deleted."
 
 type JsonBody = Record<string, unknown>
 
@@ -109,24 +103,6 @@ export const catalogHandlers = [
       ? errorResponse(409, "RESOURCE_CONFLICT", COUNTRY_IN_USE_MESSAGE)
       : new HttpResponse(null, { status: 204 })
   ),
-  http.post(`${API}/master-permissions`, async ({ request }) => {
-    const body = (await request.json()) as JsonBody
-    if (body.key === PERMISSION_KEY_TAKEN) {
-      return errorResponse(
-        409,
-        "MASTER_PERMISSION_KEY_EXISTS",
-        PERMISSION_KEY_TAKEN_MESSAGE
-      )
-    }
-    return HttpResponse.json({
-      data: {
-        ...FIXTURE_MASTER_PERMISSION_BRANCHES,
-        id: 99,
-        ...body,
-        description: body.description ?? null,
-      },
-    })
-  }),
   http.patch(`${API}/master-permissions/:id`, async ({ request, params }) => {
     const body = (await request.json()) as JsonBody
     return HttpResponse.json({
@@ -137,13 +113,12 @@ export const catalogHandlers = [
       },
     })
   }),
-  http.delete(`${API}/master-permissions/:id`, ({ params }) =>
-    Number(params.id) === PERMISSION_IN_USE_ID
-      ? errorResponse(
-          409,
-          "RESOURCE_CONFLICT",
-          PERMISSION_IN_USE_MESSAGE
-        )
-      : HttpResponse.json({ data: null })
-  ),
+  http.get(`${API}/master-permissions/:id`, ({ params }) => {
+    const found = FIXTURE_MASTER_PERMISSIONS.find(
+      (item) => item.id === Number(params.id)
+    )
+    return found === undefined
+      ? errorResponse(404, "NOT_FOUND", "Master permission not found.")
+      : HttpResponse.json({ data: found })
+  }),
 ]

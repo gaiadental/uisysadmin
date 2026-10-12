@@ -48,6 +48,8 @@ Change: 2026-10-12 — TODO-020 added (user decision 2026-10-12, frontend fix: t
 
 Change: 2026-10-12 — TODO-020 Completed (Unit Test Report `execution_overall: PASS`, 890/890, 70 files; user confirmed the live `social_links` key on 2026-10-12). Progress 19 of 20 (95.0%). TODO-018 remains Not Started (deferred). The QA finding on `tenants.get` (OQ-P-63) stays open until the QA re-check is recorded. Status unchanged (Approved).
 
+Change: 2026-10-12 — TODO-021 Completed (Unit Test Report `execution_overall: PASS`, 909 passed in 75 files (was 917)). Progress 20 of 21 (95.2%). TODO-018 remains Not Started (deferred). Status unchanged (Approved).
+
 Change: 2026-10-12 — TODO-021 added (user decision 2026-10-12: Katalog > Permission read-only; ARCH-FE-001 v1.0.4). TODO-021 is Not Started, gated by Pending Approval of ARCH-FE-001 v1.0.4; total becomes 21 TODOs; progress 19 of 21 (90.5%). No TODO status changed (TODO-013 remains Completed). Status unchanged (Approved).
 
 Source Requirements:
@@ -60,7 +62,7 @@ Related Artifacts:
 
 ## At a Glance
 
-- 19 of 21 TODOs Completed (90.5%). TODO-018 is `Not Started` (deferred). TODO-021 is `Not Started` (user-approved 2026-10-12; gate cleared: ARCH-FE-001 v1.0.4 Approved). TODO-019 is `Completed` (added after QA, 2026-10-12; QA D-1 remediated pending the QA C-10 re-run). TODO-020 is `Completed` (2026-10-12, Critical; live tenant detail contract; QA re-check of `tenants.get` pending). Phase 3 is complete.
+- 20 of 21 TODOs Completed (95.2%). TODO-018 is `Not Started` (deferred). TODO-021 is `Completed` (2026-10-12; Katalog > Permission read-only). TODO-019 is `Completed` (added after QA, 2026-10-12; QA D-1 remediated pending the QA C-10 re-run). TODO-020 is `Completed` (2026-10-12, Critical; live tenant detail contract; QA re-check of `tenants.get` pending). Phase 3 is complete.
 - Active phase: Phase 0 — Foundation. OQ-P-01 and OQ-P-02 are answered (2026-10-10). It starts when Checkpoint B clears and the orchestrator records the gate.
 - Blocking open questions: 0. OQ-P-01 and OQ-P-02 were answered on 2026-10-10 (see `implementation-plan.md` -> Open Questions).
 
@@ -80,7 +82,7 @@ Frontend TODOs in this repository (TODO-001 to TODO-021; TODO-019, TODO-020 and 
 
 ## Overall Progress
 
-Percentage: 90.5% (19 of 21 TODOs Completed)
+Percentage: 95.2% (20 of 21 TODOs Completed)
 
 | Phase | TODOs | Completed | Status |
 |-------|-------|-----------|--------|
@@ -90,7 +92,7 @@ Percentage: 90.5% (19 of 21 TODOs Completed)
 | Phase 3 — Retirement and acceptance | TODO-017 | 1 of 1 | Completed |
 | Phase 4 — Deferred E2E | TODO-018 | 0 of 1 | Not Started (deferred) |
 | Post-QA remediation (added 2026-10-12) | TODO-019, TODO-020 | 2 of 2 | Completed (QA re-checks for D-1 and `tenants.get` pending) |
-| User decision change (added 2026-10-12) | TODO-021 | 0 of 1 | Not Started (approved 2026-10-12; ARCH-FE-001 v1.0.4 Approved) |
+| User decision change (added 2026-10-12) | TODO-021 | 1 of 1 | Completed |
 
 ## Active Phase
 
@@ -119,6 +121,7 @@ Entry conditions: OQ-P-01 and OQ-P-02 answered (done); Checkpoint B gate cleared
 - TODO-017 Mock removal, static checks and acceptance mapping (High) — Unit Test Report `execution_overall: PASS` (884/884, 70 files; lint, typecheck, build PASS)
 - TODO-019 Nullable `updated_by` in countries and tenant-categories contracts (Critical; post-QA, closes QA D-1 pending the QA C-10 re-run) — Unit Test Report `execution_overall: PASS` (886/886, 70 files; tsc, build PASS)
 - TODO-020 Tenant detail accepts the live shape (Critical; QA finding on `tenants.get`) — Unit Test Report `execution_overall: PASS` (890/890, 70 files; TODO-009 and TODO-010 regressions PASS)
+- TODO-021 Katalog > Permission read-only (High; user decision 2026-10-12) — Unit Test Report `execution_overall: PASS` (909 passed in 75 files (was 917); tsc, eslint PASS)
 
 ## In Progress
 
@@ -127,7 +130,6 @@ Entry conditions: OQ-P-01 and OQ-P-02 answered (done); Checkpoint B gate cleared
 ## Not Started
 
 - TODO-018 Playwright E2E (Low, deferred)
-- TODO-021 Katalog > Permission read-only (High; user-approved 2026-10-12, gate cleared (ARCH-FE-001 v1.0.4 Approved); external BG-12 / SP-BG-13 not blocking)
 
 ## Blocked
 

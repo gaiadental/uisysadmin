@@ -1,72 +1,44 @@
 import { describe, expect, it } from "vitest"
 
-import {
-  PERMISSION_CATEGORY_MAX,
-  PERMISSION_KEY_MAX,
-  PERMISSION_MODULE_MAX,
-  PERMISSION_NAME_MAX,
-  permissionCreateSchema,
-} from "./schema"
+import { PERMISSION_NAME_MAX, permissionEditSchema } from "./schema"
 
-const VALID = {
-  key: "reports:view",
-  name: "View reports",
-  description: "",
-  category: "REPORT",
-  module: "reporting",
-  active: true,
-  customerPermitted: false,
-}
+const VALID = { name: "View reports", description: "" }
 
 function messageFor(overrides: Record<string, unknown>, field: string) {
-  const result = permissionCreateSchema.safeParse({ ...VALID, ...overrides })
+  const result = permissionEditSchema.safeParse({ ...VALID, ...overrides })
   if (result.success) return null
-  return result.error.issues.find((issue) => issue.path[0] === field)?.message ?? null
+  return (
+    result.error.issues.find((issue) => issue.path[0] === field)?.message ??
+    null
+  )
 }
 
-describe("permissionCreateSchema limits (FE doc 5.3)", () => {
-  it("declares the contract limits", () => {
-    expect([
-      PERMISSION_KEY_MAX,
-      PERMISSION_NAME_MAX,
-      PERMISSION_CATEGORY_MAX,
-      PERMISSION_MODULE_MAX,
-    ]).toEqual([100, 100, 50, 50])
+describe("permissionEditSchema (FE doc 5.3, TODO-021)", () => {
+  it("declares the contract limit", () => {
+    expect(PERMISSION_NAME_MAX).toBe(100)
   })
 
   it("accepts a valid value and trims text", () => {
-    const result = permissionCreateSchema.safeParse({
-      ...VALID,
-      key: "  reports:view  ",
+    const result = permissionEditSchema.safeParse({
+      name: "  View  ",
       description: "  note  ",
     })
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data.key).toBe("reports:view")
-      expect(result.data.description).toBe("note")
+      expect(result.data).toEqual({ name: "View", description: "note" })
     }
   })
 
-  it.each([
-    ["key", 100],
-    ["name", 100],
-    ["category", 50],
-    ["module", 50],
-  ])("accepts %s at exactly %i characters and rejects one more", (field, max) => {
-    expect(messageFor({ [field]: "a".repeat(max) }, field)).toBeNull()
-    expect(messageFor({ [field]: "a".repeat(max + 1) }, field)).toMatch(
-      new RegExp(`${max} karakter`)
+  it("accepts name at exactly 100 characters and rejects one more", () => {
+    expect(messageFor({ name: "a".repeat(100) }, "name")).toBeNull()
+    expect(messageFor({ name: "a".repeat(101) }, "name")).toMatch(
+      /100 karakter/
     )
   })
 
-  it.each([
-    ["key", "Key wajib diisi."],
-    ["name", "Nama wajib diisi."],
-    ["category", "Kategori wajib diisi."],
-    ["module", "Modul wajib diisi."],
-  ])("rejects empty and whitespace-only %s", (field, message) => {
-    expect(messageFor({ [field]: "" }, field)).toBe(message)
-    expect(messageFor({ [field]: "   " }, field)).toBe(message)
+  it("rejects empty and whitespace-only name", () => {
+    expect(messageFor({ name: "" }, "name")).toBe("Nama wajib diisi.")
+    expect(messageFor({ name: "   " }, "name")).toBe("Nama wajib diisi.")
   })
 
   it("measures length after trimming", () => {
@@ -77,8 +49,15 @@ describe("permissionCreateSchema limits (FE doc 5.3)", () => {
     expect(messageFor({ description: "" }, "description")).toBeNull()
   })
 
-  it("rejects non-boolean flags", () => {
-    expect(messageFor({ active: "yes" }, "active")).not.toBeNull()
-    expect(messageFor({ customerPermitted: undefined }, "customerPermitted")).not.toBeNull()
+  it("drops fields that are not editable", () => {
+    const result = permissionEditSchema.safeParse({
+      ...VALID,
+      key: "x:y",
+      active: false,
+    })
+    expect(result.success && Object.keys(result.data).sort()).toEqual([
+      "description",
+      "name",
+    ])
   })
 })

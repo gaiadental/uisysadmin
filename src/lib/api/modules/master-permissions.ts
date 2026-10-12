@@ -3,10 +3,9 @@
  * is not paginated by the server: the whole catalogue is returned and the
  * screen paginates it on the client.
  *
- * Writes (TODO-013; D5.3, FE doc 5.3): create is POST, edit is PATCH with the
- * full current values (the screen sends every field, `key` unchanged), delete
- * answers `{ "data": null }`. Create is not idempotent (SP-BG-11): the caller
- * disables the submit while in flight and nothing retries it.
+ * Write (D5.3, FE doc 5.3): edit is PATCH with the full current values (the
+ * screen sends every field, `key` unchanged). The catalogue is read-only in
+ * the SP web (TODO-021): create and delete are not in this module.
  */
 
 import { apiRequest } from "../client"
@@ -20,7 +19,7 @@ import { unwrapData } from "./auth"
 
 const MASTER_PERMISSIONS_PATH = "/api/v1/master-permissions"
 
-/** D5.3 request body (`MasterPermissionRequest`). `description` is left out of create when empty. */
+/** D5.3 request body (`MasterPermissionRequest`). */
 export interface MasterPermissionInput {
   readonly key: string
   readonly name: string
@@ -39,15 +38,17 @@ export async function listMasterPermissions(): Promise<MasterPermission[]> {
   return unwrapData(MasterPermissionListSchema, body)
 }
 
-/** POST /api/v1/master-permissions. Requires `master_permissions:create`. 409 for a taken key. */
-export async function createMasterPermission(
-  input: MasterPermissionInput
+/**
+ * GET /api/v1/master-permissions/{id}. Requires `master_permissions:view`.
+ * The edit dialog reads the permission again just before the PATCH (TODO-021).
+ */
+export async function getMasterPermission(
+  id: number
 ): Promise<MasterPermission> {
-  const body = await apiRequest<unknown>(MASTER_PERMISSIONS_PATH, {
-    method: "POST",
-    body: toRequestBody(input, false),
-    route: "masterPermissions.create",
-  })
+  const body = await apiRequest<unknown>(
+    `${MASTER_PERMISSIONS_PATH}/${encodeURIComponent(String(id))}`,
+    { route: "masterPermissions.get" }
+  )
   return unwrapData(MasterPermissionSchema, body)
 }
 
@@ -63,35 +64,24 @@ export async function updateMasterPermission(
     `${MASTER_PERMISSIONS_PATH}/${encodeURIComponent(String(id))}`,
     {
       method: "PATCH",
-      body: toRequestBody(input, true),
+      body: toRequestBody(input),
       route: "masterPermissions.update",
     }
   )
   return unwrapData(MasterPermissionSchema, body)
 }
 
-/** DELETE /api/v1/master-permissions/{id}. Requires `master_permissions:delete`. */
-export async function deleteMasterPermission(id: number): Promise<void> {
-  await apiRequest<unknown>(
-    `${MASTER_PERMISSIONS_PATH}/${encodeURIComponent(String(id))}`,
-    { method: "DELETE", route: "masterPermissions.delete" }
-  )
-}
-
-/** Whitelist: only the contract keys are sent. An empty description is omitted on create and sent as "" on edit. */
+/** Whitelist: only the contract keys are sent. An empty description is sent as "". */
 function toRequestBody(
-  input: MasterPermissionInput,
-  sendDescription: boolean
+  input: MasterPermissionInput
 ): Record<string, string | boolean> {
-  const body: Record<string, string | boolean> = {
+  return {
     key: input.key,
     name: input.name,
+    description: input.description ?? "",
     category: input.category,
     module: input.module,
     active: input.active,
     customerPermitted: input.customerPermitted,
   }
-  const description = input.description ?? ""
-  if (sendDescription || description !== "") body.description = description
-  return body
 }

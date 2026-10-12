@@ -3,7 +3,7 @@ id: MASTER-TODO
 title: Master TODO — System Principal Web (Frontend)
 owner: project_manager
 status: Approved
-version: 1.8
+version: 1.9
 last_updated: 2026-10-12
 source_requirements: [REQ-FE-001, REQ-FE-002, REQ-FE-003, REQ-FE-004, REQ-FE-005, REQ-FE-006, REQ-FE-007, REQ-FE-008, REQ-FE-009, REQ-FE-010, REQ-FE-011, REQ-FE-012, REQ-FE-013, REQ-FE-014, REQ-FE-015, REQ-FE-016, REQ-FE-017, REQ-FE-018, REQ-FE-019, REQ-FE-020, REQ-FE-021, REQ-FE-022, REQ-FE-023, REQ-FE-024, REQ-FE-025, REQ-FE-026, REQ-FE-028, REQ-FE-029, REQ-FE-030, REQ-FE-031, REQ-FE-032, REQ-FE-033, REQ-FE-034, REQ-FE-035, REQ-FE-036, REQ-FE-037, REQ-FE-038, REQ-FE-039, REQ-FE-040, REQ-FE-041, REQ-FE-042, REQ-FE-043, REQ-FE-045, REQ-FE-046, REQ-FE-047, REQ-FE-048, REQ-FE-049, REQ-FE-050, REQ-FE-051]
 related_artifacts: [ARCH-FE-001, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, IMPLEMENTATION-PLAN, PROGRESS-TRACKER]
@@ -16,7 +16,7 @@ Owner: project_manager
 
 Status: Approved
 
-Version: 1.8
+Version: 1.9
 
 Last Updated: 2026-10-12
 
@@ -37,6 +37,8 @@ Change: 2026-10-12 — amendment (v1.5, user decision 2026-10-12, option 1): TOD
 Change: 2026-10-12 — amendment (v1.7, user decision 2026-10-12, frontend fix): TODO-020 added. The frontend accepts the live tenant detail shape: `GET /api/v1/tenants/{id}` returns nested `tenant_category` and `country` and no top-level `tenant_category_id` or `country_code`, so the detail parse failed with CONTRACT (new QA finding on `tenants.get`, 2026-10-12). The create and list shapes are unchanged. TODO-020 is `Not Started`; no other TODO status changed (TODO-010 remains `Completed`). Status unchanged (Approved). (The front matter read `version: 1.6` with no v1.6 change line; this amendment sets 1.7.)
 
 Change: 2026-10-12 — TODO-020 Completed (Unit Test Report `execution_overall: PASS`, 890/890, 70 files; user confirmed on 2026-10-12 that the live `GET /api/v1/tenants/{id}` body contains `social_links`). QA re-check of `tenants.get` on the live stack is pending and is not part of the unit gate. Version unchanged (1.7); Status unchanged (Approved).
+
+Change: 2026-10-12 — amendment (v1.9, user approved 2026-10-12): TODO-021 `createMasterPermission` and `deleteMasterPermission` removed from `src/lib/api/modules/master-permissions.ts` with their module tests and route names (previously left in place); `toRequestBody` always sends `description` (empty string when absent); update PATCH unchanged. Test count 909 passed in 75 files (was 917). No File scope path changes; TODO-021 stays Completed. Status unchanged (Approved).
 
 Source Requirements:
 - REQ-FE-001 to REQ-FE-051 (ARCH-FE-001 v1.0). REQ-FE-027 (deferred), REQ-FE-041 (excluded), REQ-FE-044 (external) are not in any TODO; see `implementation-plan.md` -> Requirement Coverage.
@@ -1124,7 +1126,7 @@ Gate: unit tests for the tenants module PASS, including the three cases above; `
 
 Description:
 
-Make Katalog > Permission (`/master-permissions`) read-only (user product decision 2026-10-12; ARCH-FE-001 v1.0.4, Pending Approval). Remove from the UI: the create button and create dialog path, the activate/deactivate (`active`) switch, and the delete action including its confirmation dialog and the `RowDeleteButton` usage on this page. Keep: list, detail, and edit of `name` and `description` only. The edit PATCH sends the full current body (`key`, `category`, `module`, `active`, `customerPermitted` unchanged; FE-OQ-38 default); `key` is read-only and `active` is shown as a read-only status. Gates per D6.4: the page needs `master_permissions:view`; the edit action needs `master_permissions:update`; no control is offered for `:create`, `:delete` or the `active` toggle, even when the session holds all `master_permissions:*` keys. Invalidation after edit per D12.1 (`['system','masterPermissions']`, all `['system','tenantPermissions']`, `['system','rolePermissions']`). Remove code that becomes unused in the page and form dialog (create mode, delete handler, `active` switch field, create-only schema parts). The API functions `createMasterPermission` and `deleteMasterPermission` in `master-permissions.ts`: ARCH-FE-001 v1.0.4 does not say to remove them, so they are left in place unless the implementer verifies by grep that nothing else uses them and records that as a proposal for approval; do not delete on assumption. Tenant permission activate/deactivate (`tenant_permissions:*`) is not affected.
+Make Katalog > Permission (`/master-permissions`) read-only (user product decision 2026-10-12; ARCH-FE-001 v1.0.4, Pending Approval). Remove from the UI: the create button and create dialog path, the activate/deactivate (`active`) switch, and the delete action including its confirmation dialog and the `RowDeleteButton` usage on this page. Keep: list, detail, and edit of `name` and `description` only. The edit PATCH sends the full current body (`key`, `category`, `module`, `active`, `customerPermitted` unchanged; FE-OQ-38 default); `key` is read-only and `active` is shown as a read-only status. Gates per D6.4: the page needs `master_permissions:view`; the edit action needs `master_permissions:update`; no control is offered for `:create`, `:delete` or the `active` toggle, even when the session holds all `master_permissions:*` keys. Invalidation after edit per D12.1 (`['system','masterPermissions']`, all `['system','tenantPermissions']`, `['system','rolePermissions']`). Remove code that becomes unused in the page and form dialog (create mode, delete handler, `active` switch field, create-only schema parts). The API functions `createMasterPermission` and `deleteMasterPermission` in `master-permissions.ts`: ARCH-FE-001 v1.0.4 does not say to remove them, so they were removed from `master-permissions.ts` together with their module tests and route names (user-approved amendment 2026-10-12, v1.9; supersedes the earlier instruction to leave them). `toRequestBody` now always sends `description` (empty string when absent); the update PATCH is unchanged. Tenant permission activate/deactivate (`tenant_permissions:*`) is not affected.
 
 Owner:
 
@@ -1132,7 +1134,7 @@ developer_frontend
 
 Status:
 
-Not Started (approved by the user 2026-10-12; gate cleared: ARCH-FE-001 v1.0.4 now Approved; `/build` may start but the TODO is not yet In Progress)
+Completed (2026-10-12; Unit Test Report `execution_overall: PASS`, 909 passed in 75 files, was 917; file-provenance rows FP-230 to FP-237)
 
 Priority:
 
