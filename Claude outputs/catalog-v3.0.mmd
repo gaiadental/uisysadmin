@@ -1,0 +1,247 @@
+erDiagram
+
+    catalog_services {
+        uuid id PK "DEFAULT gen_random_uuid()"
+        uuid tenant_id "plain UUID dari JWT, bukan FK"
+        varchar code UK "unik per tenant"
+        varchar name "NOT NULL"
+        varchar category "PERIODONSIA / KONSERVASI / BEDAH_MULUT / PEDODONSIA / ORTHODONTIA / PROSTODONSIA / OBAT / BAHAN"
+        varchar sub_category "PARTIAL_DENTURE / FULL_DENTURE / FIXED_DENTURE / RESTORASI / LAIN_LAIN, NULL kecuali Prostodonsia"
+        varchar unit "BUTIR / BOTOL / PCS / PACK, NULL untuk tindakan, wajib untuk OBAT dan BAHAN"
+        integer dp_min_percent "NULL = tidak perlu DP, 50 = DP minimal 50 persen untuk Behel dan Gigi Tiruan"
+        text description "keterangan klinis dari pricelist"
+        boolean is_active "DEFAULT TRUE"
+        timestamptz created_at "DEFAULT NOW()"
+        uuid created_by
+        timestamptz updated_at "DEFAULT NOW()"
+        uuid updated_by
+        timestamptz deleted_at "NULL = belum dihapus"
+        uuid deleted_by
+    }
+
+    master_prices {
+        uuid id PK "DEFAULT gen_random_uuid()"
+        uuid tenant_id "plain UUID dari JWT, bukan FK"
+        uuid catalog_service_id FK "references catalog_services.id"
+        varchar price_tier "RENCANA v3.0 - TIER_1 / TIER_2 / TIER_3, Tier 1 = harga utama. Unique constraint jadi (tenant_id, catalog_service_id, price_tier, effective period)"
+        decimal amount "harga normal, NOT NULL"
+        char currency "ISO 4217, contoh IDR"
+        timestamptz effective_from "kapan harga mulai berlaku"
+        timestamptz effective_to "NULL = harga masih aktif"
+        timestamptz created_at "DEFAULT NOW()"
+        uuid created_by
+        timestamptz updated_at "DEFAULT NOW()"
+        uuid updated_by
+        timestamptz deleted_at "NULL = belum dihapus"
+        uuid deleted_by
+    }
+
+    branch_price_tiers {
+        uuid id PK "DEFAULT gen_random_uuid() - RENCANA v3.0, tabel baru"
+        uuid tenant_id "plain UUID dari JWT, bukan FK"
+        uuid branch_id "plain UUID dari JWT, bukan FK, referensi ke branch di master-data-service"
+        varchar price_tier "RENCANA v3.0 - TIER_1 / TIER_2 / TIER_3, tier yang berlaku otomatis untuk cabang ini. Unique per (tenant_id, branch_id)"
+        timestamptz created_at "DEFAULT NOW()"
+        uuid created_by
+        timestamptz updated_at "DEFAULT NOW()"
+        uuid updated_by
+        timestamptz deleted_at "NULL = belum dihapus"
+        uuid deleted_by
+    }
+
+    insurance_providers {
+        uuid id PK "DEFAULT gen_random_uuid()"
+        uuid tenant_id "plain UUID dari JWT, bukan FK"
+        uuid branch_id "plain UUID dari JWT, bukan FK, satu baris per cabang"
+        varchar code UK "unik per tenant dan branch, contoh BRILIFE"
+        varchar name "NOT NULL, contoh BRILIFE"
+        varchar status "RENCANA v3.0 - GANTI dari is_active (boolean). Isi: BERLAKU / TIDAK_BERLAKU / BELUM_BERLAKU / HARGA_KHUSUS. Statusnya PER BARIS (per provider+cabang), bukan global per provider - karena tabel ini sudah satu baris per cabang, jadi bisa saja mis. BRILIFE = BERLAKU di cabang lain tapi TIDAK_BERLAKU khusus di cabang Veteran. Alasan ganti dari is_active: booleannya cuma 2 keadaan, data asli butuh 4"
+        varchar special_price_code "RENCANA v3.0 - nullable, kode harga khusus (contoh NAYAKA, InovaCare), diisi kalau status = HARGA_KHUSUS"
+        timestamptz created_at "DEFAULT NOW()"
+        uuid created_by
+        timestamptz updated_at "DEFAULT NOW()"
+        uuid updated_by
+        timestamptz deleted_at "NULL = belum dihapus"
+        uuid deleted_by
+    }
+
+    insurance_rules {
+        uuid id PK "DEFAULT gen_random_uuid()"
+        uuid tenant_id "plain UUID dari JWT, bukan FK"
+        uuid branch_id "plain UUID dari JWT, bukan FK"
+        uuid insurance_provider_id FK "references insurance_providers.id"
+        uuid catalog_service_id FK "references catalog_services.id, NULL = rule global berlaku semua item"
+        varchar pricing_type "FIXED atau PERCENTAGE"
+        decimal pricing_value "nominal jika FIXED, persen jika PERCENTAGE"
+        decimal coverage_percent "porsi ditanggung penjamin, NULL = 100 persen"
+        decimal coverage_max "plafon per item, NULL = tanpa batas"
+        varchar percentage_tier_reference "RENCANA v3.0 - nullable, tier acuan kalau pricing_type=PERCENTAGE. NULL = pakai default tenant (saat ini TIER_3, sudah diputuskan)"
+        uuid alternative_group_id "RENCANA v3.0 - nullable, rule dengan group_id sama untuk insurance_provider_id+catalog_service_id yang sama dianggap alternatif (pilih salah satu, spt kasus Prudential). NULL = rule berdiri sendiri"
+        varchar status "RENCANA v3.0 - AKTIF / NONAKTIF. Kontrol manual, independen dari effective_from/effective_to. Sebelumnya status cuma dihitung dari tanggal (sama seperti master_prices)"
+        timestamptz effective_from
+        timestamptz effective_to "NULL = masih berlaku"
+        timestamptz created_at "DEFAULT NOW()"
+        uuid created_by
+        timestamptz updated_at "DEFAULT NOW()"
+        uuid updated_by
+        timestamptz deleted_at "NULL = belum dihapus"
+        uuid deleted_by
+    }
+
+    discount_programs {
+        uuid id PK "DEFAULT gen_random_uuid()"
+        uuid tenant_id "plain UUID dari JWT, bukan FK"
+        varchar program_type "PROMO atau VOUCHER"
+        varchar code UK "unik per tenant, contoh HAPPYHOUR atau CFD50K"
+        varchar name "NOT NULL"
+        text description
+        varchar eligibility_anchor "BOOKING_TIME / CHECKIN_TIME / PAYMENT_TIME, penentu promo gugur atau tidak"
+        integer usage_limit "NULL untuk PROMO, wajib untuk VOUCHER"
+        integer usage_count "DEFAULT 0, counter redemption voucher"
+        timestamptz starts_at "awal kampanye"
+        timestamptz ends_at "akhir kampanye"
+        boolean is_active "DEFAULT TRUE"
+        timestamptz created_at "DEFAULT NOW()"
+        uuid created_by
+        timestamptz updated_at "DEFAULT NOW()"
+        uuid updated_by
+        timestamptz deleted_at "NULL = belum dihapus"
+        uuid deleted_by
+    }
+
+    discount_schedules {
+        uuid id PK "DEFAULT gen_random_uuid()"
+        uuid tenant_id "plain UUID dari JWT, bukan FK"
+        uuid discount_program_id FK "references discount_programs.id"
+        varchar days_of_week "contoh 2,3,4,5 untuk Selasa sampai Jumat"
+        time start_time "contoh 09:00"
+        time end_time "contoh 13:00"
+        integer grace_minutes "toleransi keterlambatan, contoh 10 menit"
+        timestamptz created_at "DEFAULT NOW()"
+        uuid created_by
+        timestamptz updated_at "DEFAULT NOW()"
+        uuid updated_by
+        timestamptz deleted_at "NULL = belum dihapus"
+        uuid deleted_by
+    }
+
+    discount_rules {
+        uuid id PK "DEFAULT gen_random_uuid()"
+        uuid tenant_id "plain UUID dari JWT, bukan FK"
+        uuid discount_program_id FK "references discount_programs.id"
+        uuid catalog_service_id FK "references catalog_services.id"
+        varchar discount_type "FIXED atau PERCENTAGE"
+        decimal discount_value "nominal potongan atau persentase"
+        decimal max_discount "batas maksimum potongan untuk PERCENTAGE, NULL = tanpa batas"
+        decimal min_subtotal "syarat minimum belanja, NULL = tanpa syarat"
+        timestamptz effective_from
+        timestamptz effective_to "NULL = masih berlaku"
+        timestamptz created_at "DEFAULT NOW()"
+        uuid created_by
+        timestamptz updated_at "DEFAULT NOW()"
+        uuid updated_by
+        timestamptz deleted_at "NULL = belum dihapus"
+        uuid deleted_by
+    }
+
+    discount_branches {
+        uuid id PK "DEFAULT gen_random_uuid()"
+        uuid tenant_id "plain UUID dari JWT, bukan FK"
+        uuid discount_program_id FK "references discount_programs.id"
+        uuid branch_id "plain UUID dari JWT, bukan FK"
+        boolean is_applicable "DEFAULT TRUE, FALSE = cabang ini tidak dapat promo, tidak ada baris = berlaku semua cabang"
+        timestamptz created_at "DEFAULT NOW()"
+        uuid created_by
+        timestamptz updated_at "DEFAULT NOW()"
+        uuid updated_by
+        timestamptz deleted_at "NULL = belum dihapus"
+        uuid deleted_by
+    }
+
+    discount_grants {
+        uuid id PK "DEFAULT gen_random_uuid()"
+        uuid tenant_id "plain UUID dari JWT, bukan FK"
+        uuid branch_id "plain UUID dari JWT, bukan FK"
+        uuid profile_id "referensi patient service, bukan FK"
+        uuid granted_by "dokter pemberi diskon prerogatif"
+        varchar reason "VIP / EMPLOYEE_FAMILY / BUNDLED_PROCEDURE / LOYAL"
+        varchar discount_type "FIXED atau PERCENTAGE"
+        decimal discount_value "nominal atau persentase"
+        uuid consent_document_id "bukti informed consent, referensi cross service, bukan FK"
+        uuid approved_by "kasir yang memvalidasi"
+        timestamptz approved_at
+        timestamptz created_at "DEFAULT NOW()"
+        uuid created_by
+        timestamptz updated_at "DEFAULT NOW()"
+        uuid updated_by
+        timestamptz deleted_at "NULL = belum dihapus"
+        uuid deleted_by
+    }
+
+    price_quotes {
+        uuid id PK "DEFAULT gen_random_uuid()"
+        uuid tenant_id "plain UUID dari JWT, bukan FK"
+        uuid branch_id "plain UUID dari JWT, bukan FK"
+        uuid profile_id "referensi patient service, bukan FK"
+        uuid appointment_id "referensi appointment service, bukan FK"
+        uuid checkout_session_id UK "unik per tenant dan branch"
+        timestamptz booked_at "snapshot waktu booking, basis evaluasi kelayakan promo"
+        uuid insurance_provider_id "NULL = pasien umum, referensi insurance_providers.id"
+        char currency "ISO 4217"
+        decimal subtotal "total harga normal sebelum penyesuaian"
+        decimal total_adjustment "jumlah seluruh potongan dari quote_adjustments"
+        decimal insurance_covered "porsi ditanggung penjamin"
+        decimal patient_payable "sisa dibayar pasien, co-payment"
+        varchar status "DRAFT / CONFIRMED / EXPIRED / VOID"
+        timestamptz expires_at
+        timestamptz created_at "DEFAULT NOW()"
+        uuid created_by
+        timestamptz updated_at "DEFAULT NOW()"
+        uuid updated_by
+    }
+
+    price_quote_items {
+        uuid id PK "DEFAULT gen_random_uuid()"
+        uuid tenant_id "plain UUID dari JWT, bukan FK"
+        uuid branch_id "plain UUID dari JWT, bukan FK"
+        uuid price_quote_id FK "references price_quotes.id"
+        uuid catalog_service_id "snapshot referensi, bukan FK"
+        uuid master_price_id "harga yang dipakai saat transaksi"
+        varchar item_name "snapshot nama item saat transaksi"
+        varchar price_tier_used "RENCANA v3.0 - snapshot tier (TIER_1/2/3) yang dipakai saat transaksi, buat audit"
+        decimal quantity
+        decimal unit_price "harga satuan saat transaksi"
+        decimal subtotal "quantity dikali unit_price"
+        decimal total_adjustment "jumlah potongan untuk item ini"
+        decimal insurance_covered
+        decimal patient_payable
+        timestamptz created_at "DEFAULT NOW()"
+        uuid created_by
+        timestamptz updated_at "DEFAULT NOW()"
+        uuid updated_by
+    }
+
+    quote_adjustments {
+        uuid id PK "DEFAULT gen_random_uuid()"
+        uuid tenant_id "plain UUID dari JWT, bukan FK"
+        uuid price_quote_item_id FK "references price_quote_items.id"
+        varchar source_type "PROMO / VOUCHER / DOCTOR / INSURANCE"
+        uuid source_id "id discount_rules atau discount_grants atau insurance_rules yang dipakai"
+        decimal amount "nominal potongan, negatif untuk pengurangan"
+        integer apply_order "urutan penerapan, 1 diterapkan lebih dulu"
+        timestamptz created_at "DEFAULT NOW()"
+        uuid created_by
+    }
+
+    catalog_services ||--o{ master_prices : "catalog_service_id"
+    catalog_services ||--o{ insurance_rules : "catalog_service_id"
+    catalog_services ||--o{ discount_rules : "catalog_service_id"
+
+    insurance_providers ||--o{ insurance_rules : "insurance_provider_id"
+
+    discount_programs ||--o{ discount_schedules : "discount_program_id"
+    discount_programs ||--o{ discount_rules : "discount_program_id"
+    discount_programs ||--o{ discount_branches : "discount_program_id"
+
+    price_quotes ||--o{ price_quote_items : "price_quote_id"
+    price_quote_items ||--o{ quote_adjustments : "price_quote_item_id"

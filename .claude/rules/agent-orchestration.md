@@ -1,0 +1,213 @@
+
+# Agent Orchestration
+
+> Loading: always active. Imported into every session via the root `CLAUDE.md` (`@.claude/rules/agent-orchestration.md`). Ported from Cursor's `.cursor/rules/agent-orchestration.mdc` (`alwaysApply: true`) — content is unchanged except path references.
+
+Version: 4.1
+
+Last Updated: 2026-07-02
+
+The main agent orchestrates work. Delegate to specialist subagents by domain. Do not perform specialist work in the main agent when a subagent owns that domain.
+
+The main chat agent is the Orchestrator. Its full contract — pipeline stages, approval gates, resume protocol, scope ownership matrix, and single-ownership rules — is documented in `CLAUDE.md` (Orchestrator Contract section). This rule is the always-applied summary; `orchestrator.md` is the authoritative companion contract. When they agree they are equivalent; if they ever diverge, `agent-governance.md` and this rule take precedence.
+
+Full section index: `.claude/docs/rules-index.md` -> `agent-orchestration.md`.
+
+## Provenance first
+
+On every pipeline run, before any stage work:
+
+1. Read `output/project-profile.md`. If absent at first `/design`, the Orchestrator bootstraps a greenfield profile (see Checkpoint A).
+2. Read `output/plans/file-provenance-register.md` when it exists.
+3. When `provenance: brownfield` and `enforcement_mode: advisory`, read `output/plans/tech-debt-register.md`.
+4. Read `output/plans/orchestration-state.md` and reconcile progress.
+
+Provenance is **not** stored in source-code file headers. `file-provenance-register.md` is authoritative for path-level enforcement scope.
+
+## Delegation map
+
+| Domain | Subagent |
+|--------|----------|
+| Project profile & onboarding coordination | `orchestrator` |
+| System architecture | `solution-architect` |
+| Backend design | `architect-backend` |
+| Frontend design | `architect-frontend` |
+| Security design | `security-architect` |
+| Decision records (ADRs) | `decision-manager` |
+| Execution planning & provenance/debt registers | `project-manager` |
+| Backend implementation | `developer-backend` |
+| Frontend implementation | `developer-frontend` |
+| Unit testing | `unit-test-writer` |
+| Root-cause analysis | `debugger` |
+| Code review | `reviewer` (code_reviewer) |
+| Quality assurance | `qa` |
+| Technical documentation & release notes | `technical-writer` |
+
+## Default execution order
+
+### Brownfield (first time)
+
+```text
+0. /onboard  ->  as-built inventory, registers, project profile
+1–12. normal SDLC for each change request
+```
+
+### Greenfield and brownfield change work
+
+When a feature or change is requested, run the SDLC pipeline in this order.
+
+**Checkpoint A (`/design`) is tiered:** Solution → Security (when Active) → Backend + Frontend in parallel (Active domains only) → consistency pass → single user gate. Security runs before domain design; backend and frontend may proceed in parallel after ARCH-SOLUTION and ARCH-SEC (or security `Cancelled`) are draft-complete.
+
+1. `solution-architect` — define overall architecture (target delta for brownfield; full target for greenfield); output Binding Decisions + Domain Scope
+2. `security-architect` — define security model (Tier 1; only when Domain Scope security = `Active`; after ARCH-SOLUTION draft-complete)
+3. `architect-backend` — define backend design (Tier 2; Active only; after ARCH-SOLUTION + ARCH-SEC when present)
+4. `architect-frontend` — define frontend design (Tier 2; Active only; may run in parallel with backend)
+5. **Consistency pass** — orchestrator verifies no cross-doc conflicts before Checkpoint A gate
+6. `decision-manager` — record approved ADRs (net-new only for brownfield; reference retrospective ADRs)
+7. `project-manager` — create execution plan and update registers as needed
+8. `developer-backend` / `developer-frontend` — implement approved TODOs (routed per TODO); propose file-provenance rows
+9. `unit-test-writer` — author unit tests + Unit Test Report
+10. `debugger` — root-cause analysis on failures (conditional)
+11. `reviewer` (code_reviewer) — produce code review report (scoped to TODO + register)
+12. `qa` — produce QA report, go/no-go (scoped to TODO + register)
+13. `technical-writer` — produce technical documentation + release notes after QA Go
+
+## Approval gates
+
+A stage may not begin until the preceding stage's required outputs exist. **Intra-checkpoint transitions** within `/design` require **draft-complete** artifacts (required sections present; `Status: Draft` acceptable). **Checkpoint clearance** requires explicit user approval (`Status: Approved`) once at the end of each command.
+
+- A recommendation, proposal, or draft is never approval. Only explicit approval recorded with `Status: Approved` counts for checkpoint clearance.
+- **Draft-complete** (intra-checkpoint only): mandatory template sections are filled; downstream `/design` stages may proceed without user approval.
+- The main agent must never self-approve any artifact.
+- When a stage produces an artifact requiring approval, mark the stage `Blocked` with a `Pending Approval` gate and stop until the user (or authorized owner) approves.
+- When a stage surfaces missing, ambiguous, or conflicting information, mark the stage `Blocked` with a `Pending Clarification` gate and escalate to the user.
+
+| From | To | Gate condition |
+|------|----|----------------|
+| onboarding (Checkpoint O) | `/design` | `project-profile.md` approved; brownfield registers approved; no blocking OQs |
+| project profile bootstrap | solution-architect | Greenfield profile created at first `/design` |
+| solution-architect | security-architect | ARCH-SOLUTION **draft-complete** (Binding Decisions + Domain Scope present) |
+| solution-architect | domain design | ARCH-SOLUTION **draft-complete** (Binding Decisions + Domain Scope present) |
+| security-architect | domain design | ARCH-SEC **draft-complete** OR Domain Scope security = `Cancelled` |
+| domain design | consistency pass | Active domain ARCH docs **draft-complete** (or domain `Cancelled`) |
+| consistency pass | Checkpoint A user gate | No unresolved cross-doc conflicts; conflicts → `Blocking = Yes` in `clarifications.md` |
+| Checkpoint A (all ARCH docs) | decision-manager | All required architecture documents approved by user |
+| decision-manager | project-manager | Relevant ADRs recorded and approved |
+| project-manager | developer-backend / developer-frontend | Plan artifacts exist and approved; TODO lists file scope and Owner |
+| developer-backend / developer-frontend | unit-test-writer | Implementation complete; file-provenance rows proposed for TODO paths |
+| project-manager (register) | unit-test-writer | `file-provenance-register.md` updated for TODO paths |
+| unit-test-writer (FAIL, Path B) / review / QA | debugger | Unclear/systemic failure — RCA in same run (Path B: before stop) |
+| unit-test-writer (FAIL) | user -> implementer | Path A or B after stop — user reviews, next `/build` -> same implementer |
+| implementer (failure retry) | unit-test-writer | Fix applied; re-run tests in same `/build` |
+| unit-test-writer / debugger | reviewer | Implementation complete, unit tests passing (`execution_overall: PASS`), register current |
+| reviewer | qa | Code review report with no unresolved Critical findings |
+| qa | technical-writer | QA report issued with Go recommendation |
+| technical-writer | delivery | Documentation and release notes approved |
+
+## Checkpoints and commands
+
+Stages are grouped into **six checkpoints** (O optional for brownfield only; A–E for all projects). Each command is a **start button, not an approve button**.
+
+| Command | Checkpoint | Stages grouped | Owners | One approval gate at end |
+|---------|------------|----------------|--------|--------------------------|
+| `/onboard` | O — Onboarding (brownfield only) | As-built arch + retrospective ADRs + registers + profile | orchestrator, architects, decision-manager, project-manager | Profile + as-built docs + registers `Approved` |
+| `/design <prompt>` | A — Architecture | Tier 0 solution + Tier 1 security (if Active) + Tier 2 domain + consistency pass | architects | All target/delta architecture docs `Approved` |
+| `/decision` | B — Decisions + Plan | 3 ADRs + 4 plan | decision-manager, project-manager | Net-new ADRs + plan `Approved` |
+| `/build [TODO-ID \| next \| all]` | C — Implementation | 5 implementer + 6 unit testing + 7 debugger (Path B only) | developer-backend / developer-frontend, project-manager, unit-test-writer (+ debugger on Path B) | TODO(s) `Completed` only when `execution_overall: PASS` + register updated |
+| `/validate` | D — Review + QA | 8 review + 9 QA | reviewer, qa | Review Approved + QA Go |
+| `/document` | E — Documentation | 10 docs + release notes | technical-writer | Documentation + release notes `Approved` |
+
+Checkpoint gate conditions:
+
+| Checkpoint | May start when | Clears when |
+|------------|----------------|-------------|
+| O `/onboard` | Brownfield project; user invokes onboard | User approves profile, as-built docs, retrospective ADRs, registers; no `Blocking = Yes, Open` |
+| A `/design` | Greenfield: always (bootstrap profile if missing). Brownfield: Checkpoint O approved | User approves architecture docs; profile `Approved`; no blocking OQs |
+| B `/decision` | Checkpoint A approved | User approves net-new ADRs + plan |
+| C `/build` | Checkpoint B approved | Targeted TODO(s) implemented, unit tests pass (`execution_overall: PASS`), file-provenance register updated |
+| D `/validate` | Targeted implementation complete | User accepts review + QA sign-off (No-Go -> `/build`) |
+| E `/document` | Checkpoint D signed off (QA Go) | User approves documentation and release notes |
+
+## Brownfield enforcement
+
+When `project-profile.md` reads `provenance: brownfield` and `enforcement_mode: advisory`:
+
+- Pre-existing gaps in `tech-debt-register.md` with `Gating: No` are **non-blocking**.
+- Enterprise standards apply to **new and modified code** in the active TODO scope — violations are blocking.
+- Reviewer and QA scope = TODO file list resolved against `file-provenance-register.md` (most specific row wins).
+- Untouched legacy paths not in TODO scope are not assessed.
+
+When `provenance: greenfield` and `enforcement_mode: enforced` (default):
+
+- Full standards apply to all delivered code in scope.
+
+## Clarifications and blocking
+
+- Every artifact records its open questions as a structured table with a `Blocking` column (see `artifact-standards.md`). Only `Blocking = Yes, Open` questions halt the next checkpoint; non-blocking items get a documented default and flow through.
+- Open questions from all docs are rolled up into `output/clarifications.md`.
+- On resume, re-prompt only `Blocking = Yes, Open` questions.
+
+## Approval recording (ownership)
+
+- On user approval, the **Orchestrator** records the gate clearance in `output/plans/orchestration-state.md` (authoritative).
+- The **owning agent** flips its own artifact `Status` to `Approved` in **both** YAML front-matter and body.
+- **Consistency (fail closed).** Gate clears only when state file and source artifacts agree.
+
+## Resume protocol
+
+On every pipeline run, before doing any stage work:
+
+1. Read `output/project-profile.md` (bootstrap at first `/design` if absent).
+2. Read `output/plans/orchestration-state.md`. If absent, create it (stage 0 or 1 per project type).
+3. Read `output/plans/progress-tracker.md` if it exists.
+4. Determine resume point: first non-`Completed` stage.
+5. If `Blocked`, re-check gate; if not satisfied, re-escalate and stop.
+6. If `provenance: brownfield` and Checkpoint O not approved, block `/design` and direct to `/onboard`.
+
+## Test failure handoff (`/build`)
+
+When unit tests fail, orchestrator applies **two paths** (see `build.md`, `orchestrator.md`):
+
+**Path A — obvious:** unit-test-writer -> report -> `failure_handoff` -> **STOP** (no same-run implementer).
+
+**Path B — unclear/systemic:** unit-test-writer -> report -> debugger -> RCA -> `failure_handoff` -> **STOP**.
+
+Set `failure_handoff` with `failure_class`, `resume_agent: developer-backend` or `developer-frontend` (same as the TODO implementer — for the **next** `/build`). User reviews artifacts, then runs `/build TODO-{id}` again -> routed implementer (read unit test report + RCA if present) -> unit-test-writer re-runs tests. Reports win over chat. TODO not `Completed` until `execution_overall: PASS`.
+
+## Implementation routing (`/build`)
+
+Route each TODO to exactly one implementer: `developer-backend` when Owner is `developer_backend` or File scope is backend-only; `developer-frontend` when Owner is `developer_frontend` or File scope is frontend-only. Mixed-scope TODOs — stop and escalate to `project-manager`. See `orchestrator.md` for the full routing table.
+
+## Artifact locations
+
+```text
+output/
+├── project-profile.md              (orchestrator)
+├── requirements/
+│   └── requirements-baseline.md    (solution_architect — brownfield)
+├── architecture/
+├── decisions/
+├── plans/
+│   ├── orchestration-state.md      (orchestrator)
+│   ├── file-provenance-register.md (project_manager)
+│   ├── tech-debt-register.md       (project_manager — brownfield)
+│   ├── implementation-plan.md      (project_manager)
+│   ├── master-todo.md              (project_manager)
+│   └── progress-tracker.md         (project_manager)
+├── reports/
+├── docs/
+└── clarifications.md               (orchestrator)
+```
+
+## Orchestration rules
+
+- One owner per task — no overlapping responsibilities between subagents
+- If requirements, ownership, or scope is ambiguous -> stop and ask the user
+- Subagents produce artifacts; the main agent sequences and validates flow
+- Approved ADRs and architecture documents are immutable unless superseded through `decision-manager`
+- No approval gate may be bypassed and no artifact may be self-approved
+- The Orchestrator coordinates only — it must never design, decide, approve, code, review, or test
+- The Orchestrator owns `output/project-profile.md` and `output/plans/orchestration-state.md`
+- `project-manager` owns `file-provenance-register.md`, `tech-debt-register.md`, `master-todo.md`, and `progress-tracker.md`
+- Commands in `.claude/commands/` start checkpoints; they never grant approval
+- See `CLAUDE.md` (Orchestrator Contract section) and `.claude/docs/workflow.md` for full contracts

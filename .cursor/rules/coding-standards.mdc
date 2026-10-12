@@ -1,0 +1,257 @@
+---
+description: Universal coding quality, review, traceability, and governance standards
+alwaysApply: true
+---
+
+# Coding Standards
+
+Version: 2.0
+
+Last Updated: 2026-06-24
+
+Status: Active
+
+---
+
+# Purpose
+
+This document defines universal code quality expectations, review criteria, traceability requirements, and governance rules that apply across all stacks.
+
+This document governs:
+
+* developer_backend
+* developer_frontend
+* code_reviewer
+* debugger
+* unit_test_writer
+* qa
+
+Stack-specific code quality rules live in `standards-backend.mdc` and `standards-frontend.mdc`. Technology and implementation patterns live in `tech-stack-backend.mdc` and `tech-stack-frontend.mdc`. Load the applicable stack standards per TODO file scope.
+
+All implementation work must comply with this standard and the applicable stack standards unless explicitly overridden by an approved ADR.
+
+Full section index: `.cursor/rules-index.md` -> `coding-standards.mdc`.
+
+---
+
+# Core Principles
+
+Code must be:
+
+* Correct
+* Readable
+* Maintainable
+* Testable
+* Secure
+* Observable
+* Consistent
+* Traceable
+
+Code is written for humans first and computers second.
+
+---
+
+# Standards Map
+
+| Concern | Document |
+|---------|----------|
+| Backend code quality | `standards-backend.mdc` |
+| Frontend code quality | `standards-frontend.mdc` |
+| Backend technology | `tech-stack-backend.mdc` |
+| Frontend technology | `tech-stack-frontend.mdc` |
+| Security | `tech-stack-security.mdc` |
+| Integration / API contracts | `tech-stack-integration.mdc` |
+
+**Precedence:** `agent-governance.mdc` → `coding-standards.mdc` (this file) → `standards-*` → `tech-stack-*`
+
+---
+
+# Code Review Standards
+
+## Purpose
+
+Reviews improve quality.
+
+Reviews are not personal criticism.
+
+---
+
+## Review Areas
+
+### Correctness
+
+Does the code satisfy requirements?
+
+### Maintainability
+
+Can future developers understand it?
+
+### Security
+
+Does it follow security standards?
+
+### Performance
+
+Are there obvious inefficiencies?
+
+### Testing
+
+Are tests adequate?
+
+---
+
+## Review Output
+
+Findings should be categorized:
+
+* Critical
+* High
+* Medium
+* Low
+
+---
+
+# Refactoring Standards
+
+Refactoring should:
+
+* Preserve behavior
+* Improve readability
+* Improve maintainability
+
+---
+
+## Requirements
+
+Refactoring must not introduce functional changes unless explicitly requested.
+
+---
+
+# Technical Debt Standards
+
+Technical debt must be explicit.
+
+When debt is accepted:
+
+Document:
+
+* Reason
+* Risk
+* Future remediation plan
+
+---
+
+# Debugging Standards
+
+Debugging must be evidence-driven.
+
+---
+
+## Requirements
+
+Identify:
+
+* Symptoms
+* Root cause
+* Impact
+* Validation approach
+
+---
+
+## Prohibited
+
+Guessing root causes without evidence.
+
+---
+
+# Traceability Requirements
+
+Implementation must reference:
+
+* Requirement ID
+* Architecture ID
+* ADR ID
+* TODO ID
+
+Example:
+
+```text
+Requirement:
+REQ-001
+
+Architecture:
+ARCH-BE-001
+
+Decision:
+ADR-003
+
+Task:
+TODO-012
+```
+
+Traceability is recorded in `output/plans/master-todo.md`, `output/plans/file-provenance-register.md` (Trace column), and related artifacts — **not** in source-code file headers or provenance comments.
+
+---
+
+# Completion Checklist
+
+Before implementation is considered complete:
+
+* Requirements satisfied
+* Architecture followed
+* ADRs followed
+* Applicable stack standards loaded and satisfied per TODO file scope
+* Security requirements satisfied
+* Tests added
+* Logging added
+* Documentation updated
+* Code reviewed
+* No unresolved critical findings
+
+---
+
+# Escalation Triggers
+
+Escalate when:
+
+* Requirements are unclear
+* Architecture is unclear
+* ADR is missing
+* Security requirements conflict
+* Standards conflict
+* Multiple interpretations exist
+
+Status:
+
+Pending Clarification
+
+must be assigned.
+
+---
+
+# Final Rule
+
+Code must be:
+
+* Correct
+* Readable
+* Testable
+* Maintainable
+* Secure
+* Traceable
+
+Code must never rely on:
+
+* Assumptions
+* Hidden behavior
+* Undocumented decisions
+
+When in doubt:
+
+Stop.
+
+Request clarification.
+
+Status:
+
+Pending Clarification

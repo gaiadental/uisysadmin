@@ -60,7 +60,7 @@ export function WizardSteps({ steps, current, onStepClick }: WizardStepsProps) {
                 >
                   {step.title}
                 </span>
-                <code className="font-mono text-[0.7rem] text-muted-foreground">
+                <code className="font-mono text-xs text-muted-foreground">
                   {step.key}
                 </code>
               </span>

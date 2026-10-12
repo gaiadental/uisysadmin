@@ -1,0 +1,848 @@
+---
+description: Frontend code quality, naming, testing, and maintainability standards
+globs: **/*.{ts,tsx,js,jsx,vue}
+alwaysApply: false
+---
+
+# Frontend Coding Standards
+
+Version: 1.0
+
+Last Updated: 2026-06-26
+
+Status: Active
+
+---
+
+# Purpose
+
+This document defines frontend code quality expectations, naming conventions, component structure, hooks, styling, TypeScript, testing, performance, and accessibility patterns for TypeScript, JavaScript, and Vue applications.
+
+This document governs:
+
+* developer_frontend
+* architect_frontend
+* code_reviewer
+* debugger
+* unit_test_writer
+
+(when scope is frontend — `**/*.{ts,tsx,js,jsx,vue}` or frontend TODO file scope)
+
+All frontend implementation work must comply with this standard unless explicitly overridden by an approved ADR.
+
+Universal quality rules (code review, refactoring, traceability, debugging) remain in `coding-standards.mdc`.
+
+Full section index: `.cursor/rules-index.md` -> `standards-frontend.mdc`.
+
+---
+
+# Precedence
+
+When rules conflict, higher-priority sources win:
+
+```text
+agent-governance.mdc → coding-standards.mdc → standards-frontend.mdc → tech-stack-frontend.mdc
+```
+
+`coding-standards.mdc` owns universal review, refactoring, and traceability rules. This document owns frontend-specific code quality. `tech-stack-frontend.mdc` owns approved technologies and tool-specific implementation patterns.
+
+---
+
+# Pointers
+
+Tool-specific rules defer to stack documents:
+
+| Topic | Quality rules (this file) | Technology / tools |
+|-------|---------------------------|--------------------|
+| Folder and feature layout | Component Structure (file order) | `tech-stack-frontend.mdc` -> Frontend Architecture Standard |
+| Styling tools and approach | Styling Standards | `tech-stack-frontend.mdc` -> Styling Standard |
+| TypeScript strict configuration | TypeScript Standards | `tech-stack-frontend.mdc` -> TypeScript Configuration Standard |
+| State hierarchy and server state | State Management Standards | `tech-stack-frontend.mdc` -> State Management Standard, Server State Standard |
+| Form validation libraries | Security Standards (Zod examples) | `tech-stack-frontend.mdc` -> Form Validation Standard |
+| Test frameworks and coverage target | Testing Standards | `tech-stack-frontend.mdc` -> Testing Standard; Enterprise Capability Baseline |
+| Performance optimization evidence | Performance Guidelines | `tech-stack-frontend.mdc` -> Performance Standard |
+| Accessibility policy (WCAG 2.1 AA) | Accessibility Standards | `tech-stack-frontend.mdc` -> Accessibility Standard |
+| Security controls (CSP, storage, XSS) | Security Standards | `tech-stack-frontend.mdc` -> Security Standard (Frontend); `tech-stack-security.mdc` |
+| API contracts and error shapes | — | `tech-stack-integration.mdc` |
+| Logging levels and prohibited content | — | `tech-stack-frontend.mdc` -> Logging Standard |
+
+---
+
+# Core Principles
+
+1. **Configuration over Convention** — Prefer config objects over hard-coded logic for dynamic UI
+2. **Composition over Inheritance** — Build complexity by composing small, focused components
+3. **Explicit over Implicit** — Clear and readable code over clever or concise code
+4. **Type Safety First** — Leverage TypeScript strict mode fully; avoid `any`
+5. **Accessibility by Default** — Build accessible interfaces from the start, not as an afterthought
+
+---
+
+# Naming Conventions
+
+## File Naming
+
+| Type | Convention | Example |
+|---|---|---|
+| Components | PascalCase | `UserProfile.tsx`, `ButtonGroup.tsx` |
+| Hooks | camelCase with `use` prefix | `useApiClient.ts`, `useLocalStorage.ts` |
+| Utils | camelCase | `formatDate.ts`, `validateEmail.ts` |
+| Types / Interfaces | PascalCase | `User.types.ts`, `ApiResponse.types.ts` |
+| Constants | UPPER_SNAKE_CASE for values; camelCase for files | `API_ENDPOINTS.ts` |
+| Config files | camelCase with `Config` suffix | `formConfig.ts`, `tableConfig.ts` |
+| Styles | kebab-case | `button-styles.css` |
+| Test files | `[name].test.ts(x)` | `Button.test.tsx`, `useCounter.test.ts` |
+
+## Variables and Functions
+
+Preferred:
+
+```typescript
+const userData: UserData = {};
+const isLoading = false;
+const hasError = false;
+const handleSubmit = () => {};
+const fetchUserData = async () => {};
+```
+
+Avoid:
+
+```typescript
+const user_data = {};     // snake_case
+const loading = false;    // ambiguous boolean prefix
+const onClick = () => {}; // event handler is too generic
+const getData = async () => {}; // too vague
+```
+
+## Constants
+
+```typescript
+const MAX_RETRY_COUNT = 3;
+const DEFAULT_TIMEOUT_SECONDS = 30;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
+```
+
+---
+
+# Component Structure
+
+## Order Within a File
+
+1. Imports (see Import Order section)
+2. Types and interfaces
+3. Constants
+4. Helper functions
+5. Main component (named export — not default export)
+6. Sub-components
+7. Exports
+
+## Named Exports
+
+Export components by name — avoid default exports for components.
+
+```typescript
+// Good
+export { UserProfile };
+export function UserProfile(props: UserProfileProps) { ... }
+
+// Bad
+export default UserProfile;
+```
+
+## Component Template
+
+```typescript
+import { useState, useCallback, memo } from 'react';
+import { cn } from '@/lib/utils';
+
+interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+}
+
+const variantStyles = {
+  primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/90',
+  ghost: 'hover:bg-accent hover:text-accent-foreground',
+} as const;
+
+const sizeStyles = {
+  sm: 'h-8 px-3 text-xs',
+  md: 'h-10 px-4 py-2',
+  lg: 'h-12 px-6 text-lg',
+} as const;
+
+export const Button = memo(function Button({
+  variant = 'primary',
+  size = 'md',
+  children,
+  onClick,
+  disabled = false,
+  className,
+}: ButtonProps) {
+  const handleClick = useCallback(() => {
+    if (!disabled && onClick) {
+      onClick();
+    }
+  }, [disabled, onClick]);
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={disabled}
+      className={cn(
+        'inline-flex items-center justify-center rounded-md font-medium',
+        'transition-colors focus-visible:outline-none',
+        'disabled:pointer-events-none disabled:opacity-50',
+        variantStyles[variant],
+        sizeStyles[size],
+        className
+      )}
+    >
+      {children}
+    </button>
+  );
+});
+```
+
+---
+
+# Custom Hooks Standards
+
+## Rules
+
+1. Always start hook names with `use`
+2. Call hooks at top level only — never inside loops or conditions
+3. Keep focused — one hook, one responsibility
+4. Return stable references — use `useMemo` and `useCallback`
+5. Provide explicit return type interfaces
+
+## Custom Hook Template
+
+```typescript
+import { useState, useCallback } from 'react';
+
+interface UseCounterOptions {
+  initial?: number;
+  min?: number;
+  max?: number;
+}
+
+interface UseCounterReturn {
+  count: number;
+  increment: () => void;
+  decrement: () => void;
+  reset: () => void;
+  set: (value: number) => void;
+}
+
+export function useCounter(options: UseCounterOptions = {}): UseCounterReturn {
+  const { initial = 0, min = -Infinity, max = Infinity } = options;
+  const [count, setCount] = useState(initial);
+
+  const increment = useCallback(() => {
+    setCount((c) => Math.min(c + 1, max));
+  }, [max]);
+
+  const decrement = useCallback(() => {
+    setCount((c) => Math.max(c - 1, min));
+  }, [min]);
+
+  const reset = useCallback(() => {
+    setCount(initial);
+  }, [initial]);
+
+  const set = useCallback((value: number) => {
+    setCount(Math.max(min, Math.min(value, max)));
+  }, [min, max]);
+
+  return { count, increment, decrement, reset, set };
+}
+```
+
+## useEffect Rules
+
+```typescript
+// Good: All dependencies listed
+useEffect(() => {
+  fetchData(id);
+}, [id, fetchData]);
+
+// Bad: Missing dependencies
+useEffect(() => {
+  fetchData(id);
+}, []);
+```
+
+---
+
+# Import Order
+
+```typescript
+// 1. React and core
+import { useState, useCallback, memo } from 'react';
+
+// 2. Third-party libraries
+import { useQuery } from '@tanstack/react-query';
+import { z } from 'zod';
+
+// 3. Absolute imports (path aliases)
+import { cn } from '@/lib/utils';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+
+// 4. Relative imports
+import { UserCard } from './UserCard';
+import type { User } from './types';
+
+// 5. Styles (last)
+import './styles.css';
+```
+
+---
+
+# Styling Standards
+
+Tailwind CSS with `cn()` utility is the preferred approach — see `tech-stack-frontend.mdc` -> Styling Standard for tool selection policy.
+
+## cn() Utility
+
+```typescript
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+## Tailwind Class Order
+
+1. Layout (`flex`, `grid`, `block`)
+2. Sizing (`w-full`, `h-screen`)
+3. Spacing (`p-4`, `m-2`, `gap-3`)
+4. Typography (`text-sm`, `font-bold`)
+5. Visual (`bg-primary`, `rounded-md`)
+6. Interactive (`hover:bg-secondary`, `focus:ring-2`)
+7. State (`disabled:opacity-50`)
+
+## Conditional Classes
+
+```typescript
+// Good
+<button className={cn(
+  'flex items-center gap-2 px-4 py-2',
+  'bg-primary text-white rounded-md',
+  'hover:bg-primary/90 focus:ring-2',
+  variant === 'danger' && 'bg-red-500 hover:bg-red-600',
+  className
+)}>
+```
+
+## Avoid
+
+```typescript
+// Bad: Hard-to-read inline class strings
+<div className="p-4 m-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-lg transform transition-transform hover:scale-105">
+
+// Good: Extract to variable
+const buttonClasses = cn(
+  'py-2 px-4 rounded font-bold text-white',
+  'bg-blue-500 hover:bg-blue-600',
+  'shadow-lg transform transition-transform hover:scale-105'
+);
+```
+
+## Responsive Design
+
+Use mobile-first approach:
+
+```typescript
+<div className="
+  w-full md:w-1/2 lg:w-1/3
+  p-4 md:p-6 lg:p-8
+">
+```
+
+---
+
+# TypeScript Standards
+
+Strict mode is required for all projects — see `tech-stack-frontend.mdc` -> TypeScript Configuration Standard for compiler options and path aliases.
+
+## Type Definitions
+
+```typescript
+// Good: Explicit types
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'user' | 'guest';
+  createdAt: Date;
+}
+
+// Good: Discriminated unions
+type ApiResponse<T> =
+  | { status: 'success'; data: T }
+  | { status: 'error'; error: string; code: number }
+  | { status: 'loading' };
+
+// Good: Utility types
+type CreateUserInput = Omit<User, 'id' | 'createdAt'>;
+type UpdateUserInput = Partial<CreateUserInput>;
+
+// Good: Generic types
+function processData<T extends Record<string, unknown>>(data: T): T {
+  return data;
+}
+
+// Bad: any
+function processData(data: any): any {
+  return data;
+}
+```
+
+## Function Signatures
+
+```typescript
+// Good: Explicit return type for exported functions
+export function calculateTotal(items: CartItem[]): number {
+  return items.reduce((sum, item) => sum + item.price, 0);
+}
+
+// Good: Object parameters for multiple args
+interface CreateUserParams {
+  email: string;
+  password: string;
+  name: string;
+  role?: UserRole;
+}
+
+export function createUser(params: CreateUserParams): Promise<User> {
+  // implementation
+}
+
+// Bad: Too many positional arguments
+export function createUser(
+  email: string,
+  password: string,
+  name: string,
+  role: string
+): Promise<User> { ... }
+```
+
+## Prohibited
+
+- `any` without explicit justification documented in a comment
+- Disabling TypeScript strict mode
+- Missing return types on exported functions
+- Implicit `any` through missing type annotations
+
+---
+
+# State Management Standards
+
+State hierarchy policy (local → feature → global; TanStack Query for server state) is defined in `tech-stack-frontend.mdc` -> State Management Standard and Server State Standard. Below are implementation patterns.
+
+## Local State
+
+```typescript
+const [isExpanded, setIsExpanded] = useState(false);
+const [user, setUser] = useState<User | null>(null);
+```
+
+## Complex State
+
+```typescript
+type Action =
+  | { type: 'FETCH_START' }
+  | { type: 'FETCH_SUCCESS'; payload: User[] }
+  | { type: 'FETCH_ERROR'; payload: string };
+```
+
+## Context State
+
+```typescript
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  const [theme, setTheme] = useState<Theme>('light');
+
+  const value = useMemo(() => ({
+    theme,
+    setTheme,
+    toggle: () => setTheme((t) => (t === 'light' ? 'dark' : 'light')),
+  }), [theme]);
+
+  return (
+    <ThemeContext.Provider value={value}>
+      {children}
+    </ThemeContext.Provider>
+  );
+}
+```
+
+---
+
+# Testing Standards
+
+Test framework selection (Vitest or Jest, React Testing Library, MSW) is defined in `tech-stack-frontend.mdc` -> Testing Standard and Enterprise Capability Baseline.
+
+## Test File Location
+
+Preferred: co-located with the source file.
+
+```text
+├── Button.tsx
+└── Button.test.tsx
+```
+
+Allowed: separate tests folder.
+
+```text
+tests/
+├── unit/
+│   └── Button.test.tsx
+└── integration/
+    └── checkout-flow.test.ts
+```
+
+## Component Testing
+
+```typescript
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { Button } from './Button';
+
+describe('Button', () => {
+  it('renders with correct text', () => {
+    render(<Button>Click me</Button>);
+    expect(screen.getByText('Click me')).toBeInTheDocument();
+  });
+
+  it('handles click events', () => {
+    const handleClick = vi.fn();
+    render(<Button onClick={handleClick}>Click me</Button>);
+    fireEvent.click(screen.getByText('Click me'));
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('is disabled when loading', () => {
+    render(<Button disabled>Click me</Button>);
+    expect(screen.getByRole('button')).toBeDisabled();
+  });
+});
+```
+
+## Hook Testing
+
+```typescript
+import { renderHook, act } from '@testing-library/react';
+import { describe, it, expect } from 'vitest';
+import { useCounter } from './useCounter';
+
+describe('useCounter', () => {
+  it('increments correctly', () => {
+    const { result } = renderHook(() => useCounter({ initial: 0 }));
+    act(() => { result.current.increment(); });
+    expect(result.current.count).toBe(1);
+  });
+});
+```
+
+## Test Requirements
+
+- Tests must be independent and repeatable
+- Tests must cover happy path, error states, edge cases, and loading states
+- Use `vi.fn()` (Vitest) or `jest.fn()` (Jest) for mock functions — never real implementations in unit tests
+- Use MSW for API mocking in integration tests
+- Coverage target: 80% or higher (guideline, not a quality guarantee)
+
+---
+
+# Performance Guidelines
+
+Optimization policy (lazy loading, code splitting, bundle awareness) is defined in `tech-stack-frontend.mdc` -> Performance Standard. Below are implementation patterns.
+
+## Memoization
+
+```typescript
+// Memoize expensive computations
+const sortedData = useMemo(() => {
+  return [...data].sort((a, b) => a.score - b.score);
+}, [data]);
+
+// Memoize callbacks passed to children
+const handleUpdate = useCallback((id: string) => {
+  updateItem(id, { updated: true });
+}, [updateItem]);
+
+// Memoize components rendered in lists or as children
+export const ListItem = memo(function ListItem({ item }: { item: Item }) {
+  return <div>{item.name}</div>;
+});
+```
+
+## Lazy Loading
+
+```typescript
+// Lazy load routes
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+
+// Lazy load heavy components
+const HeavyChart = lazy(() => import('./components/HeavyChart'));
+```
+
+## Image Optimization
+
+```typescript
+// Use next/image for all images
+import Image from 'next/image';
+
+<Image
+  src="/photo.jpg"
+  alt="Descriptive alt text"
+  width={800}
+  height={600}
+  priority={isAboveFold}
+  placeholder="blur"
+/>
+```
+
+Prohibited:
+
+- Raw `<img>` tags for user-facing content
+- Importing entire libraries when tree-shakeable alternatives exist
+- Premature optimization without measurement
+
+---
+
+# Accessibility Standards
+
+WCAG 2.1 Level AA policy is defined in `tech-stack-frontend.mdc` -> Accessibility Standard. Below are implementation patterns.
+
+## Accessible Components
+
+```typescript
+// Good: Accessible button with icon
+<button
+  type="button"
+  aria-label="Close dialog"
+  aria-pressed={isOpen}
+  onClick={onClose}
+>
+  <XIcon aria-hidden="true" />
+</button>
+
+// Good: Accessible form field
+<label htmlFor="email">Email Address</label>
+<input
+  id="email"
+  type="email"
+  aria-required="true"
+  aria-invalid={hasError}
+  aria-describedby={hasError ? 'email-error' : undefined}
+/>
+{hasError && (
+  <span id="email-error" role="alert">{error}</span>
+)}
+```
+
+## Prohibited
+
+- Interactive controls without keyboard access
+- Icon-only actions without `aria-label`
+- Relying on color alone to convey meaning
+- Modals that trap focus without a close mechanism
+
+---
+
+# Comments and Documentation
+
+## When to Comment
+
+Comment to explain **why**, not **what**.
+
+```typescript
+// Good: Explains why
+// Defer heavy calculation to avoid blocking the initial render
+const deferredValue = useDeferredValue(heavyData);
+
+// Bad: Explains what (obvious)
+// Set count to 0
+setCount(0);
+```
+
+## JSDoc for Public APIs
+
+```typescript
+/**
+ * Formats a date to locale string.
+ * @param date - Date to format
+ * @param locale - Optional locale string (defaults to 'id-ID')
+ * @returns Formatted date string
+ * @example
+ * formatDate(new Date()) // '17 Juni 2024'
+ */
+export function formatDate(date: Date, locale = 'id-ID'): string {
+  return date.toLocaleDateString(locale, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+```
+
+---
+
+# Security Standards
+
+Browser storage, CSP, and cross-site risk policy are defined in `tech-stack-frontend.mdc` -> Security Standard (Frontend) and `tech-stack-security.mdc`. Below are implementation patterns.
+
+## Input Validation
+
+```typescript
+// Good: Validate all inputs with Zod
+const loginSchema = z.object({
+  email: z.string().email('Invalid email'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+const result = loginSchema.safeParse(data);
+if (!result.success) {
+  return { error: result.error };
+}
+```
+
+## HTML Sanitization
+
+```typescript
+// Good: Sanitize HTML before rendering
+import DOMPurify from 'dompurify';
+
+function RichText({ html }: { html: string }) {
+  const sanitized = DOMPurify.sanitize(html);
+  return <div dangerouslySetInnerHTML={{ __html: sanitized }} />;
+}
+```
+
+## Data Handling
+
+```typescript
+// Bad: Never log sensitive data
+console.log('User data:', user); // may contain password
+
+// Good: Selective safe logging
+const { password, accessToken, ...safeUser } = user;
+console.log('User data:', safeUser);
+```
+
+Prohibited:
+
+- Logging passwords, tokens, secrets, or sensitive personal data
+- Using `dangerouslySetInnerHTML` without sanitization
+
+---
+
+# Code Review Checklist
+
+## Functionality
+
+- [ ] Feature meets the requirement
+- [ ] Error handling is implemented
+- [ ] Edge cases are handled
+- [ ] Loading states are explicit
+- [ ] Empty states are handled
+
+## Code Quality
+
+- [ ] TypeScript types are complete (no unresolved `any`)
+- [ ] Functions are focused and not too long (< 50 lines ideally)
+- [ ] No duplicated code (DRY)
+- [ ] Naming is clear and descriptive
+- [ ] Export style is correct (named, not default for components)
+
+## Performance
+
+- [ ] Memoization used for expensive computations and callbacks to children
+- [ ] Images use `next/image`
+- [ ] No unnecessary re-renders
+- [ ] Bundle size is considered
+
+## Testing
+
+- [ ] Unit tests cover business logic
+- [ ] Component tests cover UI behavior
+- [ ] Edge cases are tested
+- [ ] Tests pass in CI
+
+## Security
+
+- [ ] All inputs validated with Zod
+- [ ] HTML output sanitized where applicable
+- [ ] No secrets in code
+- [ ] Authentication checks present
+
+## Accessibility
+
+- [ ] Keyboard navigation works
+- [ ] Focus management is correct
+- [ ] ARIA attributes are present and correct
+- [ ] Color is not the only indicator of meaning
+
+---
+
+# Escalation Triggers
+
+Escalate when:
+
+* TypeScript types cannot be defined without `any` and require architectural guidance
+* Component boundary decisions conflict with approved architecture
+* State management requirements exceed what local state can handle without architectural decision
+* Accessibility requirements are unclear
+* Security requirements for data handling are unclear
+
+---
+
+# Final Rule
+
+Frontend code must be:
+
+* Correct
+* Readable
+* Type-safe (no `any`)
+* Accessible (WCAG 2.1 AA)
+* Testable
+* Maintainable
+* Secure
+* Performant
+
+Frontend code must never rely on:
+
+* Assumptions
+* Hidden behavior
+* Undocumented decisions
+* Disabled TypeScript checks
+
+When in doubt:
+
+Stop.
+
+Request clarification.
+
+Status:
+
+Pending Clarification
+
+---
+
+# Open Questions
+
+| ID | Question | Why it matters | Impact | Owner | Blocking | Status | Answer / Default |
+|----|----------|----------------|--------|-------|----------|--------|------------------|
+| OQ1 | Awaiting FE colleague tune reference (path TBD) | Quality sections require source material | Resolved — `standards-frontend.mdc` Active (Phase 6 gate flip) | architect_frontend | No | Answered | Adopted from `temp-reference/frontend-standards.mdc`; deduplicated against `tech-stack-frontend.mdc` |

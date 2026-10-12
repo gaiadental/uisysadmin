@@ -11,6 +11,11 @@ type MetricCardProps = {
   /** Nada merah untuk metrik yang menandakan kegagalan. */
   tone?: "default" | "destructive"
   hint?: string
+  /**
+   * Keadaan data async (REQ-FE-037). "loading" dan "error" menggantikan nilai
+   * dengan teks yang dibacakan pembaca layar; default "ready" menampilkan nilai.
+   */
+  state?: "ready" | "loading" | "error"
 }
 
 export function MetricCard({
@@ -19,6 +24,7 @@ export function MetricCard({
   icon: Icon,
   tone = "default",
   hint,
+  state = "ready",
 }: MetricCardProps) {
   return (
     <Card
@@ -29,7 +35,7 @@ export function MetricCard({
       )}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground">
+        <span className="text-sm font-medium text-muted-foreground">
           {label}
         </span>
         {Icon ? (
@@ -41,16 +47,29 @@ export function MetricCard({
           />
         ) : null}
       </div>
-      <div
-        className={cn(
-          "font-mono text-2xl font-semibold tabular-nums",
-          tone === "destructive" && "text-destructive"
-        )}
-      >
-        {value}
-      </div>
+      {state === "ready" ? (
+        <div
+          className={cn(
+            "font-mono text-2xl font-semibold tabular-nums",
+            tone === "destructive" && "text-destructive"
+          )}
+        >
+          {value}
+        </div>
+      ) : state === "loading" ? (
+        <div
+          role="status"
+          className="text-sm text-muted-foreground"
+        >
+          Memuat...
+        </div>
+      ) : (
+        <div role="alert" className="text-sm text-destructive">
+          Gagal dimuat
+        </div>
+      )}
       {hint ? (
-        <span className="text-xs text-muted-foreground">{hint}</span>
+        <span className="text-sm text-muted-foreground">{hint}</span>
       ) : null}
     </Card>
   )

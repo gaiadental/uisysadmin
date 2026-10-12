@@ -1,16 +1,16 @@
-import * as React from "react"
+import { Fragment } from "react"
 import { IconSearch } from "@tabler/icons-react"
 
-import { useRoute } from "@/router"
-import { routeMeta } from "@/lib/routes-meta"
+import { breadcrumbFor } from "@/app/navigation"
+import { splitHref, useLocationHref } from "@/app/router"
 import { useCommandPalette } from "@/components/command-palette"
 import { Kbd } from "@/components/ui/kbd"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 
 export function SiteHeader() {
-  const route = useRoute()
-  const meta = routeMeta[route.name]
+  const { pathname } = splitHref(useLocationHref())
+  const crumbs = breadcrumbFor(pathname) ?? []
   const palette = useCommandPalette()
 
   return (
@@ -22,15 +22,21 @@ export function SiteHeader() {
           className="mx-1 h-4 data-vertical:self-auto"
         />
 
-        <nav className="hidden items-center gap-1.5 text-sm sm:flex">
-          {meta.breadcrumb.map((crumb, i) => {
-            const last = i === meta.breadcrumb.length - 1
+        <nav
+          aria-label="Jejak navigasi"
+          className="hidden items-center gap-1.5 text-sm sm:flex"
+        >
+          {crumbs.map((crumb, index) => {
+            const last = index === crumbs.length - 1
             return (
-              <React.Fragment key={crumb}>
-                {i > 0 ? (
-                  <span className="text-muted-foreground/60">/</span>
+              <Fragment key={`${index}-${crumb}`}>
+                {index > 0 ? (
+                  <span aria-hidden="true" className="text-muted-foreground/60">
+                    /
+                  </span>
                 ) : null}
                 <span
+                  aria-current={last ? "page" : undefined}
                   className={
                     last
                       ? "font-medium text-foreground"
@@ -39,7 +45,7 @@ export function SiteHeader() {
                 >
                   {crumb}
                 </span>
-              </React.Fragment>
+              </Fragment>
             )
           })}
         </nav>
@@ -48,13 +54,11 @@ export function SiteHeader() {
           <button
             type="button"
             onClick={palette.open}
-            className="flex h-8 w-full items-center gap-2 rounded-lg border border-input bg-transparent px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted/50 sm:w-88 lg:w-104 dark:bg-input/30"
+            className="flex h-9 w-full items-center gap-2 rounded-lg border border-input bg-transparent px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted/50 sm:w-88 lg:w-104 dark:bg-input/30"
           >
             <IconSearch className="size-4 shrink-0" />
-            <span className="hidden truncate sm:inline">
-              Cari tenant, akun, permission, atau tempel UUID
-            </span>
-            <span className="truncate sm:hidden">Cari…</span>
+            <span className="hidden truncate sm:inline">Cari halaman</span>
+            <span className="truncate sm:hidden">Cari</span>
             <Kbd className="ml-auto">⌘K</Kbd>
           </button>
         </div>

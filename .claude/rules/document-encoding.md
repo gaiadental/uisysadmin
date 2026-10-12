@@ -1,0 +1,99 @@
+
+# Document Encoding Standard
+
+> Loading: on demand only. Not imported by `CLAUDE.md`. Read this file explicitly when an agent's or command's *Mandatory References* section names it (Claude Code has no automatic glob-based rule injection, unlike Cursor's `alwaysApply: false` + `globs`). Scope in the original Cursor rule: `**/*.{md,mdc,txt}`. Ported from Cursor's `.cursor/rules/document-encoding.mdc`.
+
+Version: 1.1
+
+Last Updated: 2026-06-23
+
+Status: Active
+
+Full section index: `.claude/docs/rules-index.md` -> `document-encoding.md`.
+
+---
+
+# Purpose
+
+Keep all generated and edited text readable across editors and platforms. Prevent mojibake such as U+FFFD (replacement character), lone `?`, or `???` from Windows-1252 or copy-paste corruption.
+
+Applies to: `.claude/` governance files, `output/` artifacts, README files, and any other `*.md`, `*.md`, or `*.txt` content.
+
+---
+
+# Scope
+
+This rule applies to all markdown and text artifacts **except** when editing `document-encoding.md` itself.
+
+When editing `document-encoding.md`:
+
+- Do **not** run the pre-save checklist against this file.
+- Do **not** rewrite illustrative forbidden characters in `# Examples`, `# Forbidden in committed text`, or the "Do not use" list under `# Typography`.
+- Those sections intentionally show bad patterns for documentation only.
+
+---
+
+# File Encoding
+
+- Save every file as **UTF-8** (no BOM preferred).
+- Do not re-save UTF-8 files as Windows-1252, Latin-1, or other legacy encodings.
+- After paste from Word, Outlook, PDF, or web, replace smart punctuation before saving.
+
+---
+
+# Typography (use these exactly)
+
+| Use case | Character | Example |
+|----------|-----------|---------|
+| Clause or label separator | Em dash `—` (U+2014) | `Checkpoint A — Architecture` |
+| Numeric range | En dash `–` (U+2013) | `100–1,000 TPS` |
+| Cross-reference / pointer | ASCII `->` | `` `artifact-standards.md` -> **Master TODO** `` |
+| Hyphen in identifiers | ASCII `-` | `file-provenance-register`, `TODO-001` |
+
+Do not use:
+
+- Unicode arrow `→` for cross-references (use ASCII `->` instead).
+- Ambiguous `-` where an em dash or en dash is intended.
+- Smart/ curly quotes (`“` `”` `‘` `’`) — use straight ASCII `"` and `'`.
+
+---
+
+# Forbidden in committed text
+
+- Replacement character U+FFFD
+- Lone `?` or `???` where punctuation was corrupted
+- C1 control characters (U+0080–U+009F) from mis-decoded Windows-1252 bytes
+
+If any appear while editing, fix them before marking the task complete.
+
+---
+
+# Pre-save checklist
+
+Before finishing edits to markdown or governance text:
+
+1. Search the file for U+FFFD, `???`, and suspicious `?` between words (does not apply when editing `document-encoding.md`; see **Scope**).
+2. Confirm numeric ranges use en dash `–`, not hyphen or corrupted bytes.
+3. Confirm section titles and list glosses use em dash `—` where sibling docs do.
+4. Confirm cross-references use ASCII `->`, matching `agent-governance.md` and `CHANGELOG.md`.
+5. Save as UTF-8.
+
+---
+
+# Examples
+
+Bad:
+
+```text
+all agents U+FFFD no assumptions
+100U+FFFD1,000 TPS
+See artifact-standards.md → Master TODO
+```
+
+Good:
+
+```text
+all agents — no assumptions
+100–1,000 TPS
+See artifact-standards.md -> Master TODO
+```

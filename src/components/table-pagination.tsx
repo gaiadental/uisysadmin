@@ -7,10 +7,23 @@ import {
 
 import { cn } from "@/lib/utils"
 import { IconButton } from "@/components/icon-button"
-import type { Pagination } from "@/hooks/use-pagination"
 
-type TablePaginationProps<T> = {
-  pagination: Pagination<T>
+/**
+ * What the bar reads. Both the client hook (`usePagination`) and a server page
+ * (D5.4) provide it, so one bar serves both. `from` and `to` are 1-based row
+ * indexes, 0 when there are no rows.
+ */
+export type PaginationView = {
+  page: number
+  setPage: (page: number) => void
+  pageCount: number
+  from: number
+  to: number
+  total: number
+}
+
+type TablePaginationProps = {
+  pagination: PaginationView
   /** Sembunyikan bila hanya satu halaman (default: true). */
   hideWhenSingle?: boolean
   className?: string
@@ -19,17 +32,18 @@ type TablePaginationProps<T> = {
 }
 
 /** Bar paginasi untuk diletakkan di dalam Card, setelah <Table>. */
-export function TablePagination<T>({
+export function TablePagination({
   pagination,
   hideWhenSingle = true,
   className,
   unit = "baris",
-}: TablePaginationProps<T>) {
+}: TablePaginationProps) {
   const { page, setPage, pageCount, from, to, total } = pagination
   if (hideWhenSingle && pageCount <= 1) return null
 
   return (
-    <div
+    <nav
+      aria-label={`Paginasi ${unit}`}
       className={cn(
         "flex items-center justify-between gap-2 border-t border-border bg-muted/40 px-3 py-2",
         className
@@ -67,6 +81,6 @@ export function TablePagination<T>({
           onClick={() => setPage(pageCount)}
         />
       </div>
-    </div>
+    </nav>
   )
 }
