@@ -73,3 +73,7 @@ FE-OQ-36 (domain names, ops) and FE-OQ-37 (routing library), both non-blocking. 
 ## Gate Cleared (2026-10-12)
 
 Approved by the user, 2026-10-12: ARCH-FE-001 v1.0.4 (Katalog > Permission read-only) and TODO-021, with the added acceptance that `key`, `category`, `module`, `active` and `customerPermitted` are read-only, re-fetched from the server before the PATCH and sent unchanged, with tests. ARCH-FE-001 reads Approved; master-todo TODO-021 reads Not Started (approved). `/build TODO-021` may start. Platform side: SP-BG-13 extended in the platform `clarifications.md` (not committed there).
+
+## Checkpoint C — TODO-021 (2026-10-12)
+
+TODO-021 Completed in `master-todo.md` and `progress-tracker.md` (20 of 21; TODO-018 deferred). Unit Test Report `execution_overall: PASS` (909 passed in 75 files). `file-provenance-register.md` FP-230 to FP-237. User checked the page in the browser and ordered the commit and `/validate` ("sudah dicek di browser, commit TODO-021"); commit `34ab93c`. Checkpoint D (`/validate TODO-021`) started.
