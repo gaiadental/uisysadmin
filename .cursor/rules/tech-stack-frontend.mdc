@@ -1,0 +1,972 @@
+---
+description: Approved frontend technologies and implementation guidelines
+globs: **/*.{ts,tsx,js,jsx,vue}
+alwaysApply: false
+---
+
+# Frontend Technology Standards
+
+Version: 1.4
+
+Last Updated: 2026-06-26
+
+Status: Active
+
+---
+
+# Purpose
+
+This document defines approved frontend technologies, architectural patterns, implementation standards, and development guidelines.
+
+This document governs:
+
+* architect_frontend
+* developer_frontend
+* code_reviewer
+* debugger
+* unit_test_writer
+
+All frontend recommendations must comply with this standard unless an approved ADR explicitly overrides it.
+
+Full section index: `.cursor/rules-index.md` -> `tech-stack-frontend.mdc`.
+
+---
+
+# Technology Selection Policy
+
+## Preferred Technology Rule
+
+Preferred technologies should be used whenever possible.
+
+Alternative technologies may be proposed only when:
+
+* Required by business requirements
+* Required by client constraints
+* Required by integration constraints
+* Justified through ADR
+
+---
+
+## Escalation Rule
+
+If a project requires technologies outside this standard:
+
+Status:
+Pending Approval
+
+Approval required from:
+
+* architect_frontend
+* solution_architect
+
+---
+
+# Enterprise Capability Baseline
+
+Every enterprise frontend application must satisfy capabilities by tier. **Preferred** implementations (including approved versions) are the default; alternatives require ADR per Technology Selection Policy.
+
+## Capability Matrix
+
+| Capability | Tier | Preferred | When required |
+|------------|------|-----------|---------------|
+| Language | Mandatory | TypeScript 5.7.x (strict mode) | All applications |
+| Framework | Mandatory | React 19.0.0 | All applications |
+| App framework | Mandatory | Next.js 15.x (App Router, Turbopack) | Default for web applications |
+| Package manager | Mandatory | Bun (bun.lock) | All applications |
+| Build dev server | Mandatory | Turbopack (`next dev --turbopack`) | Local development |
+| Architecture | Mandatory | Feature-based structure | All non-trivial applications |
+| Styling | Mandatory | Tailwind CSS 3.4.x + cn() utility | All styling |
+| UI components | Mandatory | shadcn/ui (Radix UI + Tailwind) | Base component library |
+| Server state | Mandatory | TanStack Query 5.x | All API-backed features |
+| Form validation | Mandatory | React Hook Form 7.x + Zod 3.x | All forms with user input |
+| API integration | Mandatory | Axios (interceptors via approved API client) | All data access |
+| Loading / error UX | Mandatory | Explicit loading and error states | All async operations |
+| Authentication | Mandatory | NextAuth (Auth.js) 5.x beta (OIDC / OAuth2) | All protected applications |
+| Authorization UX | Mandatory | UI guards (backend enforces security) | Role-gated features |
+| Unit / component tests | Mandatory | Vitest or Jest 29.x + React Testing Library 16.x | All features |
+| API mocking (tests) | Mandatory | MSW 2.x | All API integration tests |
+| Accessibility | Mandatory | WCAG 2.1 Level AA considerations | All user-facing UI |
+| Security headers | Mandatory | CSP coordinated with `security-architect` | All production deployments |
+| Logging | Mandatory | Client error logging (no secrets) | All production applications |
+| Performance awareness | Mandatory | Code splitting, lazy loading, next/image | Applications above trivial size |
+| Global state | Conditional | Zustand, Redux Toolkit, or React Context | Shared state across features |
+| URL state | Conditional | nuqs 2.x | Query param synchronization |
+| E2E testing | Conditional | Playwright (latest stable) | Critical user journeys |
+| Internationalization | Conditional | i18n library + translation strategy | Multi-language requirements |
+| Bundle budget | Conditional | Defined max bundle size per route/chunk | Performance-sensitive applications |
+| Alternative framework | Optional / ADR | Vue, Angular, Svelte | Justified through ADR |
+| Alternative app framework | Optional / ADR | Vite, Remix | Justified through ADR |
+| Alternative package manager | Optional / ADR | npm, pnpm, yarn | Justified through ADR |
+| Alternative E2E | Optional / ADR | Cypress | Justified through ADR |
+
+---
+
+# Frontend Architecture Standard
+
+## Preferred Architecture
+
+Feature-Based Architecture
+
+Example:
+
+```text
+src/
+├── app/                    # Next.js App Router
+│   ├── (public)/          # Route group: public pages
+│   ├── (private)/         # Route group: authenticated pages
+│   ├── api/               # API routes
+│   └── layout.tsx         # Root layout
+│
+├── components/
+│   ├── ui/                # shadcn/ui base components
+│   ├── custom/            # Reusable custom components
+│   ├── dynamic/           # Configuration-driven components
+│   │   ├── dynamic-form/
+│   │   ├── dynamic-table/
+│   │   ├── dynamic-filter/
+│   │   └── dynamic-view/
+│   ├── layout/            # Layout components
+│   └── providers/         # Context providers
+│
+├── features/              # Feature-based modules
+│   ├── auth/
+│   │   ├── components/
+│   │   ├── hooks/
+│   │   ├── services/
+│   │   └── types/
+│   └── [feature-name]/
+│
+├── hooks/                 # Shared custom hooks
+├── lib/                   # Core libraries
+│   └── api/               # API architecture
+│       ├── modules/       # API modules
+│       ├── clients/       # Client factories
+│       └── registry/      # Registry pattern
+├── styles/                # Global styles
+├── providers/             # App-level React Context providers
+├── utils/                 # Utility functions
+└── constants/             # Constants
+
+types/                     # Global TypeScript types
+public/                    # Static assets
+tests/
+├── unit/
+├── integration/
+└── e2e/
+```
+
+Reason:
+
+* Scalable
+* Maintainable
+* Clear ownership
+* Reduced coupling
+* Supports configuration-driven dynamic components
+
+---
+
+## Avoid
+
+Layer-based structures that become difficult to scale.
+
+Example:
+
+```text
+components/
+pages/
+services/
+utils/
+```
+
+for large applications.
+
+---
+
+# Framework Standard
+
+## Preferred
+
+React
+
+Reason:
+
+* Organization standard
+* Mature ecosystem
+* Large community support
+
+---
+
+## Preferred React Version
+
+Latest stable LTS-compatible version approved by organization standards.
+
+---
+
+## Allowed Alternatives
+
+Requires ADR:
+
+* Vue
+* Angular
+* Svelte
+
+---
+
+# Application Framework Standard
+
+## Preferred
+
+Next.js
+
+Reason:
+
+* Routing
+* SSR support
+* SEO support
+* Mature ecosystem
+
+---
+
+## Allowed Alternatives
+
+Requires ADR:
+
+* Vite
+* Remix
+
+---
+
+# Language Standard
+
+## Preferred
+
+TypeScript
+
+Reason:
+
+* Type safety
+* Better maintainability
+* Improved developer experience
+
+---
+
+## Prohibited
+
+Large-scale applications written in plain JavaScript without approved justification.
+
+---
+
+# UI Component Standard
+
+## Preferred Approach
+
+Reusable component architecture.
+
+Components should be:
+
+* Small
+* Focused
+* Reusable
+* Testable
+
+---
+
+## Component Categories
+
+### Shared Components
+
+Reusable across features.
+
+Examples:
+
+```text
+Button
+Modal
+Table
+Input
+```
+
+---
+
+### Feature Components
+
+Specific to a business domain.
+
+Examples:
+
+```text
+CustomerForm
+AccountSearch
+TransactionHistory
+```
+
+---
+
+# Design System Standard
+
+## Preferred
+
+Organization-approved design system.
+
+Examples:
+
+* Material UI
+* Ant Design
+* Custom Design System
+
+Project must define which design system is adopted.
+
+---
+
+## Rule
+
+A single design system should be used.
+
+Mixing multiple component libraries is discouraged.
+
+---
+
+# Styling Standard
+
+## Preferred
+
+Component-scoped styling.
+
+Examples:
+
+* CSS Modules
+* Tailwind CSS
+* Styled Components
+
+---
+
+## Avoid
+
+Large global CSS files.
+
+---
+
+# State Management Standard
+
+## Principle
+
+State should remain as local as possible.
+
+Do not introduce global state unnecessarily.
+
+---
+
+## Preferred Order
+
+### Local Component State
+
+Use when possible.
+
+### Feature State
+
+Use when required.
+
+### Global State
+
+Use only when shared across multiple features.
+
+---
+
+## Preferred Global State
+
+Requires project decision.
+
+Examples:
+
+* Redux Toolkit
+* Zustand
+* Context API
+
+Selection must be documented.
+
+---
+
+# Server State Standard
+
+## Preferred
+
+TanStack Query
+
+Reason:
+
+* Caching
+* Synchronization
+* Error handling
+* Retry mechanisms
+
+---
+
+## Rule
+
+Server state and UI state must be managed separately.
+
+---
+
+# Routing Standard
+
+## Preferred
+
+Framework-native routing.
+
+Examples:
+
+* Next.js App Router
+
+---
+
+## Requirements
+
+Routing must support:
+
+* Authentication guards
+* Authorization guards
+* Error pages
+* Not Found pages
+
+---
+
+# API Integration Standard
+
+## Principle
+
+Frontend must not directly access databases.
+
+All data access must occur through approved APIs.
+
+---
+
+## Requirements
+
+Must support:
+
+* Loading states
+* Error states
+* Retry handling
+* Timeout handling
+
+---
+
+## Error Handling
+
+All API errors must be standardized.
+
+Users must receive meaningful error messages.
+
+Sensitive backend details must not be exposed.
+
+---
+
+# Authentication Standard
+
+## Preferred
+
+OIDC / OAuth2 compatible flows.
+
+---
+
+## Requirements
+
+Authentication implementation must comply with:
+
+* security_architect guidance
+* security standards
+
+---
+
+## Prohibited
+
+Storage of sensitive credentials in frontend code.
+
+---
+
+# Authorization Standard
+
+Authorization must be enforced by backend systems.
+
+Frontend authorization is for user experience only.
+
+Frontend authorization must never be treated as a security boundary.
+
+---
+
+# Performance Standard
+
+## Mandatory
+
+Applications must consider:
+
+* Lazy loading for routes and heavy components
+* Code splitting at route or feature boundaries
+* Image optimization (appropriate formats and sizing)
+* Bundle size awareness — avoid importing entire libraries when tree-shakeable alternatives exist
+
+---
+
+## Conditional
+
+When performance requirements or bundle size risk exists, must define:
+
+* Bundle budget targets (e.g. max initial JS per route)
+* Measurement approach (build analyzer, Lighthouse, or CI gate)
+
+---
+
+## Rule
+
+Optimization must be justified by measurable impact.
+
+Avoid premature optimization.
+
+---
+
+# Accessibility Standard
+
+## Mandatory
+
+Applications must support accessibility requirements aligned with **WCAG 2.1 Level AA** considerations.
+
+Minimum requirements:
+
+* Keyboard navigation for all interactive elements
+* Visible focus indicators
+* Form labels associated with inputs
+* Semantic HTML (headings, landmarks, buttons vs. divs)
+* Sufficient color contrast (per design system)
+* Accessible error messages and validation feedback
+* Focus management for modals and dynamic content
+
+---
+
+## Conditional
+
+When required by project or regulation:
+
+* Screen reader testing
+* Automated a11y checks in CI (e.g. axe-core)
+
+---
+
+## Prohibited
+
+* Interactive controls without keyboard access
+* Icon-only actions without accessible names
+* Relying on color alone to convey meaning
+
+---
+
+# Security Standard (Frontend)
+
+## Content Security Policy
+
+CSP must be defined in coordination with `security-architect` for production deployments.
+
+Must consider:
+
+* Script sources
+* Style sources
+* Connect sources (API origins)
+* Frame ancestors
+
+---
+
+## Browser Storage
+
+Sensitive data must not be stored in `localStorage` or `sessionStorage` without explicit justification and `security-architect` approval.
+
+Preferred:
+
+* HttpOnly cookies for session tokens (when applicable)
+* In-memory storage for short-lived tokens
+
+---
+
+## Cross-Site Risks
+
+Applications must protect against:
+
+* XSS (output encoding, CSP, safe DOM APIs)
+* CSRF (token or SameSite cookie strategy per backend contract)
+* Clickjacking (frame options or CSP `frame-ancestors`)
+
+---
+
+# Internationalization Standard
+
+If multi-language support is required:
+
+Must define:
+
+* Supported languages
+* Translation strategy
+* Localization strategy
+
+If requirements are unclear:
+
+Status:
+Pending Clarification
+
+---
+
+# Logging Standard
+
+Frontend logging should capture:
+
+* Unexpected errors
+* Critical failures
+* User-impacting issues
+
+---
+
+## Prohibited
+
+Logging:
+
+* Passwords
+* Tokens
+* Sensitive personal data
+* Secret values
+
+---
+
+# API Client Standard
+
+## Preferred
+
+Axios with request and response interceptors.
+
+```typescript
+export function createApiClient(config: ApiClientConfig) {
+  const client = axios.create({
+    baseURL: config.apiBaseUrl,
+    timeout: 30000,
+    headers: { 'Content-Type': 'application/json' }
+  });
+
+  client.interceptors.request.use((config) => {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+    return config;
+  });
+
+  client.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      if (error.response?.status === 401) onExpired?.();
+      return Promise.reject(error);
+    }
+  );
+
+  return client;
+}
+```
+
+## Requirements
+
+- All API calls must go through the approved API client
+- Request interceptor must attach the authorization header
+- Response interceptor must handle 401 (token expiration)
+- Timeout must be set (default 30000ms)
+- All responses and errors must be typed
+
+---
+
+# Form Validation Standard
+
+## Preferred
+
+React Hook Form with Zod resolver.
+
+```typescript
+const schema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+});
+
+type FormData = z.infer<typeof schema>;
+
+const form = useForm<FormData>({
+  resolver: zodResolver(schema),
+  defaultValues: { email: '', password: '' },
+});
+```
+
+## Requirements
+
+- All user input must be validated with Zod schemas
+- Schema types must be inferred from Zod (`z.infer<typeof schema>`)
+- Avoid `any` types in form values
+- Error messages must be user-friendly and accessible
+
+---
+
+# Package Manager Standard
+
+## Preferred
+
+Bun
+
+```bash
+bun dev                    # Start dev server with Turbopack
+bun build                  # Production build
+bun start                  # Start production server
+bun lint                   # Run ESLint
+bun type-check             # Run TypeScript check
+bun test                   # Run tests
+bun add [package]          # Add dependency
+bun add -d [package]       # Add dev dependency
+```
+
+Lockfile: `bun.lock`
+
+## Allowed Alternative
+
+npm, pnpm, or yarn — requires ADR justification when deviating from Bun.
+
+---
+
+# Next.js Configuration Standard
+
+Every Next.js project must configure security headers:
+
+```javascript
+const nextConfig = {
+  experimental: {
+    turbo: {},
+  },
+  images: {
+    remotePatterns: [ /* configured domains */ ]
+  },
+  headers: async () => [{
+    source: '/:path*',
+    headers: [
+      { key: 'X-Frame-Options', value: 'DENY' },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Strict-Transport-Security', value: 'max-age=63072000' }
+    ]
+  }]
+};
+```
+
+Build output must be `standalone` for containerized deployments unless architecture specifies otherwise.
+
+---
+
+# TypeScript Configuration Standard
+
+Every project must enable strict TypeScript:
+
+```json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  }
+}
+```
+
+Path aliases must be configured:
+
+```json
+{
+  "paths": {
+    "@/*": ["./src/*"]
+  }
+}
+```
+
+Prohibited:
+
+- `any` type without explicit justification
+- Disabling strict mode
+- Importing with implicit `any`
+
+---
+
+# Architectural Patterns Standard
+
+Frontend projects must select and document appropriate architectural patterns. Pattern selection requires justification in the frontend architecture document.
+
+## Plugin / Registry Pattern
+
+Use when:
+
+- Multiple feature modules can be independently developed and registered
+- Multi-tenant applications with per-client feature sets
+- Features must be hot-swappable or toggleable
+
+Requirements:
+
+- Define a `PluginRegistry` with `register`, `createAll`, and `unregister`
+- Each plugin implements a documented factory contract
+- Plugins self-register on import
+- Plugin initialization errors must not crash other plugins
+- Type augmentation must be implemented for type-safe access
+
+## Strategy Pattern
+
+Use when:
+
+- Multiple algorithms or behaviors exist for the same operation
+- Runtime conditions (user role, feature flag, client tier) determine behavior
+- Algorithms must be independently testable
+
+Requirements:
+
+- Define explicit strategy interface contracts
+- Implement a hook-based or context-based strategy selector
+- Each concrete strategy must be testable in isolation
+- Selection logic must reference the relevant ADR
+
+## Configuration-Driven Architecture
+
+Use when:
+
+- Forms, tables, or views share rendering logic but differ by use case
+- Multi-client or multi-tenant UI with configurable behavior
+- Dynamic UI components driven by config objects
+
+Requirements:
+
+- Define `FieldConfig` and `FormConfig` type contracts (or equivalent)
+- Implement a field renderer registry using the Strategy Pattern
+- Implement conditional display logic (`showIf`) per the type contract
+- Validate config at runtime before rendering
+- Handle async option loading with explicit loading and error states
+
+## Composition Pattern
+
+Use when:
+
+- Building reusable layout systems
+- Complex UI assembled from focused sub-components
+- Context-driven parent–child communication is required
+
+Requirements:
+
+- Use compound components or render props for composition API
+- Define Context contracts for parent–child communication
+- Document composition constraints and ordering rules
+
+---
+
+# Testing Standard
+
+## Unit Testing
+
+Preferred:
+
+* Jest (29.x)
+* Vitest (latest)
+
+Project must select one.
+
+---
+
+## Component Testing
+
+Preferred:
+
+* React Testing Library
+
+---
+
+## End-to-End Testing
+
+Preferred:
+
+* Playwright
+
+Allowed Alternative:
+
+* Cypress
+
+Requires justification.
+
+---
+
+# Documentation Requirements
+
+Frontend applications must document:
+
+* Architecture
+* Routing
+* State management
+* API integration patterns
+* Build instructions
+
+---
+
+# Architecture Compliance Checklist
+
+Before approval:
+
+* Enterprise capability baseline satisfied (mandatory tier; versions per Capability Matrix)
+* TypeScript strict mode enabled
+* React 19 + Next.js 15 App Router used (or ADR justifying alternative)
+* shadcn/ui selected as base component library (or ADR justifying alternative)
+* State management defined (local → feature → global → server state hierarchy)
+* TanStack Query v5 used for server state
+* React Hook Form + Zod used for forms
+* Axios with interceptors used as API client
+* Bun selected as package manager (or ADR justifying alternative)
+* Routing strategy defined with auth guards
+* Loading and error states defined for all async operations
+* Security requirements addressed (NextAuth, CSP, browser storage)
+* Accessibility requirements addressed (WCAG 2.1 AA considerations)
+* Performance and bundle strategy defined (lazy loading, code splitting, next/image)
+* Architectural patterns selected and justified (Plugin/Registry, Strategy, Config-Driven, Composition — as applicable)
+* Testing strategy defined (Jest or Vitest + RTL, Playwright for E2E)
+* Documentation requirements satisfied
+
+If any item fails:
+
+Status:
+Pending Approval
+
+---
+
+# Escalation Triggers
+
+Escalate when:
+
+* Non-standard framework proposed
+* Non-standard state management proposed
+* Non-standard authentication approach proposed
+* Multiple design systems proposed
+* Accessibility requirements are unclear
+* Localization requirements are unclear
+* Package manager deviates from Bun without ADR
+* React or Next.js version deviates from approved versions without ADR
+* Architectural pattern selection is unclear or contested
+* Configuration-driven component contract is undefined
+* Plugin/Registry or Strategy pattern contracts are missing
+
+---
+
+# Final Rule
+
+Frontend technology choices must be:
+
+* Requirement-driven
+* Justified
+* Traceable
+* Documented
+
+Frontend technology choices must never be based solely on:
+
+* Personal preference
+* Familiarity
+* Popularity
+* Trends

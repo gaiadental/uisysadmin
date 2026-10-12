@@ -1,81 +1,40 @@
-import { IconCheck } from "@tabler/icons-react"
-
 import { cn } from "@/lib/utils"
 
 export type WizardStep = {
   id: string
   title: string
-  /** Enum teknis singkat untuk ditampilkan font-mono. */
-  key: string
 }
 
 type WizardStepsProps = {
   steps: WizardStep[]
   /** Indeks langkah aktif (0-based). */
   current: number
-  /** Loncat ke langkah tertentu (hanya langkah yang sudah dilewati). */
-  onStepClick?: (index: number) => void
+  className?: string
 }
 
-export function WizardSteps({ steps, current, onStepClick }: WizardStepsProps) {
+/** "Langkah n/N" with a thin progress bar. The step title is the heading under it. */
+export function WizardSteps({ steps, current, className }: WizardStepsProps) {
+  const total = steps.length
+  const position = current + 1
   return (
-    <ol className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-0">
-      {steps.map((step, i) => {
-        const state =
-          i < current ? "done" : i === current ? "active" : "upcoming"
-        const clickable = i < current && !!onStepClick
-        return (
-          <li key={step.id} className="flex flex-1 items-center gap-3">
-            <button
-              type="button"
-              disabled={!clickable}
-              onClick={() => clickable && onStepClick?.(i)}
-              className={cn(
-                "flex items-center gap-2.5 rounded-md px-1 py-1 text-left transition-colors",
-                clickable && "hover:opacity-80"
-              )}
-            >
-              <span
-                className={cn(
-                  "flex size-6 shrink-0 items-center justify-center rounded-full border font-mono text-xs tabular-nums",
-                  state === "done" &&
-                    "border-primary bg-primary text-primary-foreground",
-                  state === "active" && "border-primary text-primary",
-                  state === "upcoming" &&
-                    "border-border text-muted-foreground"
-                )}
-              >
-                {state === "done" ? (
-                  <IconCheck className="size-3.5" />
-                ) : (
-                  i + 1
-                )}
-              </span>
-              <span className="flex flex-col leading-tight">
-                <span
-                  className={cn(
-                    "text-sm font-medium",
-                    state === "upcoming" && "text-muted-foreground"
-                  )}
-                >
-                  {step.title}
-                </span>
-                <code className="font-mono text-[0.7rem] text-muted-foreground">
-                  {step.key}
-                </code>
-              </span>
-            </button>
-            {i < steps.length - 1 ? (
-              <span
-                className={cn(
-                  "hidden h-px flex-1 sm:block",
-                  i < current ? "bg-primary" : "bg-border"
-                )}
-              />
-            ) : null}
-          </li>
-        )
-      })}
-    </ol>
+    <div className={cn("flex flex-col gap-2", className)}>
+      <p className="text-sm text-muted-foreground">
+        Langkah {position}/{total}
+        <span className="sr-only">: {steps[current]?.title}</span>
+      </p>
+      <div
+        role="progressbar"
+        aria-label="Kemajuan langkah"
+        aria-valuemin={1}
+        aria-valuemax={total}
+        aria-valuenow={position}
+        className="h-1.5 overflow-hidden rounded-full bg-muted"
+      >
+        <div
+          className="h-full rounded-full bg-primary transition-[width] duration-300 motion-reduce:transition-none"
+          style={{ width: `${(position / total) * 100}%` }}
+        />
+      </div>
+    </div>
   )
 }

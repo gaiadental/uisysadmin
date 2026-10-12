@@ -1,0 +1,495 @@
+---
+description: Mandatory governance rules for all agents — no assumptions, clarification, escalation, artifacts, traceability
+alwaysApply: true
+---
+
+# Agent Governance Standard
+
+Version: 1.3
+
+Last Updated: 2026-06-23
+
+Status: Active
+
+---
+
+# Purpose
+
+This document defines mandatory rules that apply to all agents.
+
+Every agent must load and comply with this document before executing any task.
+
+These rules override any agent-specific behavior.
+
+Full section index: `.cursor/rules-index.md` -> `agent-governance.mdc`.
+
+Text encoding and typography: `document-encoding.mdc`.
+
+---
+
+# Core Principles
+
+## Source of Truth
+
+Agents must use artifacts as the source of truth.
+
+Agents must not rely on conversation history as the authoritative source.
+
+### Artifact Read Order
+
+Before any stage work, every agent must read artifacts in this order:
+
+1. `output/project-profile.md` — project provenance and enforcement posture (all projects)
+2. `output/plans/file-provenance-register.md` — when it exists
+3. `output/plans/tech-debt-register.md` — when `enforcement_mode: advisory` in the project profile
+4. Other artifacts per the priority order below
+
+If `project-profile.md` is absent and the user is starting greenfield `/design`, the Orchestrator bootstraps it first (see `agent-orchestration.mdc`).
+
+### Priority Order (conflict resolution)
+
+When artifacts conflict on design or delivery decisions, higher-priority sources win:
+
+1. Approved ADRs
+2. Approved Architecture Documents
+3. Approved Plans
+4. Approved Requirements
+5. Conversation Context
+
+`project-profile.md` and the provenance registers govern **how strictly** standards apply and **which paths are in scope**; they do not override approved ADRs or architecture for design decisions.
+
+---
+
+## Single Ownership
+
+Every decision, artifact, and responsibility must have exactly one owner.
+
+Agents may:
+
+* Read artifacts
+* Reference artifacts
+* Propose changes
+
+Agents may NOT:
+
+* Modify artifacts owned by another agent
+* Override decisions owned by another agent
+
+---
+
+## Separation of Responsibilities
+
+Orchestrators coordinate.
+
+Architects design.
+
+Engineers implement.
+
+Governance validates.
+
+Agents must never perform responsibilities assigned to another role.
+
+---
+
+# No Assumptions Policy
+
+## Strict Rule
+
+Agents must never make assumptions.
+
+Agents must never invent:
+
+* Requirements
+* Constraints
+* Business rules
+* Technology preferences
+* Security requirements
+* Scalability requirements
+* Deployment requirements
+* User preferences
+* Missing configuration
+
+Unknown information must remain unknown.
+
+---
+
+## Forbidden Behavior
+
+Not allowed:
+
+"We will use Java 21."
+
+when the user has not approved Java 21.
+
+Not allowed:
+
+"The system will likely handle 10,000 TPS."
+
+when TPS requirements were not provided.
+
+Not allowed:
+
+"The customer probably wants a microservice architecture."
+
+when not explicitly stated.
+
+---
+
+# Clarification Policy
+
+## Mandatory Clarification
+
+Agents must stop and request clarification when information is:
+
+* Missing
+* Ambiguous
+* Contradictory
+* Open to interpretation
+
+The agent must not continue analysis until clarification is received.
+
+---
+
+## Clarification Format
+
+Every clarification request must contain:
+
+### Missing Information
+
+What information is missing.
+
+### Why It Is Required
+
+Why the information affects the outcome.
+
+### Impact
+
+What decisions cannot be made without it.
+
+### Suggested Options
+
+Suggested answers when appropriate.
+
+### User Decision Required
+
+Explicit request for clarification.
+
+Example:
+
+Missing Information:
+Expected transaction volume.
+
+Why It Is Required:
+Scalability architecture depends on transaction volume.
+
+Suggested Options:
+
+* Less than 100 TPS
+* 100–1,000 TPS
+* 1,000–10,000 TPS
+* More than 10,000 TPS
+
+Status:
+Pending Clarification
+
+---
+
+# Conflict Resolution Policy
+
+Agents must never resolve requirement conflicts independently.
+
+When a conflict is detected:
+
+1. Identify the conflict.
+2. Explain the impact.
+3. Request clarification.
+4. Stop further work.
+
+Example:
+
+Requirement A:
+System must operate fully offline.
+
+Requirement B:
+System must synchronize in real time.
+
+Result:
+
+Conflict Detected
+
+Clarification Required
+
+Status:
+Pending Clarification
+
+---
+
+# Escalation Policy
+
+Agents must escalate when:
+
+* Requirements are missing
+* Requirements are ambiguous
+* Requirements conflict
+* Ownership is unclear
+* Standards conflict
+* Decisions impact another domain
+* Approval is required from another owner
+
+Escalation must occur before proceeding.
+
+---
+
+# Decision Policy
+
+## Recommendations Allowed
+
+Agents may:
+
+* Analyze alternatives
+* Compare options
+* Present trade-offs
+* Rank alternatives
+
+Example:
+
+Option A: Java 17
+
+Pros:
+
+* Mature
+* Lower migration effort
+
+Cons:
+
+* Fewer modern features
+
+Option B: Java 21
+
+Pros:
+
+* Latest LTS
+* Virtual Threads
+
+Cons:
+
+* Requires newer runtime
+
+Recommendation:
+Java 21
+
+Decision Required:
+User Approval
+
+---
+
+## Decisions Not Allowed
+
+Agents must not finalize decisions unless:
+
+* Explicitly approved by the decision owner
+* Explicitly approved by the user
+
+---
+
+# Artifact Policy
+
+## Artifact First
+
+All work must be documented through artifacts.
+
+Conversation responses are temporary.
+
+Artifacts are permanent.
+
+---
+
+## Required Artifact Updates
+
+When creating architecture:
+
+Update:
+
+output/architecture/
+
+When creating decisions:
+
+Update:
+
+output/decisions/
+
+When creating plans:
+
+Update:
+
+output/plans/
+
+When creating reports:
+
+Update:
+
+output/reports/
+
+When creating documentation:
+
+Update:
+
+output/docs/
+
+---
+
+# Progress Tracking Policy
+
+All implementation work must be tracked.
+
+The following files are mandatory:
+
+output/plans/master-todo.md
+
+output/plans/progress-tracker.md
+
+---
+
+## TODO Format
+
+Every task must include the fields in the **Master TODO** template in `artifact-standards.mdc`, including:
+
+* Unique identifier, Description, Status, Owner, Dependencies, Priority
+* Related Requirement, Related ADR, Related Architecture
+* **File scope** — repo-relative paths or modules the TODO will create or modify; required for `/build` and `/validate` enforcement scope
+
+Canonical template: `artifact-standards.mdc` -> **Agent Artifact Index** -> **Master TODO** -> **TODO Template**. Do not duplicate the template in agent contracts or this file.
+
+---
+
+## Progress Status Values
+
+Allowed values:
+
+* Not Started
+* In Progress
+* Blocked
+* Completed
+* Cancelled
+
+No other status values are allowed.
+
+---
+
+# Open Questions Policy
+
+Every artifact must contain:
+
+## Open Questions
+
+All unresolved items must be listed.
+
+---
+
+## Completion Restriction
+
+Artifacts cannot be marked complete when:
+
+* Open questions exist
+* Conflicts exist
+* Missing information exists
+* Required approvals are missing
+
+Required status:
+
+Status: Pending Clarification
+
+---
+
+# Architecture Freeze Policy
+
+Approved decisions are immutable.
+
+Once an ADR is approved:
+
+* Engineers may not override it.
+* Reviewers may not override it.
+* QA may not override it.
+
+Changes require returning to the original decision owner.
+
+---
+
+# Approval Policy
+
+A recommendation is not approval.
+
+A proposal is not approval.
+
+A draft is not approval.
+
+Only explicit approval counts as approval.
+
+Approved artifacts must contain:
+
+Status: Approved
+
+---
+
+# Traceability Policy
+
+Every implementation artifact must reference:
+
+* Requirement ID
+* Architecture Document
+* ADR
+* Task ID
+
+Example:
+
+Requirement:
+REQ-001
+
+Architecture:
+ARCH-BE-001
+
+Decision:
+ADR-003
+
+Task:
+TODO-014
+
+---
+
+# Completion Policy
+
+An agent may only mark work complete when:
+
+* All required inputs exist
+* No assumptions were made
+* No conflicts remain
+* No open questions remain
+* Required approvals exist
+* Required artifacts are updated
+
+Otherwise:
+
+Status: Pending Clarification
+
+or
+
+Status: Pending Approval
+
+must be used.
+
+---
+
+# Mandatory Final Check
+
+Before completing any task, every agent must verify:
+
+* No assumptions made
+* No missing information
+* No conflicting requirements
+* Correct ownership respected
+* Artifacts updated
+* Open questions documented
+* Status accurately assigned
+* Text encoding complies with `document-encoding.mdc`
+
+If any check fails, the task must not be marked complete.

@@ -9,7 +9,7 @@
 /* ------------------------------------------------------------------ */
 /* Template redesign                                                   */
 /* Theme: Teal · Chart: Amber · Font: Inter · Display: Plus Jakarta    */
-/* Scale: xs · Radius: md · Scheme: light · Layout: full               */
+/* Scale: base · Radius: md · Scheme: light · Layout: full               */
 /* Sidebar: floating, expanded                                         */
 /* ------------------------------------------------------------------ */
 
@@ -67,7 +67,7 @@
   --radius: 0.5rem;
 
   /* neutrals — near-white with a faint cool (teal) cast */
-  --background: oklch(1 0 0);
+  --background: oklch(0.972 0.004 200);
   --foreground: oklch(0.21 0.02 220);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.21 0.02 220);
@@ -78,17 +78,17 @@
   --primary: oklch(0.556 0.107 187);
   --primary-foreground: oklch(0.985 0.01 190);
 
-  --secondary: oklch(0.968 0.008 200);
+  --secondary: oklch(0.945 0.008 200);
   --secondary-foreground: oklch(0.3 0.03 210);
   --muted: oklch(0.968 0.008 200);
-  --muted-foreground: oklch(0.52 0.02 215);
+  --muted-foreground: oklch(0.48 0.02 215);
   --accent: oklch(0.95 0.03 190);
   --accent-foreground: oklch(0.4 0.07 195);
 
   --destructive: oklch(0.577 0.245 27.325);
 
   --border: oklch(0.918 0.01 210);
-  --input: oklch(0.918 0.01 210);
+  --input: oklch(0.86 0.012 215);
   --ring: oklch(0.62 0.1 188);
 
   /* chart colors: amber ramp */
@@ -99,12 +99,12 @@
   --chart-5: oklch(0.52 0.095 45);
 
   /* sidebar — floating, tinted teal */
-  --sidebar: oklch(0.985 0.006 195);
+  --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.21 0.02 220);
   --sidebar-primary: oklch(0.556 0.107 187);
   --sidebar-primary-foreground: oklch(0.985 0.01 190);
-  --sidebar-accent: oklch(0.95 0.03 190);
-  --sidebar-accent-foreground: oklch(0.4 0.07 195);
+  --sidebar-accent: oklch(0.22 0.025 215);
+  --sidebar-accent-foreground: oklch(0.99 0.003 200);
   --sidebar-border: oklch(0.915 0.012 205);
   --sidebar-ring: oklch(0.62 0.1 188);
 }
@@ -152,9 +152,9 @@
 }
 
 @layer base {
-  /* scale: xs — shrink the rem base so spacing + type scale down uniformly */
+  /* 16px base. The old 90% made text-sm 12.6px and text-xs 10.8px, too small to read in tables and forms. */
   :root {
-    font-size: 90%;
+    font-size: 100%;
   }
 
   * {

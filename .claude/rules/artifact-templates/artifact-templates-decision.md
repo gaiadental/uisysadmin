@@ -1,0 +1,299 @@
+
+# Artifact Templates — Decision
+
+> Loading: on demand only, per checkpoint. Read this file when the active command's or agent's *Mandatory References* / *Template bundles* section names it. Artifact templates for Checkpoint B — ADR, Implementation Plan, Roadmap, Progress Tracker, Clarifications Register Ported from Cursor's `.cursor/rules/artifact-templates/artifact-templates-decision.mdc`.
+
+Version: 1.0
+
+Last Updated: 2026-06-30
+
+Status: Active
+
+---
+
+# Purpose
+
+Artifact templates for Checkpoint **B** (`/decision`). Master TODO template remains in `artifact-standards.md` (core). General rules, metadata, and the Agent Artifact Index live in `artifact-standards.md` (core).
+
+Before writing any artifact in this file, also load `artifact-standards.md` (core) for general metadata rules, mandatory sections, and the Agent Artifact Index.
+
+---
+# Architecture Decision Records (ADR)
+
+Location:
+
+output/decisions/
+
+Owner:
+
+decision_manager
+
+---
+
+## File Naming
+
+```text
+ADR-001-java-21.md
+ADR-002-postgresql.md
+ADR-003-event-driven-architecture.md
+```
+
+---
+
+## Template
+
+```md
+ADR ID:
+Title:
+Owner:
+Status:
+Decision Date:
+
+## Context
+
+## Problem Statement
+
+## Options Considered
+
+### Option 1
+
+Pros:
+
+Cons:
+
+### Option 2
+
+Pros:
+
+Cons:
+
+## Decision
+
+## Justification
+
+## Consequences
+
+### Positive
+
+### Negative
+
+## Related Artifacts
+
+## Open Questions
+```
+
+---
+
+## ADR Identifier Format
+
+```text
+ADR-001
+ADR-002
+ADR-003
+```
+
+Sequential numbering only.
+
+---
+# Implementation Plan
+
+Location:
+
+output/plans/
+
+Owner:
+
+project_manager
+
+---
+
+## File Naming
+
+```text
+implementation-plan.md
+```
+
+---
+
+## Template
+
+```md
+Title:
+Owner:
+Status:
+Version:
+
+## Objectives
+
+## Scope
+
+## Assumptions
+
+Not Allowed
+
+Use:
+
+Clarifications Required
+
+## Dependencies
+
+## Phases
+
+### Phase 1
+
+Objectives:
+
+Deliverables:
+
+Dependencies:
+
+### Phase 2
+
+Objectives:
+
+Deliverables:
+
+Dependencies:
+
+## Risks
+
+## Open Questions
+```
+
+---
+
+# Roadmap
+
+Location:
+
+output/plans/
+
+Owner:
+
+project_manager
+
+---
+
+## Template
+
+```md
+Title:
+Owner:
+Status:
+
+## Milestones
+
+### Milestone 1
+
+Target:
+
+Deliverables:
+
+Dependencies:
+
+### Milestone 2
+
+Target:
+
+Deliverables:
+
+Dependencies:
+
+## Risks
+
+## Open Questions
+```
+
+---
+
+# Progress Tracker
+
+Location:
+
+output/plans/
+
+Owner:
+
+project_manager
+
+---
+
+## Template
+
+```md
+Title:
+Owner:
+Status:
+
+## Overall Progress
+
+Percentage:
+
+## Active Phase
+
+Current Phase:
+
+## Completed Tasks
+
+- TODO-001
+- TODO-002
+
+## In Progress
+
+- TODO-003
+
+## Blocked
+
+- TODO-004
+
+Reason:
+
+## Risks
+
+## Open Questions
+```
+
+---
+
+# Clarifications Register
+
+Location:
+
+output/clarifications.md
+
+Owner:
+
+orchestrator
+
+Purpose:
+
+A single roll-up index of the Open Questions tables from every artifact, so the user can see and answer all outstanding clarifications from one place. Each artifact still owns its own questions; this register only aggregates them and points back to the source. Checkpoint gates read this register: a checkpoint cannot clear while any `Blocking = Yes, Status = Open` row remains.
+
+---
+
+## Template
+
+```md
+Title: Clarifications Register
+Owner: orchestrator
+Status:
+Version:
+Last Updated:
+
+## Purpose
+
+Roll-up index of all open questions across artifacts.
+
+## Open Questions
+
+| ID | Source Artifact | Question | Owner | Blocking | Status | Answer / Default |
+|----|-----------------|----------|-------|----------|--------|------------------|
+| ARCH-SEC-001:OQ1 | ARCH-SEC-001 | ... | security_architect | Yes | Open | — |
+| ARCH-BE-001:OQ3 | ARCH-BE-001 | ... | architect_backend | No | Deferred | Documented default: ... |
+
+## Blocking Summary
+
+Blocking open questions: <count>
+```
+
+---
