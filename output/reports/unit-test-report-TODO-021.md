@@ -3,8 +3,8 @@ id: UNIT-TEST-REPORT-TODO-021
 title: Unit Test Report — TODO-021 Katalog Permission read-only
 owner: unit_test_writer
 status: Pending Approval
-version: 1.0
-last_updated: 2026-10-12 14:21
+version: 1.1
+last_updated: 2026-10-12 14:33
 related_todo: TODO-021
 execution_overall: PASS
 source_requirements: [REQ-FE-035, REQ-FE-018, REQ-FE-036, REQ-FE-040, REQ-FE-048]
@@ -15,8 +15,8 @@ blocking_open_questions: 0
 Title: Unit Test Report — TODO-021 Katalog Permission read-only
 Owner: unit_test_writer
 Status: Pending Approval
-Version: 1.0
-Last Updated: 2026-10-12 14:21
+Version: 1.1
+Last Updated: 2026-10-12 14:33
 Source Requirements: REQ-FE-035, REQ-FE-018, REQ-FE-036, REQ-FE-040, REQ-FE-048
 Related Artifacts:
 - output/plans/master-todo.md (TODO-021)
@@ -26,7 +26,7 @@ Related Artifacts:
 ## At a Glance
 
 - Verifies Katalog > Permission is read-only with an edit of `name` and `description` only. Every acceptance criterion has a test; no gap found, so no test file was added by this run.
-- Full suite PASS: 75 files, 909 tests, 0 failed. tsc and eslint clean. No production code modified.
+- Full suite PASS: 75 files, 912 tests, 0 failed. tsc and eslint clean. No production code modified. Reworked for QA M1 (see Rework section); 3 tests added by the implementer, reviewed here, no further gap requiring a new test.
 - No blocking open questions.
 
 ## Purpose
@@ -51,20 +51,26 @@ Under test: `permission-list-page.tsx`, `permission-form-dialog.tsx`, `schema.ts
 | Exactly one PATCH with full body, key unchanged | `sends exactly one PATCH with the edited name and description` | PASS |
 | Invalidation per D12.1; none on failure | `edit invalidates master, tenant and role permission queries`, `a failed write invalidates nothing` | PASS |
 | Schema: name 1-100 trimmed, description optional, other fields dropped | `permissionEditSchema` describe (7 tests, schema.test.ts) | PASS |
+| Incomplete re-fetch (M1): no PATCH, error alert, dialog stays open, no toast | `refuses to save and sends no PATCH when the re-fetch lacks %s` (active, customerPermitted: 2 cases) | PASS |
+| Present flags sent unchanged (M1) | `sends active=false and customerPermitted=true unchanged when both are present` | PASS |
 | API `getMasterPermission` GET, 404, CONTRACT | `getMasterPermission (TODO-021)` describe (3 tests) | PASS |
 
 ## Amendment (2026-10-12)
 
 User-approved amendment to TODO-021: `createMasterPermission` and `deleteMasterPermission` were removed from `master-permissions.ts` together with their module tests (create and delete describe blocks and the create/delete cases in the additional-cases block; the update-only "drops keys outside the contract" case was kept). Total moved from 917 to 909 tests and TODO-021 files from 53 to 45. Re-run: tsc exit 0, eslint exit 0, vitest PASS. Test files and source were not edited by this run.
 
+## Rework (M1, 2026-10-12)
+
+QA finding M1: `permission-form-dialog.tsx` no longer defaults `active ?? true` / `customerPermitted ?? false`. When the re-fetched permission lacks either flag (non-boolean), the dialog shows 'Data permission dari server tidak lengkap. Perubahan tidak disimpan.' and sends no PATCH. Review M2: redundant `canUpdate` checks removed from `permission-list-page.tsx` (covered by existing :update/:view tests, still PASS). Tests added in `permission-list-page.test.tsx`: missing `active`, missing `customerPermitted`, and values sent unchanged (active=false, customerPermitted=true); the default GET handler in `beforeEach` and the order test now return both flags. Residual note: the guard uses `typeof !== "boolean"`, but tests exercise only absent keys, not explicit `null`; the same branch handles both, so no test was added. Re-run: tsc exit 0, eslint exit 0, vitest 912 passed (75 files); TODO-021 files 48 tests in 3 files. Total moved from 909 to 912 (+3).
+
 ## Execution Summary
 
 | Metric | Value |
 |--------|-------|
 | Command | npx tsc -p tsconfig.app.json --noEmit; npx eslint src; npx vitest run |
-| Run at | 2026-10-12 14:19 |
-| Total | 909 |
-| Passed | 909 |
+| Run at | 2026-10-12 14:32 |
+| Total | 912 |
+| Passed | 912 |
 | Failed | 0 |
 | Errors | 0 |
 | Skipped | 0 |
@@ -72,7 +78,7 @@ User-approved amendment to TODO-021: `createMasterPermission` and `deleteMasterP
 
 ## Execution Results
 
-909 tests passed (75 files). TODO-021 files: 45 tests in 3 files (page, schema, API module), all passed. tsc exit 0, eslint exit 0.
+912 tests passed (75 files). TODO-021 files: 48 tests in 3 files (page, schema, API module), all passed. tsc exit 0, eslint exit 0.
 
 ## Coverage
 
@@ -80,7 +86,7 @@ API module tests now cover list, get and update only. Every TODO-021 acceptance 
 
 ## Edge Cases
 
-Blank and whitespace name, 100-character boundary, empty description, re-fetch 500, PATCH 500 and 409, 404 and malformed GET body, list loading, empty, error and no-match states, pagination.
+Re-fetched permission missing `active` or `customerPermitted` (no PATCH, nothing guessed), flags false/true passed through unchanged, blank and whitespace name, 100-character boundary, empty description, re-fetch 500, PATCH 500 and 409, 404 and malformed GET body, list loading, empty, error and no-match states, pagination.
 
 ## Mocking Strategy
 

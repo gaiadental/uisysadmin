@@ -54,6 +54,18 @@ beforeEach(() => {
   authMock.permissions = ALL
   window.history.replaceState(null, "", "/master-permissions")
   vi.spyOn(console, "error").mockImplementation(() => undefined)
+  // The shared fixture has no flags; the save needs them from the server.
+  server.use(
+    http.get(`${API}/master-permissions/:id`, () =>
+      HttpResponse.json({
+        data: {
+          ...FIXTURE_MASTER_PERMISSION_BRANCHES,
+          active: true,
+          customerPermitted: false,
+        },
+      })
+    )
+  )
 })
 
 afterEach(() => {
@@ -266,12 +278,64 @@ describe("edit dialog (TODO-021)", () => {
     })
   })
 
+  it.each(["active", "customerPermitted"] as const)(
+    "refuses to save and sends no PATCH when the re-fetch lacks %s",
+    async (missing) => {
+      const seen = capturePatch()
+      const incomplete: Record<string, unknown> = {
+        ...FIXTURE_MASTER_PERMISSION_BRANCHES,
+        active: true,
+        customerPermitted: true,
+      }
+      delete incomplete[missing]
+      server.use(
+        http.get(`${API}/master-permissions/:id`, () =>
+          HttpResponse.json({ data: incomplete })
+        )
+      )
+      await openEdit()
+      fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
+      const alert = await screen.findByRole("alert")
+      expect(alert).toHaveTextContent("tidak lengkap")
+      expect(alert).toHaveTextContent("tidak disimpan")
+      expect(seen.count).toBe(0)
+      expect(screen.getByRole("dialog")).toBeInTheDocument()
+      expect(screen.getByRole("button", { name: "Simpan" })).toBeEnabled()
+      expect(toastMock.success).not.toHaveBeenCalled()
+    }
+  )
+
+  it("sends active=false and customerPermitted=true unchanged when both are present", async () => {
+    const seen = capturePatch()
+    server.use(
+      http.get(`${API}/master-permissions/:id`, () =>
+        HttpResponse.json({
+          data: {
+            ...FIXTURE_MASTER_PERMISSION_BRANCHES,
+            active: false,
+            customerPermitted: true,
+          },
+        })
+      )
+    )
+    await openEdit()
+    fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
+    await waitFor(() => expect(seen.count).toBe(1))
+    expect(seen.body).toMatchObject({ active: false, customerPermitted: true })
+  })
+
   it("re-fetches before the PATCH", async () => {
     const order: string[] = []
     server.use(
       http.get(`${API}/master-permissions/:id`, () => {
         order.push("GET")
-        return HttpResponse.json({ data: FIXTURE_MASTER_PERMISSION_BRANCHES })
+        return HttpResponse.json({
+          data: {
+            ...FIXTURE_MASTER_PERMISSION_BRANCHES,
+            active: true,
+            customerPermitted: false,
+          },
+        })
       }),
       http.patch(`${API}/master-permissions/:id`, () => {
         order.push("PATCH")
