@@ -1,6 +1,7 @@
 /**
  * "Sesi aktif" tab of the system user detail (REQ-FE-032; ARCH-FE-001 D4.10,
- * D12.1). The tab itself is shown only with `sessions:view`. "Force logout"
+ * D12.1). The tab is shown only with `sessions:view` and only for other
+ * accounts (the own account links to `/account/sessions`). "Force logout"
  * needs `sessions:revoke`, asks for confirmation, is hidden for the own
  * account, and invalidates `['admin','sessions', userId]`.
  */

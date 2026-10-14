@@ -1,7 +1,7 @@
 /**
- * The confirmed actions on a system user: suspend, deactivate, reactivate,
- * delete and reset password (REQ-FE-039; ARCH-FE-001 D6.4, D12.1). Suspend,
- * deactivate, delete and reset password ask first; reactivate does not. One
+ * The confirmed actions on a system user: suspend, deactivate, reactivate
+ * and reset password (REQ-FE-039, REQ-FE-054; ARCH-FE-001 D6.4, D12.1). Suspend,
+ * deactivate and reset password ask first; reactivate does not. One
  * action runs at a time, and the in-flight guard is a ref, so a double click
  * cannot send two requests (create-like sends are not idempotent, SP-BG-11).
  * Every success invalidates the system user keys through the D12.1 map.
@@ -15,17 +15,15 @@ import { useDialogs, type ConfirmRequest } from "@/components/dialogs/dialogs"
 import type { WriteFailure } from "@/features/tenants/create/write-failure"
 import {
   changeSystemUserStatus,
-  deleteSystemUser,
   resetSystemUserPassword,
 } from "@/lib/api/modules/system-users"
 import { applyInvalidation } from "@/lib/query/invalidation"
-import { queryKeys } from "@/lib/query/keys"
 import type { SystemUser } from "@/types/system-user"
 
 import { describeUserWriteFailure } from "./user-failure"
 
 export type UserActionKind =
-  "suspend" | "deactivate" | "reactivate" | "delete" | "resetPassword"
+  "suspend" | "deactivate" | "reactivate" | "resetPassword"
 
 export interface PendingAction {
   readonly userId: string
@@ -44,7 +42,7 @@ function confirmFor(
       return {
         title: `Tangguhkan akun ${user.loginId}?`,
         description:
-          "Akun tidak bisa masuk selama ditangguhkan. Akun bisa diaktifkan kembali.",
+          "Blokir sementara akun ini, misalnya saat cuti atau investigasi. Semua sesinya diakhiri. Bisa diaktifkan kembali.",
         confirmLabel: "Tangguhkan",
         tone: "destructive",
       }
@@ -52,21 +50,9 @@ function confirmFor(
       return {
         title: `Nonaktifkan akun ${user.loginId}?`,
         description:
-          "Akun tidak bisa masuk setelah dinonaktifkan. Akun bisa diaktifkan kembali.",
+          "Untuk anggota yang sudah tidak bertugas. Semua sesinya diakhiri. Bisa diaktifkan kembali bila diperlukan.",
         confirmLabel: "Nonaktifkan",
         tone: "destructive",
-      }
-    case "delete":
-      return {
-        title: `Hapus akun ${user.loginId}?`,
-        description: "Akun akan dihapus dari platform.",
-        impact: [
-          "Tindakan ini tidak bisa dibatalkan.",
-          "Untuk menahan akses sementara, gunakan Tangguhkan atau Nonaktifkan. Keduanya bisa diaktifkan kembali.",
-        ],
-        confirmLabel: "Hapus",
-        tone: "destructive",
-        permanent: true,
       }
     case "resetPassword":
       return {
@@ -81,11 +67,6 @@ function confirmFor(
   }
 }
 
-interface UseUserActionsOptions {
-  /** Called after a successful delete, with the deleted user. */
-  readonly onDeleted?: (user: SystemUser) => void
-}
-
 export interface UserActions {
   readonly run: (kind: UserActionKind, user: SystemUser) => Promise<void>
   readonly pending: PendingAction | null
@@ -93,10 +74,7 @@ export interface UserActions {
   readonly clearFailure: () => void
 }
 
-export function useUserActions(
-  options: UseUserActionsOptions = {}
-): UserActions {
-  const { onDeleted } = options
+export function useUserActions(): UserActions {
   const queryClient = useQueryClient()
   const { confirm } = useDialogs()
   const [pending, setPending] = useState<PendingAction | null>(null)
@@ -130,15 +108,6 @@ export function useUserActions(
             await resetSystemUserPassword(user.id)
             toast.success(RESET_PASSWORD_SUCCESS)
             break
-          case "delete":
-            await deleteSystemUser(user.id)
-            toast.success("Akun dihapus.")
-            // Leave the detail page first, then drop its query, so it never refetches (it would answer 404).
-            onDeleted?.(user)
-            queryClient.removeQueries({
-              queryKey: queryKeys.systemUsers.detail(user.id),
-            })
-            break
         }
         await applyInvalidation(queryClient, {
           kind: "systemUserWrite",
@@ -151,7 +120,7 @@ export function useUserActions(
         setPending(null)
       }
     },
-    [confirm, onDeleted, queryClient]
+    [confirm, queryClient]
   )
 
   const clearFailure = useCallback(() => setFailure(null), [])

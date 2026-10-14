@@ -3,9 +3,9 @@ id: OPEN-DECISIONS
 title: Open Decisions Register
 owner: decision_manager
 status: Approved
-version: 1.1
-last_updated: 2026-10-10
-related_artifacts: [ARCH-FE-001, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, CLARIFICATIONS, DECISION-INDEX]
+version: 1.3
+last_updated: 2026-10-14
+related_artifacts: [ARCH-FE-001, TODO-022, TODO-023, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, CLARIFICATIONS, DECISION-INDEX]
 blocking_open_questions: 0
 ---
 
@@ -15,20 +15,28 @@ Owner: decision_manager
 
 Status: Approved
 
-Approved: 2026-10-10 (user, Checkpoint B gate)
+Approved: v1.3, 2026-10-14 (user, Checkpoint B gate for TODO-023). Previously approved: v1.2, 2026-10-14 (user, Checkpoint B gate for TODO-022). Earlier: v1.1, 2026-10-10 (user, Checkpoint B gate).
 
-Version: 1.1
+Version: 1.3
 
-Last Updated: 2026-10-10
+Last Updated: 2026-10-14
+
+Change: 2026-10-14 v1.3 — Approved by the user at the Checkpoint B gate for TODO-023 (2026-10-14); DM-15 confirmed (ARCH-FE-001 v1.0.6 needs no ADR). Version stays 1.3; no content change.
+
+Change: 2026-10-14 v1.3 — TODO-023 / ARCH-FE-001 v1.0.6 assessed at /decision: no net-new ADR (see decision-index.md, section ADR Assessment for ARCH-FE-001 v1.0.6). Content changed, so status is Pending Approval until the user approves the Checkpoint B gate for TODO-023. Next ADR number stays ADR-008.
+
+Change: 2026-10-14 v1.2 — TODO-022 / ARCH-FE-001 v1.0.5 assessed at /decision: no net-new ADR (see decision-index.md, section ADR Assessment for ARCH-FE-001 v1.0.5). Next ADR number stays ADR-008.
+
+Change: 2026-10-14 v1.2 — Approved by the user at the Checkpoint B gate for TODO-022 (2026-10-14); DM-14 confirmed (ARCH-FE-001 v1.0.5 needs no ADR). Version stays 1.2; no content change.
 
 Source Requirements: RAG-FE-SP-001 ("[FE Requirement] system-principal-web v1.0")
 
-Related Artifacts: ARCH-FE-001 v1.0; ADR-001 to ADR-007; `output/clarifications.md`; `output/decisions/decision-index.md`
+Related Artifacts: ARCH-FE-001 v1.0, v1.0.5 and v1.0.6; TODO-022; TODO-023; ADR-001 to ADR-007; `output/clarifications.md`; `output/decisions/decision-index.md`
 
 ## At a Glance
 
-- Tracks every unresolved item for the SP web decisions: 24 ARCH-FE-001 rows (FE-OQ-14 to FE-OQ-37), of which FE-OQ-37 is answered on 2026-10-10 and 23 remain Open; and 13 items found at `/decision` (DM-01 to DM-13), of which 5 are answered at approval, 2 are Deferred and 6 are Open.
-- Blocking = Yes: 0. Every item is non-blocking. Items for the user: DM-02 (security review follow-up for ADR-004, Open, Blocking No). DM-01 is answered (user approval as the sole approver).
+- Tracks every unresolved item for the SP web decisions: 24 ARCH-FE-001 rows (FE-OQ-14 to FE-OQ-37), of which FE-OQ-37 is answered on 2026-10-10 and 23 remain Open; and 15 items found at `/decision` (DM-01 to DM-15), of which 7 are answered at approval, 2 are Deferred and 6 are Open. Since v1.0.5 (2026-10-14) FE-OQ-39 and FE-OQ-40 are Answered in ARCH-FE-001, and since v1.0.6 (2026-10-14) FE-OQ-41 and FE-OQ-42 are Answered (see the added sections below).
+- Blocking = Yes: 0. Every item is non-blocking. Item for the user: DM-02 (security review follow-up for ADR-004, Open, Blocking No). DM-15 (no ADR for ARCH-FE-001 v1.0.6) is Answered/Closed, confirmed by the user on 2026-10-14. DM-14 (no ADR for ARCH-FE-001 v1.0.5) is Answered/Closed, confirmed by the user on 2026-10-14. DM-01 is answered (user approval as the sole approver).
 - Documented defaults come from ARCH-FE-001 unless the row says that no default is recorded. This register does not resolve any item.
 
 ## Purpose
@@ -76,7 +84,7 @@ Covers the SP web repository (`output/`). The FE-OQ-01 to FE-OQ-13 rows are answ
 | FE-OQ-36 | Domain names for the staging and production SP hosts and the gateway host | ops | No | Open | `system.<env-domain>` per environment. Infrastructure decision | ADR-006 |
 | FE-OQ-37 | Routing library for path routes, or custom History API routing | architect_frontend, user | No | Answered | Answered 2026-10-10 (user, OQ-P-02): History API path routes. No routing library. ADR-001 OQ2 closed; no ADR-001 amendment | ADR-001 |
 
-## Items Found at /decision (DM-01 to DM-13)
+## Items Found at /decision (DM-01 to DM-15)
 
 These items are not rows in ARCH-FE-001. They were found while recording the ADRs. decision-manager records them and does not resolve them. Status changes below record answers given by the user at the Checkpoint B gate (2026-10-10).
 
@@ -95,15 +103,38 @@ These items are not rows in ARCH-FE-001. They were found while recording the ADR
 | DM-11 | Orchestrator readings to confirm. FE-OQ-05 (Base UI) and FE-OQ-11 (first-party login) are recorded as orchestrator readings marked "confirm at the gate". The Checkpoint A approval text ("Setujui keduanya") approves ARCH-FE-001 as a whole | `output/clarifications.md`; orchestration-state gate log | user | No | Answered | Answered 2026-10-10 by the user's approval of ADR-001 (Base UI) and ADR-004 (first-party login) | ADR-001, ADR-004 |
 | DM-12 | Theme sources. `next-themes` (for Sonner) and the app's `theme-provider` (key `theme`) are two theme sources | ARCH-FE-001 Table 5 | architect_frontend | No | Deferred | Keep both until the theme TODO; remove `next-themes` if it becomes unused | ADR-007 |
 | DM-13 | `staleTime` per resource | ARCH-FE-001 D12 | architect_frontend | No | Deferred | Set per resource in the TODO that adds each query | ADR-003 |
+| DM-14 | ADR assessment of ARCH-FE-001 v1.0.5 (TODO-022): the flag `OTHER_ACCOUNT_SESSIONS_ENABLED`, the shared module `guard-failure.ts`, the fixed copy and the 409/503 fallthrough rule | ARCH-FE-001 v1.0.5 (REQ-FE-052, REQ-FE-053, D4.10, D13.1); `decision-index.md` ADR Assessment | user | No | Answered | Answered/Closed 2026-10-14: the user confirmed at the /decision gate that v1.0.5 needs no ADR. decision-manager conclusion: no net-new ADR; all three items are decided inside ARCH-FE-001 by the user's approval of 2026-10-14. No ADR created; next number stays ADR-008 | none |
+| DM-15 | ADR assessment of ARCH-FE-001 v1.0.6 (TODO-023): removal of the "Hapus" action on system account pages, explanatory text in the Tangguhkan and Nonaktifkan dialogs, `deleteSystemUser` kept unused in the API module, D13.1a guard-code reachability | ARCH-FE-001 v1.0.6 (REQ-FE-054, D6.4, D13.1a, FE-OQ-41, FE-OQ-42); `decision-index.md` ADR Assessment for v1.0.6 | user | No | Answered | Confirmed by the user on 2026-10-14: v1.0.6 needs no ADR (Closed). Original assessment: confirm that v1.0.6 needs no ADR. decision-manager conclusion: no net-new ADR; it removes a UI action and adds no dependency, standard deviation or new technology rule. All items are decided inside ARCH-FE-001 by the user's approval of 2026-10-14. No ADR created; next number stays ADR-008. Closed 2026-10-14 by the user at the Checkpoint B gate for TODO-023 | none |
+
+## ARCH-FE-001 v1.0.5 rows (added 2026-10-14)
+
+Rows below are in ARCH-FE-001 v1.0.5 and are mirrored here for visibility. Their answers live in ARCH-FE-001; this register does not resolve them.
+
+| ID | Question | Owner | Blocking | Status | Answer or default (ARCH-FE-001) | Linked ADR |
+|----|----------|-------|----------|--------|--------------------------------|------------|
+| FE-OQ-22 | UI language and error copy (existing row, updated in v1.0.5) | user, product | No | Open | The six guard-failure strings in D13.1 are fixed by the user (2026-10-14); the rest of the copy deck stays open | none (D13, D13.1) |
+| FE-OQ-39 | Final contract for `/api/v1/system-users/{id}/sessions` once SP-BG-14 is Closed, and who flips `OTHER_ACCOUNT_SESSIONS_ENABLED` | auth-service architect_backend, architect_frontend | No | Answered | User 2026-10-14: the flag stays `false` until SP-BG-14 is Closed in the platform `clarifications.md`, then a new ARCH-FE-001 amendment flips it. Not TODO-022. Follow-up watch item: SP-BG-14 (platform, Open) | none (D4.10) |
+| FE-OQ-40 | Do the guard-failure messages apply to tenant role paths; which pages are account and role pages | auth-service architect_backend, user | No | Answered | User 2026-10-14: system account pages and system role pages only; tenant role paths keep current handling | none (D13.1) |
+
+## ARCH-FE-001 v1.0.6 rows (added 2026-10-14)
+
+Rows below are in ARCH-FE-001 v1.0.6 and are mirrored here for visibility. Their answers live in ARCH-FE-001; this register does not resolve them.
+
+| ID | Question | Owner | Blocking | Status | Answer or default (ARCH-FE-001) | Linked ADR |
+|----|----------|-------|----------|--------|--------------------------------|------------|
+| FE-OQ-41 | Does `system_users:delete` stay in the role permission matrices and auth-service seed data now that the UI never uses it; does auth-service plan to change `DELETE /system-users/{id}` | auth-service architect_backend, user | No | Answered | User 2026-10-14: default adopted. The permission stays in the catalogue and the role checklist unchanged (no FE filtering); `deleteSystemUser` stays in the API module; re-add the UI action only through a later amendment if the server gains a real delete | none (D6.4, REQ-FE-054) |
+| FE-OQ-42 | Does the platform document `PLATFORM_ROLE_PROTECTED` for suspend or deactivate of a SYS_PRINCIPAL holder by a non-principal actor | auth-service architect_backend | No | Answered | User 2026-10-14: default adopted. Tests use role change or reset password for this code; suspend and deactivate tests do not assert it | none (D13.1a) |
 
 ## Summary
 
 | Measure | Value |
 |---------|-------|
 | Rows from ARCH-FE-001 (FE-OQ-14 to FE-OQ-37) | 24: 23 Open; FE-OQ-37 Answered (2026-10-10) |
-| Items found at /decision (DM-01 to DM-13) | 13: 5 Answered (DM-01, DM-07, DM-09, DM-10, DM-11); 2 Deferred (DM-12, DM-13); 6 Open (DM-02 to DM-06 and DM-08) |
+| Rows added by v1.0.5 (FE-OQ-39, FE-OQ-40) | 2: both Answered (2026-10-14). FE-OQ-22 stays Open |
+| Rows added by v1.0.6 (FE-OQ-41, FE-OQ-42) | 2: both Answered (2026-10-14) |
+| Items found at /decision (DM-01 to DM-15) | 15: 7 Answered (DM-01, DM-07, DM-09, DM-10, DM-11, DM-14, DM-15); 2 Deferred (DM-12, DM-13); 6 Open (DM-02 to DM-06 and DM-08) |
 | Blocking = Yes | 0 |
-| Items for the user | DM-02 (non-blocking security review follow-up) |
+| Items for the user | DM-02 (non-blocking security review follow-up). DM-14 and DM-15 closed 2026-10-14 |
 
 ## Open Questions
 

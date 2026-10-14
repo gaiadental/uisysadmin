@@ -34,9 +34,17 @@ import {
 import { server } from "@/test/server"
 
 import { ALL_USER_PERMISSIONS, renderWithClient } from "./test-support"
+import {
+  CONFLICT_MESSAGE,
+  LAST_PRINCIPAL_MESSAGE,
+  PROTECTED_ACCOUNT_MESSAGE,
+  PROTECTED_ROLE_MESSAGE,
+  ROLE_IN_USE_MESSAGE,
+  SELF_ACTION_MESSAGE,
+  SERVICE_UNAVAILABLE_MESSAGE,
+} from "../shared/guard-failure"
 import { ROLE_NOT_FOUND_MESSAGE, USER_NOT_FOUND_MESSAGE } from "./user-failure"
 import { UserDetailPage } from "./user-detail-page"
-import { confirmPermanent } from "@/test/confirm"
 
 const authMock = vi.hoisted(() => ({ permissions: [] as readonly string[] }))
 vi.mock("@/app/providers/auth-provider", () => ({
@@ -57,6 +65,21 @@ const toastMock = vi.hoisted(() => ({
 }))
 vi.mock("sonner", () => ({ toast: toastMock }))
 
+// Other-account sessions are suspended (OTHER_ACCOUNT_SESSIONS_ENABLED = false).
+// The kept tab code is exercised with the flag mocked to true; the default is
+// the real behaviour (false).
+const flagMock = vi.hoisted(() => ({ enabled: false }))
+vi.mock("./access", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./access")>()
+  return {
+    ...actual,
+    canViewUserSessions: (permissions: readonly string[]) =>
+      flagMock.enabled && permissions.includes("sessions:view"),
+    canForceLogout: (permissions: readonly string[], isSelf: boolean) =>
+      flagMock.enabled && permissions.includes("sessions:revoke") && !isSelf,
+  }
+})
+
 let queryClient: QueryClient
 
 beforeEach(() => {
@@ -64,6 +87,7 @@ beforeEach(() => {
   setAccessToken(null)
   queryClient = createQueryClient()
   authMock.permissions = ALL_USER_PERMISSIONS
+  flagMock.enabled = false
   vi.spyOn(console, "error").mockImplementation(() => undefined)
 })
 
@@ -98,17 +122,12 @@ function headerActions(loginId: string): string[] {
 async function confirmFlow(openName: string, confirmLabel: string) {
   fireEvent.click(screen.getByRole("button", { name: openName }))
   const dialog = await screen.findByRole("dialog")
-  if (confirmLabel === "Hapus") {
-    confirmPermanent(dialog, confirmLabel)
-  } else {
-    fireEvent.click(within(dialog).getByRole("button", { name: confirmLabel }))
-  }
+  fireEvent.click(within(dialog).getByRole("button", { name: confirmLabel }))
 }
 
 describe("each gate key independently (D6.4)", () => {
   it.each([
     ["system_users:update", ["Nonaktifkan", "Tangguhkan"]],
-    ["system_users:delete", ["Hapus"]],
     ["system_users:reset_password", ["Reset password"]],
   ])(
     "%s alone gives exactly its buttons on an ACTIVE account",
@@ -169,15 +188,34 @@ describe("each gate key independently (D6.4)", () => {
   })
 })
 
+describe("no Hapus action (REQ-FE-054)", () => {
+  it.each([
+    ["ACTIVE", FIXTURE_USER_ACTIVE],
+    ["SUSPENDED", FIXTURE_USER_SUSPENDED],
+    ["DEACTIVATED", FIXTURE_USER_DEACTIVATED],
+    ["own account", FIXTURE_USER_SELF],
+  ])(
+    "%s: no Hapus control with every system_users permission",
+    async (_label, fixture) => {
+      renderDetail(fixture.id)
+      await readyFor(fixture.loginId)
+
+      expect(
+        screen.queryByRole("button", { name: /hapus/i })
+      ).not.toBeInTheDocument()
+      expect(headerActions(fixture.loginId)).not.toContain("Hapus")
+    }
+  )
+})
+
 describe("status transition visibility", () => {
-  it("SUSPENDED: reactivate, deactivate, reset, delete; no suspend", async () => {
+  it("SUSPENDED: reactivate, deactivate, reset; no suspend", async () => {
     renderDetail(FIXTURE_USER_SUSPENDED.id)
     await readyFor(FIXTURE_USER_SUSPENDED.loginId)
 
     expect(headerActions(FIXTURE_USER_SUSPENDED.loginId)).toEqual(
       [
         "Aktifkan",
-        "Hapus",
         "Nonaktifkan",
         "Reset password",
         "Ubah peran",
@@ -186,12 +224,12 @@ describe("status transition visibility", () => {
     expect(screen.getByText("Ditangguhkan")).toBeInTheDocument()
   })
 
-  it("DEACTIVATED: reactivate, reset, delete; no suspend or deactivate", async () => {
+  it("DEACTIVATED: reactivate, reset; no suspend or deactivate", async () => {
     renderDetail(FIXTURE_USER_DEACTIVATED.id)
     await readyFor(FIXTURE_USER_DEACTIVATED.loginId)
 
     expect(headerActions(FIXTURE_USER_DEACTIVATED.loginId)).toEqual(
-      ["Aktifkan", "Hapus", "Reset password", "Ubah peran"].sort()
+      ["Aktifkan", "Reset password", "Ubah peran"].sort()
     )
     expect(screen.getByText("Dinonaktifkan")).toBeInTheDocument()
   })
@@ -229,7 +267,7 @@ describe("status transition visibility", () => {
 })
 
 describe("confirm dialogs on the detail page", () => {
-  it.each([["Tangguhkan"], ["Nonaktifkan"], ["Hapus"], ["Reset password"]])(
+  it.each([["Tangguhkan"], ["Nonaktifkan"], ["Reset password"]])(
     "cancelling %s sends nothing",
     async (label) => {
       const calls: string[] = []
@@ -237,10 +275,6 @@ describe("confirm dialogs on the detail page", () => {
         http.patch(`${API}/system-users/:id/status`, () => {
           calls.push("patch")
           return HttpResponse.json({ data: FIXTURE_USER_ACTIVE })
-        }),
-        http.delete(`${API}/system-users/:id`, () => {
-          calls.push("delete")
-          return HttpResponse.json({ data: null })
         }),
         http.post(`${API}/system-users/:id/reset-password`, () => {
           calls.push("post")
@@ -307,47 +341,38 @@ describe("confirm dialogs on the detail page", () => {
   })
 })
 
+describe("explanatory confirm texts (REQ-FE-054)", () => {
+  it.each([
+    [
+      "Tangguhkan",
+      "Blokir sementara akun ini, misalnya saat cuti atau investigasi. Semua sesinya diakhiri. Bisa diaktifkan kembali.",
+    ],
+    [
+      "Nonaktifkan",
+      "Untuk anggota yang sudah tidak bertugas. Semua sesinya diakhiri. Bisa diaktifkan kembali bila diperlukan.",
+    ],
+  ])("%s dialog shows its exact text", async (label, text) => {
+    renderDetail(FIXTURE_USER_ACTIVE.id)
+    await readyFor(FIXTURE_USER_ACTIVE.loginId)
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: `${label} ${FIXTURE_USER_ACTIVE.loginId}`,
+      })
+    )
+    const dialog = await screen.findByRole("dialog")
+
+    expect(
+      within(dialog).getByRole("heading", {
+        name: `${label} akun ${FIXTURE_USER_ACTIVE.loginId}?`,
+      })
+    ).toBeInTheDocument()
+    expect(within(dialog).getByText(text)).toBeInTheDocument()
+  })
+})
+
 describe("error mapping on the detail page (D13)", () => {
-  it("403 on delete shows the forbidden copy and stays on the page", async () => {
-    server.use(
-      http.delete(`${API}/system-users/:id`, () =>
-        errorResponse(403, "PERMISSION_DENIED", "denied")
-      )
-    )
-    renderDetail(FIXTURE_USER_ACTIVE.id)
-    await readyFor(FIXTURE_USER_ACTIVE.loginId)
-
-    await confirmFlow(`Hapus ${FIXTURE_USER_ACTIVE.loginId}`, "Hapus")
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Anda tidak punya akses untuk aksi ini."
-    )
-    expect(window.location.pathname).toBe(
-      `/system-users/${FIXTURE_USER_ACTIVE.id}`
-    )
-    expect(toastMock.success).not.toHaveBeenCalled()
-  })
-
-  it("404 on delete shows the not-found copy and does not navigate", async () => {
-    server.use(
-      http.delete(`${API}/system-users/:id`, () =>
-        errorResponse(404, "SYSTEM_USER_NOT_FOUND", "raw")
-      )
-    )
-    renderDetail(FIXTURE_USER_ACTIVE.id)
-    await readyFor(FIXTURE_USER_ACTIVE.loginId)
-
-    await confirmFlow(`Hapus ${FIXTURE_USER_ACTIVE.loginId}`, "Hapus")
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      USER_NOT_FOUND_MESSAGE
-    )
-    expect(window.location.pathname).toBe(
-      `/system-users/${FIXTURE_USER_ACTIVE.id}`
-    )
-  })
-
-  it("409 on a status change shows the server message", async () => {
+  it("409 on a status change shows the fixed conflict copy, not the server text", async () => {
     server.use(
       http.patch(`${API}/system-users/:id/status`, () =>
         errorResponse(409, "SYSTEM_USER_STATE_CONFLICT", "Already suspended.")
@@ -358,9 +383,10 @@ describe("error mapping on the detail page (D13)", () => {
 
     await confirmFlow(`Tangguhkan ${FIXTURE_USER_ACTIVE.loginId}`, "Tangguhkan")
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Already suspended."
-    )
+    const alert = await screen.findByRole("alert")
+    expect(alert).toHaveTextContent(CONFLICT_MESSAGE)
+    expect(alert).not.toHaveTextContent("Already suspended.")
+    expect(alert).toHaveTextContent("Kode referensi")
   })
 
   it("500 on reset shows the generic line", async () => {
@@ -408,7 +434,7 @@ describe("error mapping on the detail page (D13)", () => {
   it.each([
     [403, "PERMISSION_DENIED", "Anda tidak punya akses untuk aksi ini."],
     [404, "SYSTEM_USER_NOT_FOUND", USER_NOT_FOUND_MESSAGE],
-    [409, "SYSTEM_USER_STATE_CONFLICT", "Role locked."],
+    [409, "SYSTEM_USER_STATE_CONFLICT", CONFLICT_MESSAGE],
   ])("role change %i shows the mapped copy", async (status, code, expected) => {
     server.use(
       http.patch(`${API}/system-users/:id`, () =>
@@ -488,42 +514,13 @@ describe("in-flight double-send guard", () => {
     )
     expect(patches).toBe(1)
   })
-
-  it("a delete in flight disables the other detail actions", async () => {
-    let release: () => void = () => undefined
-    const gate = new Promise<void>((resolve) => {
-      release = resolve
-    })
-    let deletes = 0
-    server.use(
-      http.delete(`${API}/system-users/:id`, async () => {
-        deletes += 1
-        await gate
-        return HttpResponse.json({ data: null })
-      })
-    )
-    renderDetail(FIXTURE_USER_ACTIVE.id)
-    await readyFor(FIXTURE_USER_ACTIVE.loginId)
-    await confirmFlow(`Hapus ${FIXTURE_USER_ACTIVE.loginId}`, "Hapus")
-
-    await waitFor(() => expect(deletes).toBe(1))
-    for (const label of ["Tangguhkan", "Nonaktifkan", "Reset password"]) {
-      expect(
-        screen.getByRole("button", {
-          name: `${label} ${FIXTURE_USER_ACTIVE.loginId}`,
-        })
-      ).toBeDisabled()
-    }
-    expect(screen.getByRole("button", { name: "Ubah peran" })).toBeDisabled()
-    release()
-    await waitFor(() =>
-      expect(toastMock.success).toHaveBeenCalledWith("Akun dihapus.")
-    )
-    expect(deletes).toBe(1)
-  })
 })
 
-describe("Sesi aktif tab gates and behaviour (D4.10)", () => {
+describe("Sesi aktif tab gates and behaviour (D4.10, flag mocked on)", () => {
+  beforeEach(() => {
+    flagMock.enabled = true
+  })
+
   function openTab() {
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Sesi aktif" }))
     fireEvent.click(screen.getByRole("tab", { name: "Sesi aktif" }))
@@ -639,7 +636,7 @@ describe("Sesi aktif tab gates and behaviour (D4.10)", () => {
 
     it.each([
       [404, "SYSTEM_USER_NOT_FOUND", USER_NOT_FOUND_MESSAGE],
-      [409, "SESSION_CONFLICT", "Sessions changed."],
+      [409, "SESSION_CONFLICT", CONFLICT_MESSAGE],
       [500, "INTERNAL_ERROR", GENERIC_WRITE_MESSAGE],
     ])(
       "maps %i to its copy and does not toast or refetch",
@@ -766,5 +763,101 @@ describe("D12.1 invalidation from the detail page", () => {
     await screen.findByRole("alert")
 
     expect(details).toBe(1)
+  })
+})
+
+const SERVER_TEXT = "Server text that must stay hidden."
+const GUARD_CASES: readonly (readonly [number, string, string])[] = [
+  [409, "SELF_ACTION_NOT_ALLOWED", SELF_ACTION_MESSAGE],
+  [409, "LAST_SYSTEM_PRINCIPAL", LAST_PRINCIPAL_MESSAGE],
+  [409, "SYSTEM_ROLE_IN_USE", ROLE_IN_USE_MESSAGE],
+  [503, "SERVICE_UNAVAILABLE", SERVICE_UNAVAILABLE_MESSAGE],
+  [403, "PLATFORM_ROLE_PROTECTED", PROTECTED_ACCOUNT_MESSAGE],
+  [409, "SOME_NEW_CONFLICT", CONFLICT_MESSAGE],
+  [503, "SOME_NEW_OUTAGE", SERVICE_UNAVAILABLE_MESSAGE],
+]
+
+describe("system account pages: fixed guard copy (D13.1, REQ-FE-053)", () => {
+  it.each(GUARD_CASES)(
+    "status change: %i %s shows the fixed copy and the reference id",
+    async (status, code, expected) => {
+      server.use(
+        http.patch(`${API}/system-users/:id/status`, () =>
+          errorResponse(status, code, SERVER_TEXT)
+        )
+      )
+      renderDetail(FIXTURE_USER_ACTIVE.id)
+      await readyFor(FIXTURE_USER_ACTIVE.loginId)
+
+      await confirmFlow(`Tangguhkan ${FIXTURE_USER_ACTIVE.loginId}`, "Tangguhkan")
+
+      const alert = await screen.findByRole("alert")
+      expect(alert).toHaveTextContent(expected)
+      expect(alert).toHaveTextContent("Kode referensi")
+      expect(alert).not.toHaveTextContent(SERVER_TEXT)
+    }
+  )
+
+  it.each(GUARD_CASES)(
+    "reset password: %i %s shows the fixed copy",
+    async (status, code, expected) => {
+      server.use(
+        http.post(`${API}/system-users/:id/reset-password`, () =>
+          errorResponse(status, code, SERVER_TEXT)
+        )
+      )
+      renderDetail(FIXTURE_USER_ACTIVE.id)
+      await readyFor(FIXTURE_USER_ACTIVE.loginId)
+
+      await confirmFlow(
+        `Reset password ${FIXTURE_USER_ACTIVE.loginId}`,
+        "Reset password"
+      )
+
+      const alert = await screen.findByRole("alert")
+      expect(alert).toHaveTextContent(expected)
+      expect(alert).not.toHaveTextContent(SERVER_TEXT)
+    }
+  )
+
+  it.each(GUARD_CASES)(
+    "role change dialog: %i %s shows the fixed copy",
+    async (status, code, expected) => {
+      server.use(
+        http.patch(`${API}/system-users/:id`, () =>
+          errorResponse(status, code, SERVER_TEXT)
+        )
+      )
+      renderDetail(FIXTURE_USER_ACTIVE.id)
+      await readyFor(FIXTURE_USER_ACTIVE.loginId)
+      fireEvent.click(screen.getByRole("button", { name: "Ubah peran" }))
+      const dialog = await screen.findByRole("dialog")
+      await within(dialog).findByRole("option", { name: /System Principal/ })
+      fireEvent.change(within(dialog).getByLabelText("Peran"), {
+        target: { value: "1" },
+      })
+      fireEvent.click(within(dialog).getByRole("button", { name: "Simpan" }))
+
+      const alert = await within(dialog).findByRole("alert")
+      expect(alert).toHaveTextContent(expected)
+      expect(alert).toHaveTextContent("Kode referensi")
+      expect(alert).not.toHaveTextContent(SERVER_TEXT)
+    }
+  )
+
+  it("PLATFORM_ROLE_PROTECTED shows the account copy here, not the role copy", async () => {
+    server.use(
+      http.patch(`${API}/system-users/:id/status`, () =>
+        errorResponse(403, "PLATFORM_ROLE_PROTECTED", SERVER_TEXT)
+      )
+    )
+    renderDetail(FIXTURE_USER_ACTIVE.id)
+    await readyFor(FIXTURE_USER_ACTIVE.loginId)
+    await confirmFlow(`Tangguhkan ${FIXTURE_USER_ACTIVE.loginId}`, "Tangguhkan")
+
+    const alert = await screen.findByRole("alert")
+    expect(alert).toHaveTextContent(PROTECTED_ACCOUNT_MESSAGE)
+    expect(alert).not.toHaveTextContent(PROTECTED_ROLE_MESSAGE)
+    expect(PROTECTED_ACCOUNT_MESSAGE).not.toBe(PROTECTED_ROLE_MESSAGE)
   })
 })

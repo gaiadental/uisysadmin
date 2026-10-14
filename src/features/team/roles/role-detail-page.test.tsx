@@ -15,6 +15,7 @@ import { createQueryClient } from "@/lib/query/client"
 import { API, errorResponse, FIXTURE_ME } from "@/test/handlers/auth"
 import { server } from "@/test/server"
 
+import { PROTECTED_ROLE_MESSAGE } from "../shared/guard-failure"
 import { ALL_ROLE_PERMISSIONS, renderWithClient } from "./test-support"
 import { RoleDetailPage } from "./role-detail-page"
 import { confirmPermanent } from "@/test/confirm"
@@ -117,7 +118,7 @@ describe("SYS_PRINCIPAL static lock (D6.6, SP-BG-13)", () => {
 })
 
 describe("refusal-driven disable for other roles (D6.6)", () => {
-  it("disables edit and delete after a refused delete, and shows the server message", async () => {
+  it("disables edit and delete after a refused delete, and shows the fixed role copy", async () => {
     refuseWith("delete", "PLATFORM_ROLE_PROTECTED")
     renderDetail(ADMIN_ID)
     await readyFor("System Admin")
@@ -127,7 +128,8 @@ describe("refusal-driven disable for other roles (D6.6)", () => {
     const dialog = await screen.findByRole("dialog")
     confirmPermanent(dialog, "Hapus")
 
-    expect(await screen.findByText(PROTECTED_MESSAGE)).toBeInTheDocument()
+    expect(await screen.findByText(PROTECTED_ROLE_MESSAGE)).toBeInTheDocument()
+    expect(screen.queryByText(PROTECTED_MESSAGE)).not.toBeInTheDocument()
     await waitFor(() => {
       expect(button("Ubah System Admin")).toBeDisabled()
       expect(button("Hapus System Admin")).toBeDisabled()
@@ -143,7 +145,11 @@ describe("refusal-driven disable for other roles (D6.6)", () => {
     const dialog = await screen.findByRole("dialog")
     fireEvent.click(within(dialog).getByRole("button", { name: "Simpan" }))
 
-    expect(await within(dialog).findByText(PROTECTED_MESSAGE)).toBeInTheDocument()
+    expect(
+      await within(dialog).findByText(PROTECTED_ROLE_MESSAGE)
+    ).toBeInTheDocument()
+    expect(within(dialog).queryByText(PROTECTED_MESSAGE)).not.toBeInTheDocument()
+    expect(within(dialog).getByText(/Kode referensi/)).toBeInTheDocument()
     expect(within(dialog).getByRole("button", { name: "Simpan" })).toBeDisabled()
     fireEvent.click(within(dialog).getByRole("button", { name: "Batal" }))
     await waitFor(() => {
@@ -161,7 +167,8 @@ describe("refusal-driven disable for other roles (D6.6)", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: /View reports/ }))
     fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
 
-    expect(await screen.findByText(PROTECTED_MESSAGE)).toBeInTheDocument()
+    expect(await screen.findByText(PROTECTED_ROLE_MESSAGE)).toBeInTheDocument()
+    expect(screen.queryByText(PROTECTED_MESSAGE)).not.toBeInTheDocument()
     await waitFor(() => {
       expect(screen.getByRole("checkbox", { name: /View reports/ })).toHaveAttribute("aria-disabled", "true")
     })

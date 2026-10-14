@@ -379,6 +379,21 @@ describe("TenantCreatePage errors (D8.2, D13)", () => {
     expect(window.location.pathname).toBe("/tenants/new")
   })
 
+  it("keeps the server message for a 409 with an unrecognised code (not the team guard copy)", async () => {
+    server.use(
+      http.post(`${API}/tenants`, () =>
+        errorResponse(409, "SOMETHING_NEW", "Server conflict wording.")
+      )
+    )
+    renderPage()
+
+    await reachReview("NEWCO")
+    submit()
+
+    expect(await screen.findByText("Server conflict wording.")).toBeInTheDocument()
+    expect(window.location.pathname).toBe("/tenants/new")
+  })
+
   it("accepts VALIDATION_FAILED as a form validation error too", async () => {
     server.use(
       http.post(`${API}/tenants`, () =>

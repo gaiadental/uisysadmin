@@ -1,7 +1,8 @@
 /**
  * Copy for a failed system user write (ARCH-FE-001 D13). Branching uses the
  * HTTP status and the code, never the message text. The two codes below carry
- * frontend copy; every other failure goes through the shared write helper.
+ * frontend copy; guard refusals and unrecognised 409/503 use fixed copy
+ * (D13.1); every other failure goes through the shared write helper.
  */
 
 import { ApiError } from "@/lib/api/errors"
@@ -9,6 +10,7 @@ import {
   describeWriteFailure,
   type WriteFailure,
 } from "@/features/tenants/create/write-failure"
+import { describeGuardFailure } from "../shared/guard-failure"
 
 export const ROLE_NOT_FOUND_MESSAGE =
   "Peran yang dipilih tidak ditemukan. Muat ulang halaman, lalu pilih peran lagi."
@@ -39,5 +41,5 @@ export function describeUserWriteFailure(error: unknown): WriteFailure {
   if (isHttp(error, 404, "SYSTEM_USER_NOT_FOUND")) {
     return { message: USER_NOT_FOUND_MESSAGE, referenceId: error.correlationId }
   }
-  return describeWriteFailure(error)
+  return describeGuardFailure(error, "account") ?? describeWriteFailure(error)
 }

@@ -3,8 +3,8 @@ id: PROGRESS-TRACKER
 title: Progress Tracker — System Principal Web (Frontend)
 owner: project_manager
 status: Approved
-version: 1.7
-last_updated: 2026-10-12
+version: 1.17
+last_updated: 2026-10-14
 source_requirements: [RAG-FE-SP-001, ARCH-FE-001]
 related_artifacts: [IMPLEMENTATION-PLAN, MASTER-TODO, ARCH-FE-001, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007]
 blocking_open_questions: 0
@@ -16,13 +16,29 @@ Owner: project_manager
 
 Status: Approved
 
-Version: 1.7
+Version: 1.17
 
-Last Updated: 2026-10-12
+Last Updated: 2026-10-14
 
 Approved: 2026-10-10 (user, Checkpoint B gate)
 
 Change: 2026-10-10 — amendment: @testing-library/dom (ADR-007 v1.2)
+
+Change: 2026-10-14 — TODO-022 Completed again (Unit Test Report v1.2 `execution_overall: PASS`, 1001 passed in 78 files; rework M1 AppLink and OQ2 done). Progress 22 of 23 (95.7%). TODO-018 remains Not Started (deferred). Status unchanged (Approved).
+
+Change: 2026-10-14 — TODO-022 back to In Progress (user-ordered rework: QA/review M1 own-sessions link uses AppLink; OQ2 ROLE_GUARD_VIOLATION shows the fixed role copy). Progress 21 of 23 (91.3%). TODO-023 Checkpoint D signed off (Go) by the user; stays Completed. TODO-018 remains Not Started (deferred). Status unchanged (Approved).
+
+Change: 2026-10-14 — TODO-023 Completed (Unit Test Report `execution_overall: PASS`, 994 passed in 78 files; FP-253 to FP-263). Progress 22 of 23 (95.7%). TODO-018 remains Not Started (deferred). Status unchanged (Approved).
+
+Change: 2026-10-14 — TODO-023 aligned with ARCH-FE-001 v1.0.6 (Approved 2026-10-14; REQ-FE-054). Still Not Started; gate satisfied, clearance recorded by the orchestrator. No TODO status changed; Status unchanged (Approved).
+
+Change: 2026-10-14 — TODO-023 added (Not Started; user decision 2026-10-14: remove the "Hapus" account action in Tim IT > Akun; gate: ARCH-FE-001 v1.0.6 amendment D6.4 is Pending Approval and must be Approved before `/build`). Total becomes 23 TODOs; progress 21 of 23 (91.3%). No TODO status changed; Status unchanged (Approved).
+
+Change: 2026-10-14 — TODO-022 Completed (Unit Test Report v1.1 `execution_overall: PASS`, 998 passed in 77 files; FP-238 to FP-252). Progress 21 of 22 (95.5%). TODO-018 remains Not Started (deferred). Status unchanged (Approved).
+
+Change: 2026-10-14 — gate update (user decision 2026-10-14): ARCH-FE-001 v1.0.5 Approved 2026-10-14; TODO-022 scope adds fixed copy for unrecognised 409/503 codes on Tim IT pages; TODO-022 stays Not Started; no status change.
+
+Change: 2026-10-14 — TODO-022 added (user decision 2026-10-14: suspend other-account sessions on `/system-users/:id`; fixed copy for guard refusals; ARCH-FE-001 v1.0.5). TODO-022 is Not Started, gate ARCH-FE-001 v1.0.5 Approved 2026-10-14; total becomes 22 TODOs; progress 20 of 22 (90.9%). No TODO status changed. Status unchanged (Approved).
 
 Change: 2026-10-12 — plan amendments recorded (implementation-plan v1.9, master-todo v1.3); no status change. Status unchanged (Approved).
 
@@ -48,6 +64,10 @@ Change: 2026-10-12 — TODO-020 added (user decision 2026-10-12, frontend fix: t
 
 Change: 2026-10-12 — TODO-020 Completed (Unit Test Report `execution_overall: PASS`, 890/890, 70 files; user confirmed the live `social_links` key on 2026-10-12). Progress 19 of 20 (95.0%). TODO-018 remains Not Started (deferred). The QA finding on `tenants.get` (OQ-P-63) stays open until the QA re-check is recorded. Status unchanged (Approved).
 
+Change: 2026-10-12 — TODO-021 back to In Progress (user-ordered rework, QA finding M1 of `qa-report-TODO-021.md`: refuse save with no PATCH when the re-fetched permission lacks `active` or `customerPermitted`; tests for both fields). Progress 19 of 21 (90.5%). TODO-018 remains Not Started (deferred). Status unchanged (Approved).
+
+Change: 2026-10-12 — TODO-021 Completed again after rework (Unit Test Report v1.1 `execution_overall: PASS`, 912 passed in 75 files, was 909; QA M1 fixed, review M2 also fixed). Progress 20 of 21 (95.2%). TODO-018 remains Not Started (deferred). Status unchanged (Approved).
+
 Change: 2026-10-12 — TODO-021 Completed (Unit Test Report `execution_overall: PASS`, 909 passed in 75 files (was 917)). Progress 20 of 21 (95.2%). TODO-018 remains Not Started (deferred). Status unchanged (Approved).
 
 Change: 2026-10-12 — TODO-021 added (user decision 2026-10-12: Katalog > Permission read-only; ARCH-FE-001 v1.0.4). TODO-021 is Not Started, gated by Pending Approval of ARCH-FE-001 v1.0.4; total becomes 21 TODOs; progress 19 of 21 (90.5%). No TODO status changed (TODO-013 remains Completed). Status unchanged (Approved).
@@ -62,7 +82,7 @@ Related Artifacts:
 
 ## At a Glance
 
-- 20 of 21 TODOs Completed (95.2%). TODO-018 is `Not Started` (deferred). TODO-021 is `Completed` (2026-10-12; Katalog > Permission read-only). TODO-019 is `Completed` (added after QA, 2026-10-12; QA D-1 remediated pending the QA C-10 re-run). TODO-020 is `Completed` (2026-10-12, Critical; live tenant detail contract; QA re-check of `tenants.get` pending). Phase 3 is complete.
+- 22 of 23 TODOs Completed (95.7%). TODO-022 is `Completed` again (2026-10-14; rework M1 AppLink and OQ2 done; 1001 passed in 78 files). TODO-018 is `Not Started` (deferred). TODO-023 is `Completed` (2026-10-14; 994 passed in 78 files; FP-253 to FP-263). TODO-022 was `Completed` 2026-10-14 (998 passed in 77 files), now back In Progress. TODO-021 is `Completed` (2026-10-12; Katalog > Permission read-only; QA M1 rework done, 912 tests). TODO-019 is `Completed` (added after QA, 2026-10-12; QA D-1 remediated pending the QA C-10 re-run). TODO-020 is `Completed` (2026-10-12, Critical; live tenant detail contract; QA re-check of `tenants.get` pending). Phase 3 is complete.
 - Active phase: Phase 0 — Foundation. OQ-P-01 and OQ-P-02 are answered (2026-10-10). It starts when Checkpoint B clears and the orchestrator records the gate.
 - Blocking open questions: 0. OQ-P-01 and OQ-P-02 were answered on 2026-10-10 (see `implementation-plan.md` -> Open Questions).
 
@@ -82,7 +102,7 @@ Frontend TODOs in this repository (TODO-001 to TODO-021; TODO-019, TODO-020 and 
 
 ## Overall Progress
 
-Percentage: 95.2% (20 of 21 TODOs Completed)
+Percentage: 91.3% (21 of 23 TODOs Completed)
 
 | Phase | TODOs | Completed | Status |
 |-------|-------|-----------|--------|
@@ -93,6 +113,8 @@ Percentage: 95.2% (20 of 21 TODOs Completed)
 | Phase 4 — Deferred E2E | TODO-018 | 0 of 1 | Not Started (deferred) |
 | Post-QA remediation (added 2026-10-12) | TODO-019, TODO-020 | 2 of 2 | Completed (QA re-checks for D-1 and `tenants.get` pending) |
 | User decision change (added 2026-10-12) | TODO-021 | 1 of 1 | Completed |
+| User decision change (added 2026-10-14) | TODO-022 | 1 of 1 | Completed |
+| User decision change (added 2026-10-14) | TODO-023 | 1 of 1 | Completed |
 
 ## Active Phase
 
@@ -121,11 +143,13 @@ Entry conditions: OQ-P-01 and OQ-P-02 answered (done); Checkpoint B gate cleared
 - TODO-017 Mock removal, static checks and acceptance mapping (High) — Unit Test Report `execution_overall: PASS` (884/884, 70 files; lint, typecheck, build PASS)
 - TODO-019 Nullable `updated_by` in countries and tenant-categories contracts (Critical; post-QA, closes QA D-1 pending the QA C-10 re-run) — Unit Test Report `execution_overall: PASS` (886/886, 70 files; tsc, build PASS)
 - TODO-020 Tenant detail accepts the live shape (Critical; QA finding on `tenants.get`) — Unit Test Report `execution_overall: PASS` (890/890, 70 files; TODO-009 and TODO-010 regressions PASS)
-- TODO-021 Katalog > Permission read-only (High; user decision 2026-10-12) — Unit Test Report `execution_overall: PASS` (909 passed in 75 files (was 917); tsc, eslint PASS)
+- TODO-021 Katalog > Permission read-only (High; user decision 2026-10-12) — Unit Test Report v1.1 `execution_overall: PASS` (912 passed in 75 files; QA M1 rework done, review M2 also fixed; tsc, eslint PASS)
+- TODO-023 Remove "Hapus" account action in Tim IT > Akun (Medium; user decision 2026-10-14) — Unit Test Report `execution_overall: PASS` (994 passed in 78 files; tsc -b, eslint ., vitest all exit 0; FP-253 to FP-263)
+- TODO-022 Suspend other-account sessions and fixed guard-failure copy (High; user decision 2026-10-14; rework done: M1 AppLink, OQ2 ROLE_GUARD_VIOLATION fixed role copy) — Unit Test Report v1.2 `execution_overall: PASS` (1001 passed in 78 files; tsc -b, eslint ., vitest run --passWithNoTests exit 0)
 
 ## In Progress
 
-(none)
+None
 
 ## Not Started
 

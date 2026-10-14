@@ -3,8 +3,8 @@ id: FILE-PROVENANCE-REGISTER
 title: File Provenance Register
 owner: project_manager
 status: Draft
-version: 0.1
-last_updated: 2026-10-12
+version: 0.5
+last_updated: 2026-10-14
 related_artifacts: [PROJECT-PROFILE]
 blocking_open_questions: 0
 register_granularity: mixed
@@ -13,8 +13,10 @@ register_granularity: mixed
 Title: File Provenance Register
 Owner: project_manager
 Status: Draft
-Version: 0.1
-Last Updated: 2026-10-12
+Version: 0.5
+Last Updated: 2026-10-14
+
+Change: 2026-10-14 — v0.5: added FP-264 (user-sessions-tab.tsx, agent-modified, comment-only) for TODO-022 rework step 4; other rework paths already covered by FP-238 to FP-252. Previous v0.4: added FP-253 to FP-263 for TODO-023 (1 agent-created, 10 agent-modified under src/features/team/users). Previous v0.3: added FP-251 (tenant-create-page.test.tsx, agent-modified) and FP-252 (guard-failure-callers.test.ts, agent-created) for TODO-022 retry. Previous v0.2: added FP-238 to FP-250 for TODO-022 (2 agent-created, 11 agent-modified under src/features/team). Status unchanged (Draft).
 Source Requirements: —
 Related Artifacts:
 - output/project-profile.md
@@ -278,6 +280,33 @@ Authoritative path-level provenance and enforcement scope. Reviewer and QA resol
 | FP-235 | src/lib/api/modules/master-permissions.ts | file | agent-modified | full | REQ-FE-035, TODO-021, ARCH-FE-001 v1.0.4 | — | a132049 | 2026-10-12 | 2026-10-12 | TODO-021 | Katalog > Permission read-only |
 | FP-236 | src/lib/api/modules/master-permissions.test.ts | file | agent-modified | full | REQ-FE-035, TODO-021, ARCH-FE-001 v1.0.4 | — | a132049 | 2026-10-12 | 2026-10-12 | TODO-021 | Katalog > Permission read-only |
 | FP-237 | src/test/handlers/catalog.ts | file | agent-modified | full | REQ-FE-035, TODO-021, ARCH-FE-001 v1.0.4 | — | a132049 | 2026-10-12 | 2026-10-12 | TODO-021 | Katalog > Permission read-only |
+| FP-238 | src/features/team/shared/guard-failure.ts | file | agent-created | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Guard-failure copy helper |
+| FP-239 | src/features/team/shared/guard-failure.test.ts | file | agent-created | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Guard-failure copy helper tests |
+| FP-240 | src/features/team/users/user-failure.ts | file | agent-modified | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Fixed copy for guard refusals |
+| FP-241 | src/features/team/roles/role-failure.ts | file | agent-modified | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Fixed copy for guard refusals |
+| FP-242 | src/features/team/users/access.ts | file | agent-modified | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | OTHER_ACCOUNT_SESSIONS_ENABLED flag |
+| FP-243 | src/features/team/users/access.test.ts | file | agent-modified | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Flag tests |
+| FP-244 | src/features/team/users/user-detail-page.tsx | file | agent-modified | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Sessions suspended for other accounts |
+| FP-245 | src/features/team/users/user-detail-page.test.tsx | file | agent-modified | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Test update |
+| FP-246 | src/features/team/users/user-detail-page.gaps.test.tsx | file | agent-modified | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Test update |
+| FP-247 | src/features/team/users/user-list-page.gaps.test.tsx | file | agent-modified | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Test update |
+| FP-248 | src/features/team/roles/role-detail-page.test.tsx | file | agent-modified | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Test update |
+| FP-249 | src/features/team/roles/role-list-page.test.tsx | file | agent-modified | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Test update |
+| FP-250 | src/features/team/roles/role-screens-gaps.test.tsx | file | agent-modified | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Test update |
+| FP-251 | src/features/tenants/create/tenant-create-page.test.tsx | file | agent-modified | full | REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Test-only update (retry) |
+| FP-252 | src/features/team/shared/guard-failure-callers.test.ts | file | agent-created | full | REQ-FE-053, ARCH-FE-001 v1.0.5, TODO-022 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-022 | Caller coverage for guard-failure helper (retry) |
+| FP-253 | src/features/team/users/no-delete-system-user.test.ts | file | agent-created | full | REQ-FE-054, REQ-FE-030, REQ-FE-031, REQ-FE-039, ARCH-FE-001 v1.0.6, TODO-023 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-023 | Static test: users feature never references deleteSystemUser |
+| FP-254 | src/features/team/users/use-user-actions.ts | file | agent-modified | full | REQ-FE-054, REQ-FE-030, REQ-FE-031, REQ-FE-039, ARCH-FE-001 v1.0.6, TODO-023 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-023 | Delete kind removed; explanatory confirm texts |
+| FP-255 | src/features/team/users/user-action-buttons.tsx | file | agent-modified | full | REQ-FE-054, REQ-FE-030, REQ-FE-031, REQ-FE-039, ARCH-FE-001 v1.0.6, TODO-023 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-023 | Hapus action removed |
+| FP-256 | src/features/team/users/access.ts | file | agent-modified | full | REQ-FE-054, REQ-FE-030, REQ-FE-031, REQ-FE-039, ARCH-FE-001 v1.0.6, TODO-023 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-023 | canDelete and USERS_DELETE removed |
+| FP-257 | src/features/team/users/access.test.ts | file | agent-modified | full | REQ-FE-054, REQ-FE-030, REQ-FE-031, REQ-FE-039, ARCH-FE-001 v1.0.6, TODO-023 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-023 | Test update |
+| FP-258 | src/features/team/users/user-detail-page.tsx | file | agent-modified | full | REQ-FE-054, REQ-FE-030, REQ-FE-031, REQ-FE-039, ARCH-FE-001 v1.0.6, TODO-023 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-023 | onDeleted and navigate-after-delete removed |
+| FP-259 | src/features/team/users/user-list-page.tsx | file | agent-modified | full | REQ-FE-054, REQ-FE-030, REQ-FE-031, REQ-FE-039, ARCH-FE-001 v1.0.6, TODO-023 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-023 | Comment only |
+| FP-260 | src/features/team/users/user-detail-page.test.tsx | file | agent-modified | full | REQ-FE-054, REQ-FE-030, REQ-FE-031, REQ-FE-039, ARCH-FE-001 v1.0.6, TODO-023 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-023 | Test update |
+| FP-261 | src/features/team/users/user-detail-page.gaps.test.tsx | file | agent-modified | full | REQ-FE-054, REQ-FE-030, REQ-FE-031, REQ-FE-039, ARCH-FE-001 v1.0.6, TODO-023 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-023 | Test update |
+| FP-262 | src/features/team/users/user-list-page.test.tsx | file | agent-modified | full | REQ-FE-054, REQ-FE-030, REQ-FE-031, REQ-FE-039, ARCH-FE-001 v1.0.6, TODO-023 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-023 | Test update |
+| FP-263 | src/features/team/users/user-list-page.gaps.test.tsx | file | agent-modified | full | REQ-FE-054, REQ-FE-030, REQ-FE-031, REQ-FE-039, ARCH-FE-001 v1.0.6, TODO-023 | — | 8c16d6d | 2026-10-14 | 2026-10-14 | TODO-023 | Test update |
+| FP-264 | src/features/team/users/user-sessions-tab.tsx | file | agent-modified | full | REQ-FE-052, REQ-FE-053, ARCH-FE-001 v1.0.7, TODO-022 | — | 4cc1267 | 2026-10-14 | 2026-10-14 | TODO-022 | Comment-only change (rework) |
 
 ## Open Questions
 

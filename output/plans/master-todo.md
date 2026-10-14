@@ -3,8 +3,8 @@ id: MASTER-TODO
 title: Master TODO — System Principal Web (Frontend)
 owner: project_manager
 status: Approved
-version: 1.9
-last_updated: 2026-10-12
+version: 1.20
+last_updated: 2026-10-14
 source_requirements: [REQ-FE-001, REQ-FE-002, REQ-FE-003, REQ-FE-004, REQ-FE-005, REQ-FE-006, REQ-FE-007, REQ-FE-008, REQ-FE-009, REQ-FE-010, REQ-FE-011, REQ-FE-012, REQ-FE-013, REQ-FE-014, REQ-FE-015, REQ-FE-016, REQ-FE-017, REQ-FE-018, REQ-FE-019, REQ-FE-020, REQ-FE-021, REQ-FE-022, REQ-FE-023, REQ-FE-024, REQ-FE-025, REQ-FE-026, REQ-FE-028, REQ-FE-029, REQ-FE-030, REQ-FE-031, REQ-FE-032, REQ-FE-033, REQ-FE-034, REQ-FE-035, REQ-FE-036, REQ-FE-037, REQ-FE-038, REQ-FE-039, REQ-FE-040, REQ-FE-041, REQ-FE-042, REQ-FE-043, REQ-FE-045, REQ-FE-046, REQ-FE-047, REQ-FE-048, REQ-FE-049, REQ-FE-050, REQ-FE-051]
 related_artifacts: [ARCH-FE-001, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, IMPLEMENTATION-PLAN, PROGRESS-TRACKER]
 blocking_open_questions: 0
@@ -16,13 +16,35 @@ Owner: project_manager
 
 Status: Approved
 
-Version: 1.9
+Version: 1.20
 
-Last Updated: 2026-10-12
+Last Updated: 2026-10-14
 
 Approved: 2026-10-10 (user, Checkpoint B gate)
 
+Change: 2026-10-14 — TODO-022 Completed again (v1.20): rework done (3c AppLink, 3d ROLE_GUARD_VIOLATION fixed role copy). Unit Test Report v1.2 `execution_overall: PASS` (`tsc -b`, `eslint .`, `vitest run --passWithNoTests` exit 0; 1001 passed in 78 files, three full runs). FP-264 added. Checkpoint D sign-off still pending. Status unchanged (Approved).
+
+Change: 2026-10-14 — rework (v1.19, user decision 2026-10-14): TODO-022 back to In Progress. (a) QA/review M1: `OwnSessionsLink` in `user-detail-page.tsx` uses `AppLink` (`features/auth/components/app-link.tsx`) instead of Button+navigateTo; test queries role "link". (b) OQ2: `ROLE_GUARD_VIOLATION` (403) on system role pages shows the fixed role-context copy of `PLATFORM_ROLE_PROTECTED` and still marks the role refused; tests in `guard-failure.test.ts` and a role page test. File scope unchanged. ARCH-FE-001 D13.1 correction is recorded concurrently by architect-frontend. TODO-023 Checkpoint D signed off (Go) by the user; it stays Completed. Nothing marked Approved by this change. Status unchanged (Approved).
+
+Change: 2026-10-14 — TODO-023 Completed (Unit Test Report `execution_overall: PASS`, 994 passed in 78 files; FP-253 to FP-263; four list-page tests re-targeted from Hapus to Tangguhkan). No artifact marked Approved by this change. Status unchanged (Approved).
+
+Change: 2026-10-14 — amendment (v1.17, user decision 2026-10-14): TODO-023 aligned with ARCH-FE-001 v1.0.6 (Approved 2026-10-14). Adds REQ-FE-054 and D13.1a/D6.4/D12.1/D19 references, replaces the REQ-FE-030/031/039 note, adds acceptance (static test: `features/team/users` does not import `deleteSystemUser`; exact dialog texts; D12.1 system user delete invalidation removed), records FE-OQ-41 and FE-OQ-42 defaults, and narrows scope: TODO-023 only removes the Hapus block and its tests; TODO-022 guard tests are not re-pointed. TODO-023 stays `Not Started`; the gate is satisfied (Approved 2026-10-14), gate clearance is recorded by the orchestrator. No TODO status changed; Status unchanged (Approved).
+
+Change: 2026-10-14 — amendment (v1.16, user decision 2026-10-14): TODO-023 added (remove the "Hapus" account action in Tim IT > Akun; Tangguhkan and Nonaktifkan confirm dialogs get explanatory text). TODO-023 is `Not Started`; gate: ARCH-FE-001 v1.0.6 amendment (D6.4) must be Approved before `/build`; it is Pending Approval (drafted concurrently by architect-frontend). Nothing marked Approved by this change. No TODO status changed; Status unchanged (Approved).
+
+Change: 2026-10-14 — TODO-022 Completed (Unit Test Report v1.1 `execution_overall: PASS`, 998 passed in 77 files; FP-238 to FP-252; v1.15). Status unchanged (Approved).
+
+Change: 2026-10-14 — amendment (v1.14, user decision 2026-10-14): TODO-022 File scope adds one test-only file, `src/features/tenants/create/tenant-create-page.test.tsx`, to prove the tenant create page keeps the old `describeWriteFailure` for a 409 with an unrecognised code; no tenant production code change; gate commands made exact. TODO-022 stays In Progress; no TODO status changed; Status unchanged (Approved).
+
+Change: 2026-10-14 — amendment (v1.13, user decision 2026-10-14: ARCH-FE-001 v1.0.5 Approved 2026-10-14; TODO-022 scope adds fixed Indonesian copy for unrecognised 409/503 codes on Tim IT pages; TODO-022 stays Not Started; no TODO status changed; Status unchanged (Approved)).
+
+Change: 2026-10-14 — amendment (v1.12, user decision 2026-10-14): TODO-022 added (suspend other-account sessions on `/system-users/:id`; fixed copy for guard refusals; ARCH-FE-001 v1.0.5). TODO-022 is Not Started, gated by Pending Approval of ARCH-FE-001 v1.0.5; total becomes 22 TODOs. No TODO status changed. Status unchanged (Approved).
+
 Change: 2026-10-10 — amendment: @testing-library/dom (ADR-007 v1.2)
+
+Change: 2026-10-12 — TODO-021 Completed again after rework (v1.11; Unit Test Report v1.1 `execution_overall: PASS`, 912 passed in 75 files, was 909; tsc, eslint, vitest verified by the orchestrator). QA M1 fixed (refuse save, no PATCH, when the re-fetched permission lacks `active` or `customerPermitted`); code review finding M2 was also fixed. File scope and file-provenance rows FP-230 to FP-237 unchanged. Status unchanged (Approved).
+
+Change: 2026-10-12 — amendment (v1.10, user-ordered rework, QA finding M1 of `qa-report-TODO-021.md`): TODO-021 returns to In Progress. In the master-permission edit dialog, if the re-fetched permission (GET `/master-permissions/{id}`) lacks `active` or `customerPermitted`, the save is refused with an error message and no PATCH is sent (the dialog no longer sends `active ?? true` / `customerPermitted ?? false`). Tests required for both fields. File scope unchanged. Status unchanged (Approved).
 
 Change: 2026-10-12 — TODO-021 added (user decision 2026-10-12: Katalog > Permission read-only; ARCH-FE-001 v1.0.4 Pending Approval). TODO-021 is Not Started and may not start `/build` until v1.0.4 is Approved. TODO-013 stays Completed. Status unchanged (Approved).
 
@@ -51,7 +73,7 @@ Related Artifacts:
 
 ## At a Glance
 
-- 20 TODOs (TODO-019 and TODO-020 added after QA, 2026-10-12). Owner is `developer_frontend` for every TODO (this repository is frontend only). Status of each TODO is tracked in `progress-tracker.md`.
+- 22 TODOs (TODO-019 and TODO-020 added after QA, 2026-10-12; TODO-021 and TODO-022 added after user decisions). Owner is `developer_frontend` for every TODO (this repository is frontend only). Status of each TODO is tracked in `progress-tracker.md`.
 - Priority: Critical 10 (TODO-001 to TODO-008, TODO-019 and TODO-020), High 8 (TODO-009 to TODO-015 and TODO-017), Medium 1 (TODO-016), Low 1 (TODO-018, deferred).
 - OQ-P-01 (jsdom with `@testing-library/jest-dom`, ADR-007 v1.1) and OQ-P-02 (History API path routes, no routing library) are answered (2026-10-10). No TODO is gated by an open question.
 - Every TODO has one owner, a concrete File scope and traces to REQ-FE, ADR-00N and ARCH-FE-001.
@@ -1134,7 +1156,7 @@ developer_frontend
 
 Status:
 
-Completed (2026-10-12; Unit Test Report `execution_overall: PASS`, 909 passed in 75 files, was 917; file-provenance rows FP-230 to FP-237)
+Completed (2026-10-12; rework for QA M1 done, review M2 also fixed; Unit Test Report v1.1 `execution_overall: PASS`, 912 passed in 75 files, was 909; file-provenance rows FP-230 to FP-237)
 
 Priority:
 
@@ -1171,7 +1193,173 @@ File scope:
 
 Notes:
 
-Decision: user decision 2026-10-12. Amendment: added as v1.8 of this artifact; TODO-013 stays Completed. Files verified by grep: all use of `createMasterPermission`, `deleteMasterPermission` and `RowDeleteButton` for master permissions is in the files listed above; `RowDeleteButton` itself (`src/components/delete-button.tsx`) is still used by tenant categories and countries and is not changed. `src/app/router.tsx`, `src/app/navigation.ts` and the route guard keep `master_permissions:view` and are not changed. Added acceptance criterion (user, 2026-10-12): fields other than `name` and `description` (`key`, `category`, `module`, `active`, `customerPermitted`) are read-only in the edit dialog. The FE re-fetches the permission from the server (GET `/api/v1/master-permissions/{id}`) just before the PATCH and sends those fields unchanged together with the edited `name` and `description`. Tests must cover: (1) the PATCH body carries the freshly fetched values of the read-only fields, not the stale list values (e.g. the server changed `active` or `customerPermitted` after the list loaded); (2) those fields are not editable controls in the dialog; (3) a failed re-fetch blocks the PATCH and shows the error. Acceptance: component tests show no create control, no active switch and no delete control render even when the session holds `master_permissions:view`, `:create`, `:update`, `:delete` and `:activate`/`:deactivate` keys; the edit of name/description sends exactly one PATCH with the full current body and `key` unchanged; the edit action is hidden without `master_permissions:update`; invalidation after edit matches D12.1; `tsc`, `eslint` and `vitest` PASS, with TODO-011, TODO-013 and TODO-015 related regressions (tenant permissions tab, role permission checklist) PASS. File-provenance rows are added at `/build`, not here.
+Decision: user decision 2026-10-12. Amendment: added as v1.8 of this artifact; TODO-013 stays Completed. Files verified by grep: all use of `createMasterPermission`, `deleteMasterPermission` and `RowDeleteButton` for master permissions is in the files listed above; `RowDeleteButton` itself (`src/components/delete-button.tsx`) is still used by tenant categories and countries and is not changed. `src/app/router.tsx`, `src/app/navigation.ts` and the route guard keep `master_permissions:view` and are not changed. Added acceptance criterion (user, 2026-10-12): fields other than `name` and `description` (`key`, `category`, `module`, `active`, `customerPermitted`) are read-only in the edit dialog. The FE re-fetches the permission from the server (GET `/api/v1/master-permissions/{id}`) just before the PATCH and sends those fields unchanged together with the edited `name` and `description`. Tests must cover: (1) the PATCH body carries the freshly fetched values of the read-only fields, not the stale list values (e.g. the server changed `active` or `customerPermitted` after the list loaded); (2) those fields are not editable controls in the dialog; (3) a failed re-fetch blocks the PATCH and shows the error. Rework amendment (QA M1, user-ordered 2026-10-12): if the re-fetched permission lacks `active` or `customerPermitted`, the save is refused with an error message and no PATCH is sent; no invented defaults (`active ?? true`, `customerPermitted ?? false`) remain. Tests (in `permission-list-page.test.tsx` or the dialog test file) cover both fields: missing `active` and missing `customerPermitted` each show the error and send zero PATCH. The auth-service `MasterPermissionResponse` defines both as primitive booleans, so the live GET always includes them; the guard only prevents invented values if the contract changes. Acceptance: component tests show no create control, no active switch and no delete control render even when the session holds `master_permissions:view`, `:create`, `:update`, `:delete` and `:activate`/`:deactivate` keys; the edit of name/description sends exactly one PATCH with the full current body and `key` unchanged; the edit action is hidden without `master_permissions:update`; invalidation after edit matches D12.1; `tsc`, `eslint` and `vitest` PASS, with TODO-011, TODO-013 and TODO-015 related regressions (tenant permissions tab, role permission checklist) PASS. File-provenance rows are added at `/build`, not here.
+
+---
+
+# TODO-022
+
+Description:
+
+Two changes on Tim IT, from user decision 2026-10-14 (ARCH-FE-001 v1.0.5, Approved 2026-10-14; REQ-FE-052, REQ-FE-053, D4.10, D13.1). No other behavior changes.
+
+(1) Suspend other-account sessions (REQ-FE-052, REQ-FE-032, D4.10). Add one exported constant `OTHER_ACCOUNT_SESSIONS_ENABLED = false` in the system-users feature (`src/features/team/users/access.ts`), with a comment citing SP-BG-14. `canViewUserSessions` returns true only when the flag is `true` and the session holds `sessions:view`. On `/system-users/:id` while the flag is `false`: no "Sesi aktif" tab and no force-logout action for any other account, and no request to either sessions endpoint from this page. For the own account (target id equals the signed-in id) the page shows a link to `/account/sessions` instead of the tab content. `user-sessions-tab.tsx` and `src/lib/api/modules/sessions.ts` are kept (not deleted), so the flag can be flipped by a later amendment. `canForceLogout` stays and also requires the flag.
+
+(2) Fixed copy for guard refusals (REQ-FE-053, D13.1). New shared module `src/features/team/shared/guard-failure.ts`, used by `src/features/team/users/user-failure.ts` and `src/features/team/roles/role-failure.ts` (both keep their other mappings). The mapper branches on HTTP status plus `code` only, never on message text, never returns the raw server `message` for these codes, and keeps the correlation id as the reference id. The caller passes the context (`role` or `account`). Copy:
+
+- 409 `SELF_ACTION_NOT_ALLOWED`: "Aksi ini tidak dapat dilakukan pada akun Anda sendiri."
+- 409 `LAST_SYSTEM_PRINCIPAL`: "Aksi ditolak. Harus selalu ada minimal satu administrator utama yang aktif."
+- 409 `SYSTEM_ROLE_IN_USE`: "Peran masih dipakai akun. Pindahkan akunnya ke peran lain, lalu coba lagi."
+- 503 `SERVICE_UNAVAILABLE`: "Layanan sedang sibuk. Perubahan belum disimpan, silakan coba lagi."
+- 403 `PLATFORM_ROLE_PROTECTED`, role context: "Peran administrator utama dilindungi dan tidak dapat diubah atau dihapus."
+- 403 `PLATFORM_ROLE_PROTECTED`, account context: "Hanya administrator utama yang aktif yang dapat melakukan aksi ini terhadap akun administrator utama."
+
+Applies only to system account pages (Tim IT > Akun: create, detail, role change, status change, reset password, delete) and system role pages (Tim IT > Peran: create, edit, delete, permission replace).
+
+Unrecognised codes (Tim IT pages only, user decision 2026-10-14): a 409 or 503 whose `code` is not one of the codes above and has no own handling never shows server text; correlation id still shown as the reference id. Other 409 = "Perubahan bertentangan dengan data terbaru. Muat ulang halaman, lalu coba lagi." Other 503 = same copy as `SERVICE_UNAVAILABLE` ("Layanan sedang sibuk. Perubahan belum disimpan, silakan coba lagi."). Done in `guard-failure.ts`, `user-failure.ts` and `role-failure.ts`. Other statuses keep the existing mapping. Codes with own handling, `SYSTEM_USER_LOGIN_EXISTS` and `SYSTEM_ROLE_KEY_EXISTS`, are unchanged. `ACCOUNT_NOT_ACTIVE` is out of scope (handled at login); noted only. Role pages that use `isRoleRefusal` keep marking the role as refused (`refused-roles.ts`); only the displayed text changes to the fixed copy.
+
+Rework (user decision 2026-10-14, File scope unchanged): (a) M1: `OwnSessionsLink` in `src/features/team/users/user-detail-page.tsx` uses `AppLink` from `src/features/auth/components/app-link.tsx` instead of Button+navigateTo; the test queries role "link". (b) OQ2: `ROLE_GUARD_VIOLATION` (403) on system role pages uses the same fixed copy as `PLATFORM_ROLE_PROTECTED` in role context ("Peran administrator utama dilindungi dan tidak dapat diubah atau dihapus.") and still marks the role refused (`isRoleRefusal`); ARCH-FE-001 D13.1 correction is recorded concurrently by architect-frontend.
+
+Owner:
+
+developer_frontend
+
+Status:
+
+Completed (2026-10-14; rework done: QA/review M1 and OQ2; Unit Test Report v1.2 PASS)
+
+Priority:
+
+High
+
+Dependencies:
+
+Gate: ARCH-FE-001 v1.0.5 Approved 2026-10-14 (user decision). Gate line satisfied; the orchestrator records the gate clearance in `orchestration-state.md`. TODO stays Not Started until `/build`. Regression gate: TODO-014 (system users), TODO-015 (system roles) and TODO-021 must stay PASS. External, not blocking: SP-BG-14 (platform item, Open; the sessions endpoint for system users `/api/v1/system-users/{id}/sessions`; the flag stays `false` until it is Closed). Not blocking: FE-OQ-39 and FE-OQ-40 (both Open with documented defaults; the architect is recording the answers concurrently; defaults: flag stays `false`; tenant role paths unchanged, every system-user action page uses the account copy, every system-role page uses the role copy). Prerequisite TODOs: TODO-014, TODO-015 (Completed).
+
+Related Requirement:
+
+REQ-FE-052, REQ-FE-053, REQ-FE-032, REQ-FE-008, REQ-FE-018
+
+Related ADR:
+
+ADR-003, ADR-005, ADR-002
+
+Related Architecture:
+
+ARCH-FE-001 v1.0.5 REQ-FE-052, REQ-FE-053, D4.10, D13.1, D6.4, D6.6, D7, BG-13, FE-OQ-22, FE-OQ-39, FE-OQ-40
+
+File scope:
+
+- `src/features/team/shared/guard-failure.ts` (new)
+- `src/features/team/shared/guard-failure.test.ts` (new)
+- `src/features/team/users/user-failure.ts`
+- `src/features/team/roles/role-failure.ts`
+- `src/features/team/users/access.ts` (add `OTHER_ACCOUNT_SESSIONS_ENABLED`; `canViewUserSessions` requires the flag; `canForceLogout` requires the flag)
+- `src/features/team/users/access.test.ts`
+- `src/features/team/users/user-detail-page.tsx`
+- `src/features/team/users/user-detail-page.test.tsx`
+- `src/features/team/users/user-detail-page.gaps.test.tsx`
+- `src/features/team/users/user-sessions-tab.tsx` (kept; only its failure-helper call is adjusted if the signature changes)
+- `src/features/team/users/use-user-actions.ts`, `user-create-dialog.tsx`, `user-role-dialog.tsx` (callers of `describeUserWriteFailure`; pass the `account` context only if the signature requires it)
+- `src/features/team/roles/use-role-actions.ts`, `role-form-dialog.tsx`, `role-permissions-tab.tsx` (callers of `describeRoleWriteFailure`; pass the `role` context only if the signature requires it)
+- `src/features/team/roles/role-detail-page.test.tsx`, `role-list-page.test.tsx`, `role-screens-gaps.test.tsx`, `refused-roles.test.tsx` (component tests per code and text expectations of the old server text)
+- `src/features/team/users/user-list-page.test.tsx`, `user-list-page.gaps.test.tsx` (adjust only if they assert the old server text for 409 or 503)
+- `src/features/team/users/test-support.tsx`, `src/features/team/roles/test-support.tsx` (only if shared helpers are needed)
+- `src/lib/api/modules/sessions.ts` and `sessions.test.ts` (kept, not changed)
+- `src/features/tenants/create/tenant-create-page.test.tsx` (test-only; one added test, no tenant production code change)
+
+Notes:
+
+Rework 2026-10-14 (user-ordered, QA/review M1 and OQ2): TODO-022 returned to In Progress. Acceptance added: 3c. `OwnSessionsLink` renders `AppLink` and the own-account test queries role "link" (no Button, no navigateTo). 3d. `ROLE_GUARD_VIOLATION` 403 on role context returns the fixed `PLATFORM_ROLE_PROTECTED` role copy, never the server message, correlation id passed through, and the role is still marked refused: a case in `guard-failure.test.ts` or `role-failure` tests plus one role page test. Before adding any path to File scope, verify by grep; none is expected. Gate commands unchanged, exactly: `tsc -b`, `eslint .`, `vitest run --passWithNoTests`; all three must PASS again, with TODO-014, TODO-015, TODO-021 regressions PASS.
+
+First completion: Completed 2026-10-14. Unit Test Report v1.1 `output/reports/unit-test-report-TODO-022.md` `execution_overall: PASS` (tsc -b, eslint ., vitest run --passWithNoTests all exit 0; 998 passed in 77 files). File-provenance rows FP-238 to FP-252. TS2345 type error fixed; tenant test 3b (`tenant-create-page.test.tsx`) added, no tenant production code changed. Files verified by grep (2026-10-14): `describeUserWriteFailure` callers are `use-user-actions.ts`, `user-create-dialog.tsx`, `user-role-dialog.tsx` and `user-sessions-tab.tsx`; `describeRoleWriteFailure` callers are `use-role-actions.ts`, `role-form-dialog.tsx` and `role-permissions-tab.tsx`. `features/team/shared/` does not exist yet. The codes `SYSTEM_ROLE_IN_USE`, `PLATFORM_ROLE_PROTECTED`, `LAST_SYSTEM_PRINCIPAL` and `SELF_ACTION_NOT_ALLOWED` appear in source only in `roles/access.ts` and `role-failure.ts`; they appear in tests for roles only. The sessions page for the own account is `src/features/auth/sessions-page.tsx` (route `/account/sessions`), not changed. Tenant role path: grep found no tenant role API module or screen in this repository (only `system-roles.ts`), so there is no tenant path to protect today; the acceptance below includes a test that the mapper is not reached from tenant, catalog or other non-team screens (they keep `describeWriteFailure` unchanged). `describeWriteFailure` today returns the raw server `message` for any 409 or 503, so before this TODO other 409/503 on the team pages show raw text; after it, the guard codes show fixed copy, and any other 409/503 on team pages shows the fixed unrecognised-code copy (the earlier documented-default note that the raw-text fallthrough stays is removed: per user decision 2026-10-14 unrecognised 409/503 on Tim IT pages use fixed copy, via the Tim IT mappers only). Tests required (Vitest, RTL, MSW; gate commands, exactly: `tsc -b`, `eslint .`, `vitest run --passWithNoTests`; all three PASS; `tsc --noEmit` (`npm run typecheck`) is not a substitute because its root tsconfig has no files and checks nothing, see OQ-P-61):
+
+1. `guard-failure.test.ts`: each code returns its copy; each case is run with a server `message` that differs from the copy and the result never contains it; branching ignores message text (same status and code with different messages gives the same copy); a code with the wrong status falls through; correlation id is passed through; `PLATFORM_ROLE_PROTECTED` returns different strings for `role` and `account`.
+2. Component tests on the system account pages (detail and its action dialogs) and the system role pages (list, detail, form, permissions tab): one test per code that shows the fixed copy, not the server message, with the reference id still shown; one test that `PLATFORM_ROLE_PROTECTED` shows the role copy on a role page and the account copy on an account page, and the two differ; `SYSTEM_USER_LOGIN_EXISTS` and `SYSTEM_ROLE_KEY_EXISTS` still use their own handling.
+3. Detail page: another account shows no "Sesi aktif" tab and no force-logout, and makes no sessions request; the own account shows the link to `/account/sessions`; the flag is `false`. Adjust the existing tests that open the tab or force logout (`user-detail-page.test.tsx` "Sesi aktif tab (D4.10)", `user-detail-page.gaps.test.tsx` "Sesi aktif tab gates and behaviour (D4.10)" and its force-logout block, and `access.test.ts` `canForceLogout` and `canViewUserSessions`) to the new behavior; the tab-level tests may exercise `user-sessions-tab.tsx` directly or via the flag mocked to `true` so the kept code stays covered.
+3a. Unknown-code tests: `guard-failure.test.ts` covers an unrecognised-code 409 (fixed conflict copy, never the server message, correlation id passed through) and an unrecognised-code 503 (same copy as `SERVICE_UNAVAILABLE`). Account page component test: a 409 with an unknown code shows no server text and still shows the reference id; the same for a 503 with an unknown code. Role page component test: the same two variants. `SYSTEM_USER_LOGIN_EXISTS` and `SYSTEM_ROLE_KEY_EXISTS` tests unchanged. The existing tenants `write-failure` tests stay unchanged and PASS.
+3b. Tenant guard test (test-only, `src/features/tenants/create/tenant-create-page.test.tsx`, the existing test file of the tenant create page, verified by grep 2026-10-14): one added test that a 409 with an unrecognised `code` on the tenant create page still shows the server `message` (old `describeWriteFailure` behavior), proving the new team guard mapping is not used there. No other edit to that file.
+4. Regressions TODO-014, TODO-015, TODO-021 PASS.
+
+Must not change: `src/features/tenants/create/write-failure.ts` (`describeWriteFailure`) and its tests, and all tenant production code (`tenant-create-page.tsx` and the rest of `src/features/tenants/`); only the test file `src/features/tenants/create/tenant-create-page.test.tsx` may be edited, and only to add the test in item 3b. It is shared with tenant and catalog screens and keeps returning the server `message` for them; verify only, no edit. Acceptance also: `OTHER_ACCOUNT_SESSIONS_ENABLED` is one exported constant, `false`, with a comment citing SP-BG-14. Plan source: user-approved plan 2026-10-14. Decision: user decision 2026-10-14. Amendment: TODO-022 added as v1.12 of this artifact; TODO-014, TODO-015 and TODO-021 stay Completed. File-provenance rows are added at `/build`, not here.
+
+# TODO-023
+
+Description:
+
+Remove the "Hapus" action on system account pages (Tim IT > Akun), in the list and on the detail page (user decision 2026-10-14; ARCH-FE-001 v1.0.6, Approved 2026-10-14: REQ-FE-054, D6.4, D13.1a). Reason: auth-service `DELETE /system-users/{id}` only sets the status to DEACTIVATED (no hard delete, no soft delete), identical to "Nonaktifkan", so a "Hapus" control is misleading. No other behavior changes.
+
+(1) No "Hapus" control on `/system-users` (row actions) or `/system-users/:id`, even when the session holds `system_users:delete`. The delete kind is removed from the action buttons, `use-user-actions.ts` (confirm copy, `deleteSystemUser` call, `onDeleted` option and the navigation after delete in `user-detail-page.tsx`) and from `access.ts` (`canDelete` and its use in the any-action check; the `USERS_DELETE` constant is removed or left unused only if the architecture amendment says so, otherwise removed).
+
+(2) Tangguhkan and Nonaktifkan stay. Their confirmation dialogs get explanatory text:
+
+- Tangguhkan: "Blokir sementara akun ini, misalnya saat cuti atau investigasi. Semua sesinya diakhiri. Bisa diaktifkan kembali."
+- Nonaktifkan: "Untuk anggota yang sudah tidak bertugas. Semua sesinya diakhiri. Bisa diaktifkan kembali bila diperlukan."
+
+(3) `deleteSystemUser` stays in `src/lib/api/modules/system-users.ts`, unused by the UI, and its module test in `system-users.test.ts` is kept. `eslint .` does not flag unused exports (no rule for it in `eslint.config.js`; verify by running the gate). Not touched: `src/components/delete-button.tsx` (`RowDeleteButton`, still used by tenant categories, countries and system roles) and the roles feature (system role delete stays).
+
+Owner:
+
+developer_frontend
+
+Status:
+
+Completed (2026-10-14)
+
+Priority:
+
+Medium
+
+Dependencies:
+
+Gate: ARCH-FE-001 v1.0.6 (REQ-FE-054, D6.4) is Approved 2026-10-14 (user approval). The orchestrator records gate clearance in `orchestration-state.md`; this TODO does not touch that file. Prerequisite TODOs: TODO-022 (Completed 2026-10-14), TODO-014 (Completed). Regression gate: TODO-014, TODO-015, TODO-021 and TODO-022 must stay PASS.
+
+Related Requirement:
+
+REQ-FE-054 (new in v1.0.6; no "Hapus" on system accounts, no UI call of `deleteSystemUser`), REQ-FE-030 (amended: no delete), REQ-FE-031, REQ-FE-039 (amended: confirm dialogs for delete exclude system accounts), REQ-FE-053. Confirmed against v1.0.6 by grep 2026-10-14; REQ-FE-032 (another user's sessions) is not touched.
+
+Related ADR:
+
+ADR-003, ADR-005, ADR-002 (as for TODO-022)
+
+Related Architecture:
+
+ARCH-FE-001 v1.0.6 (Approved 2026-10-14): D13.1a, D6.4, D6.6, D7, D12.1, D19, D13.1
+
+File scope:
+
+Production (frontend-only, all under `src/features/team/users/` unless stated; verified by grep 2026-10-14):
+
+- `src/features/team/users/use-user-actions.ts` (remove the delete kind, confirm copy, `deleteSystemUser` import and call, `onDeleted` and the delete branch of the D12.1 system user invalidation (D12.1 now lists no delete for system users); add the two explanatory texts to the suspend and deactivate confirm configs)
+- `src/features/team/users/user-action-buttons.tsx` (remove the "Hapus" action and the `RowDeleteButton` import)
+- `src/features/team/users/user-list-page.tsx` (comment only, if the header comment mentions delete; no `onDeleted` use found)
+- `src/features/team/users/user-detail-page.tsx` (remove `onDeleted` and the navigate-after-delete; header comment)
+- `src/features/team/users/access.ts` (remove `canDelete`, `USERS_DELETE` and their use in the any-action check)
+- New test (static, REQ-FE-054): `src/features/team/users/no-delete-system-user.test.ts` (reads the sources under `features/team/users` and asserts none imports or references `deleteSystemUser`; test-only file, new). ARCH-FE-001 v1.0.6 names no other new path; grep 2026-10-14 finds `deleteSystemUser` only in `lib/api/modules/system-users.ts` (kept), its test, and `features/team/users/use-user-actions.ts`.
+- Kept unchanged: `src/lib/api/modules/system-users.ts` (`deleteSystemUser` stays), `src/components/delete-button.tsx`, `src/features/team/roles/*`.
+
+Tests (every file below references Hapus or delete; see impact list):
+
+- `src/features/team/users/access.test.ts` (canDelete cases removed or changed to assert no delete capability)
+- `src/features/team/users/test-support.tsx` (the `system_users:delete` permission stays in the all-permissions fixture so tests can prove no Hapus renders; no other change expected)
+- `src/features/team/users/user-list-page.test.tsx`
+- `src/features/team/users/user-list-page.gaps.test.tsx`
+- `src/features/team/users/user-detail-page.test.tsx`
+- `src/features/team/users/user-detail-page.gaps.test.tsx`
+- `src/features/team/users/role-inactive.test.tsx` (one Hapus/delete reference; adapt if it asserts the control)
+- `src/lib/api/modules/system-users.test.ts` (kept, `deleteSystemUser` module test unchanged)
+
+Notes:
+
+Checkpoint D signed off (Go) by the user 2026-10-14. Low follow-up (review L1 / QA, non-blocking, Gating No; tech-debt-register.md does not exist in this greenfield project, so recorded here): the static test `no-delete-system-user.test.ts` (FP-253) only checks the text `deleteSystemUser`; it does not check `system_users:delete` or `RowDeleteButton`. Optional hardening later.
+
+Completed 2026-10-14. Unit Test Report `output/reports/unit-test-report-TODO-023.md` `execution_overall: PASS` (tsc -b, eslint ., vitest run --passWithNoTests exit 0; 994 passed in 78 files). Provenance rows FP-253 to FP-263. The four list-page tests that exercised Hapus were re-targeted to Tangguhkan. Plan source: user decision 2026-10-14; ARCH-FE-001 v1.0.6 Approved 2026-10-14.
+
+FE-OQ-41 (Answered, documented default): `system_users:delete` stays in the permission catalogue and role checklist; no FE filtering; `deleteSystemUser` stays in the API module. FE-OQ-42 (Answered, documented default): tests that need `PLATFORM_ROLE_PROTECTED` on an account page use role change or reset password; suspend and deactivate tests do not assert it. Both are non-blocking and need no work in this TODO beyond not filtering the permission list. File-provenance rows are added at `/build`, not here. Gate commands, exactly: `tsc -b`, `eslint .`, `vitest run --passWithNoTests`; all three must PASS (`npm run typecheck` is not a substitute, see OQ-P-61).
+
+Scope decision (user, 2026-10-14): TODO-023 only removes the Hapus block and the tests that exercise it. Other TODO-022 guard tests are NOT re-pointed. Verified by grep 2026-10-14: in `user-detail-page.gaps.test.tsx` the `GUARD_CASES` run in four blocks (delete, reset password, role change, status change); only the delete block (`it.each` near line 835) is removed, the other three blocks and the dedicated `PLATFORM_ROLE_PROTECTED` test stay as they are. In `user-list-page.gaps.test.tsx` the delete tests (near lines 207-415 and the "Hapus" in the permission matrix at line 114) are removed; they are not TODO-022 guard-code tests. The D13.1a re-pointing wording in ARCH-FE-001 is not applied beyond this removal.
+
+Other tests to remove or adapt (all that use the Hapus button): `user-detail-page.gaps.test.tsx` (action matrix lines ~136-219, `it.each` at ~257, 403/404 on delete ~336-365, in-flight delete ~518, helper branch ~126); `user-detail-page.test.tsx` (~152-170, ~266-268; own-account test keeps asserting no Hapus); `user-list-page.test.tsx` (17 references, delete flow); `access.test.ts`. Tests required: (a) no Hapus control renders in the list or on the detail page, for any user status, own or other account, even with `system_users:delete`; (b) the Tangguhkan confirm dialog shows its explanatory text and the Nonaktifkan confirm dialog shows its text (exact strings above); (c) suspend, deactivate, reactivate, reset password and role change flows unchanged; (d) `system-users.test.ts` still PASS for `deleteSystemUser`; (e) static test (REQ-FE-054): no source under `src/features/team/users` imports or references `deleteSystemUser`; (f) no Hapus control for any status, own or other account, even with `system_users:delete` in the session (restated from (a)); (g) the two dialog texts match the strings above exactly; (h) D12.1: no invalidation is wired for system user delete; the system user create, role change, status change and reset password invalidations stay; (i) role pages (`team/roles`) and tenant, catalog delete controls are unaffected (their tests PASS unchanged).
 
 ---
 

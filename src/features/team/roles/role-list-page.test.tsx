@@ -18,6 +18,7 @@ import { ROLE_KEY_TAKEN } from "@/test/handlers/system-roles"
 import { server } from "@/test/server"
 
 import { RoleListPage } from "./role-list-page"
+import { PROTECTED_ROLE_MESSAGE } from "../shared/guard-failure"
 import { ALL_ROLE_PERMISSIONS, renderWithClient } from "./test-support"
 import { confirmPermanent } from "@/test/confirm"
 
@@ -194,7 +195,8 @@ describe("gates per key (D6.4)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Hapus System Admin" }))
     confirmPermanent(await screen.findByRole("dialog"), "Hapus")
 
-    expect(await screen.findByText("Operation not permitted.")).toBeInTheDocument()
+    expect(await screen.findByText(PROTECTED_ROLE_MESSAGE)).toBeInTheDocument()
+    expect(screen.queryByText("Operation not permitted.")).not.toBeInTheDocument()
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Ubah System Admin" })).toBeDisabled()
     })

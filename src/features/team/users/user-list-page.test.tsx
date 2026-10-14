@@ -28,7 +28,6 @@ import { server } from "@/test/server"
 import { ALL_USER_PERMISSIONS, renderWithClient } from "./test-support"
 import { ROLE_NOT_FOUND_MESSAGE } from "./user-failure"
 import { UserListPage } from "./user-list-page"
-import { confirmPermanent } from "@/test/confirm"
 
 const authMock = vi.hoisted(() => ({ permissions: [] as readonly string[] }))
 vi.mock("@/app/providers/auth-provider", () => ({
@@ -171,7 +170,7 @@ describe("self-protection (D6.6)", () => {
     expect(screen.getAllByText("self")).toHaveLength(1)
   })
 
-  it("offers no suspend, deactivate or delete for the own account even with every permission", async () => {
+  it("offers no suspend or deactivate for the own account even with every permission", async () => {
     renderPage()
     await ready()
 
@@ -191,7 +190,9 @@ describe("self-protection (D6.6)", () => {
     expect(
       other.getByRole("button", { name: /Nonaktifkan/ })
     ).toBeInTheDocument()
-    expect(other.getByRole("button", { name: /Hapus/ })).toBeInTheDocument()
+    expect(
+      other.queryByRole("button", { name: /Hapus/ })
+    ).not.toBeInTheDocument()
   })
 })
 
@@ -232,7 +233,7 @@ describe("gates (D6.4)", () => {
 
     expect(button("Tambah akun")).not.toBeInTheDocument()
     expect(
-      button(/Tangguhkan|Nonaktifkan|Aktifkan|Hapus|Reset password/)
+      button(/Tangguhkan|Nonaktifkan|Aktifkan|Reset password/)
     ).not.toBeInTheDocument()
   })
 
@@ -240,17 +241,12 @@ describe("gates (D6.4)", () => {
     [
       "system_users:update",
       /Tangguhkan|Nonaktifkan|Aktifkan/,
-      /Hapus|Reset password/,
-    ],
-    [
-      "system_users:delete",
-      /Hapus/,
-      /Tangguhkan|Nonaktifkan|Aktifkan|Reset password/,
+      /Reset password/,
     ],
     [
       "system_users:reset_password",
       /Reset password/,
-      /Tangguhkan|Nonaktifkan|Aktifkan|Hapus/,
+      /Tangguhkan|Nonaktifkan|Aktifkan/,
     ],
   ])("%s shows only its own actions", async (key, shown, hidden) => {
     authMock.permissions = ["system_users:view", key]
@@ -369,31 +365,6 @@ describe("confirm dialogs (REQ-FE-039)", () => {
     expect(calls[0]?.body).toEqual({ status: "ACTIVE" })
   })
 
-  it("deletes after confirmation and refetches the list", async () => {
-    let deletes = 0
-    let lists = 0
-    server.use(
-      http.delete(`${API}/system-users/:id`, () => {
-        deletes += 1
-        return HttpResponse.json({ data: null })
-      }),
-      http.get(`${API}/system-users`, () => {
-        lists += 1
-        return HttpResponse.json({ data: FIXTURE_USERS })
-      })
-    )
-    const dialog = await open("Hapus ops@gaia.com")
-    expect(deletes).toBe(0)
-
-    confirmPermanent(dialog, "Hapus")
-
-    await waitFor(() =>
-      expect(toastMock.success).toHaveBeenCalledWith("Akun dihapus.")
-    )
-    expect(deletes).toBe(1)
-    await waitFor(() => expect(lists).toBe(2))
-  })
-
   it("resets the password after confirmation and shows the e-mail notice", async () => {
     let posts = 0
     server.use(
@@ -458,7 +429,7 @@ describe("confirm dialogs (REQ-FE-039)", () => {
     expect(resetButton).toBeDisabled()
     expect(resetButton).toHaveTextContent("Mengirim...")
     expect(
-      screen.getByRole("button", { name: "Hapus ops@gaia.com" })
+      screen.getByRole("button", { name: "Tangguhkan ops@gaia.com" })
     ).toBeDisabled()
     fireEvent.click(resetButton)
     release()
