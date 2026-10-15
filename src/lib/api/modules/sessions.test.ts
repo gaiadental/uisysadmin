@@ -177,10 +177,10 @@ describe("own sessions (D4.9)", () => {
 })
 
 describe("sessions of another user (D4.10, FE doc 5.6)", () => {
-  it("lists the sessions of one user from the admin path", async () => {
+  it("lists the sessions of one user from the system-users path", async () => {
     let requestedPath = ""
     server.use(
-      http.get(`${API}/admin/users/:userId/sessions`, ({ request }) => {
+      http.get(`${API}/system-users/:userId/sessions`, ({ request }) => {
         requestedPath = new URL(request.url).pathname
         return HttpResponse.json({ data: [FIXTURE_SESSION] })
       })
@@ -189,13 +189,13 @@ describe("sessions of another user (D4.10, FE doc 5.6)", () => {
     const sessions = await listUserSessions(USER_ID)
 
     expect(sessions).toEqual([FIXTURE_SESSION])
-    expect(requestedPath).toBe(`/api/v1/admin/users/${USER_ID}/sessions`)
+    expect(requestedPath).toBe(`/api/v1/system-users/${USER_ID}/sessions`)
   })
 
   it("lists the admin sessions of a user when lastActivityAt is null", async () => {
     const neverUsed = { ...FIXTURE_OTHER_SESSION, lastActivityAt: null }
     server.use(
-      http.get(`${API}/admin/users/:userId/sessions`, () =>
+      http.get(`${API}/system-users/:userId/sessions`, () =>
         HttpResponse.json({ data: [neverUsed] })
       )
     )
@@ -209,7 +209,7 @@ describe("sessions of another user (D4.10, FE doc 5.6)", () => {
   it("force logout sends one DELETE for the user and resolves", async () => {
     let method = ""
     server.use(
-      http.delete(`${API}/admin/users/:userId/sessions`, ({ request }) => {
+      http.delete(`${API}/system-users/:userId/sessions`, ({ request }) => {
         method = request.method
         return HttpResponse.json({
           data: { status: "SESSIONS_REVOKED", count: 1 },
@@ -223,7 +223,7 @@ describe("sessions of another user (D4.10, FE doc 5.6)", () => {
 
   it("maps 403 PERMISSION_DENIED from force logout to an HTTP error", async () => {
     server.use(
-      http.delete(`${API}/admin/users/:userId/sessions`, () =>
+      http.delete(`${API}/system-users/:userId/sessions`, () =>
         HttpResponse.json(
           {
             code: "PERMISSION_DENIED",
@@ -246,7 +246,7 @@ describe("sessions of another user (D4.10, FE doc 5.6)", () => {
 
   it("throws CONTRACT when the admin list is not an array", async () => {
     server.use(
-      http.get(`${API}/admin/users/:userId/sessions`, () =>
+      http.get(`${API}/system-users/:userId/sessions`, () =>
         HttpResponse.json({ data: FIXTURE_SESSION })
       )
     )

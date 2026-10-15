@@ -31,7 +31,7 @@ export type RevokeOwnResult = z.infer<typeof RevokeOwnResultSchema>
  * Body of DELETE /api/v1/sessions (revoke all other sessions). The live backend
  * answers `{ status: "SESSIONS_REVOKED", count }`, not `null`; `count` is the
  * number of sessions revoked (0 when there were none). The admin force logout,
- * DELETE /api/v1/admin/users/{userId}/sessions, answers the same shape.
+ * DELETE /api/v1/system-users/{userId}/sessions, answers the same shape.
  */
 export const RevokeOthersResultSchema = z.object({
   status: z.string(),

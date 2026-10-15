@@ -1455,7 +1455,7 @@ Low follow-up (user decision 2026-10-15, not part of TODO-024): other tabs that 
 Checkpoint D (user decision 2026-10-15): Low tech debt, Gating No, recorded here (no `tech-debt-register.md` in this project):
 - L5: login path, `me` 401 then refresh 403 leaves a stale pending notice that the login page shows on its next mount (`auth-provider.tsx` login).
 - L6: change-password classifier has no account-code branch and the change-password page test has no account-code case (`auth-messages.ts`, `change-password-page.tsx`).
-- Observation (not a TODO-024 defect): one full gate run had 3 timeouts in `login-page.test.tsx` (D4.5 credentials test), `change-password-page.test.tsx` (D4.6 wrong current password test) and `app-sidebar-badges.test.tsx` (failed-count badge). Not reproduced in later runs; cause not proven. Second flaky observation (user decision 2026-10-15): `tenant-create-page.test.tsx` "focus moves to the heading" failed once in a full gate run and passed on rerun (outside TODO-024 scope; tenants module).
+- Observation (not a TODO-024 defect): one full gate run had 3 timeouts in `login-page.test.tsx` (D4.5 credentials test), `change-password-page.test.tsx` (D4.6 wrong current password test) and `app-sidebar-badges.test.tsx` (failed-count badge). Not reproduced in later runs; cause not proven. Second flaky observation (user decision 2026-10-15): `tenant-create-page.test.tsx` "focus moves to the heading" failed once in a full gate run and passed on rerun (outside TODO-024 scope; tenants module). Third flaky observation (user decision 2026-10-15, found in the TODO-026 QA): `tenant-create-page.test.tsx` "TenantCreatePage steps (D9) > stays on a step and shows the field errors while the step is invalid" failed once in a full gate run and passed on the next run (outside TODO-026 scope). The tenant-create-page flakes are recorded here with the other flaky tests.
 
 Checkpoint C and D approved by the user (2026-10-15). Unit Test Report v1.3, QA report v1.2 (Go) and tech doc and release notes v1.1 (Release Version "Not assigned") are Approved. Tech debt, Low, Gating No:
 - UT024-OQ5: a boot `me` 401 followed by a refresh 401 with an expiry code (no account reason) keeps the error view with no notice. Direction (user decision 2026-10-15): when `endSession` runs during boot for any reason, the result is anonymous; the notice is shown only for `accountNotActive` and `accountNotReady`.
@@ -1520,7 +1520,76 @@ Gate commands, exactly: `tsc -b`, `eslint .`, `vitest run --passWithNoTests`; al
 
 Approved by the user 2026-10-15: Unit Test Report, Code Review and QA report of TODO-025. Tech debt, Low, Gating No: L2 (no behaviour test renders `/reset-password` while authenticated; only the route flag is asserted).
 
-Chore, Low, for later (user decision 2026-10-15, not done now): `.vitest/json/output.json` is the output of a Vitest JSON reporter run, overwritten on every run, yet it is tracked. Add it to `.gitignore` and run `git rm --cached .vitest/json/output.json` in a separate change.
+Chore, Low, DONE 2026-10-15 in a separate commit (`.vitest/` added to `.gitignore`, `.vitest/json/output.json` untracked with `git rm --cached`; the local file stays) (user decision 2026-10-15): `.vitest/json/output.json` is the output of a Vitest JSON reporter run, overwritten on every run, yet it is tracked. Add it to `.gitignore` and run `git rm --cached .vitest/json/output.json` in a separate change. Scheduled with TODO-026 as a separate commit (user decision 2026-10-15); it is not part of TODO-026 File scope.
+
+---
+
+# TODO-026
+
+Description:
+
+Enable the sessions of another system account on the account detail page (Tim IT > Akun). Platform SP-BG-14 is Closed (user decision 2026-10-15). auth-service contract:
+- `GET /api/v1/system-users/{id}/sessions`: needs `sessions:view`; the caller is a system user. No principal protection on GET (checked by the user in auth-service `SystemUserSessionService.listSessions`: it never answers 403 `PLATFORM_ROLE_PROTECTED`), so no special handling for that case; a read error keeps the generic read message.
+- `DELETE /api/v1/system-users/{id}/sessions`: needs `sessions:revoke`. Own account -> 409 `SELF_ACTION_NOT_ALLOWED`. Target holds `SYS_PRINCIPAL` and the caller is not a principal -> 403 `PLATFORM_ROLE_PROTECTED`. Not a system user -> 404 `SYSTEM_USER_NOT_FOUND`. Success -> `SESSIONS_REVOKED`. Response shape equals the tenant session endpoints.
+
+(1) `src/lib/api/modules/sessions.ts`: the other-account functions (`listUserSessions`, `forceLogoutUser`) call `/api/v1/system-users/{id}/sessions` instead of `/api/v1/admin/users/{id}/sessions`. The route labels `admin.sessions.*` stay.
+(2) `src/features/team/users/access.ts`: `OTHER_ACCOUNT_SESSIONS_ENABLED = true` through the ARCH-FE-001 v1.0.13 amendment (D4.10, REQ-FE-032, REQ-FE-052). `canViewUserSessions` and `canForceLogout` never apply to the own account.
+(3) `user-detail-page.tsx`: the "Sesi aktif" tab shows for another account only (needs `sessions:view`); the own account keeps the link to `/account/sessions` ("Sesi saya").
+(4) Errors use the TODO-022 copy: `SELF_ACTION_NOT_ALLOWED`, `PLATFORM_ROLE_PROTECTED` (account-page version), unrecognised 409, 503, and 404 `SYSTEM_USER_NOT_FOUND`. The force logout button for a principal target follows the suspend and role-change pattern: it is visible and the server decides; no extra UI gate.
+(5) Tests, red first; update the tests that expect the flag `false`.
+
+Owner:
+
+developer_frontend
+
+Status:
+
+Completed (2026-10-15; pending the user's manual test, approvals and commit)
+
+Priority:
+
+Medium
+
+Dependencies:
+
+Gate: ARCH-FE-001 v1.0.13 (D4.10 including the fact that GET has no principal protection, REQ-FE-032, REQ-FE-052, D7, D8, BG-13 Closed, FE-OQ-39 Answered) Approved by the user decision 2026-10-15. Platform SP-BG-14 Closed. Prerequisites: TODO-014, TODO-022. Regression gate: TODO-014, TODO-015, TODO-021 to TODO-025 stay PASS.
+
+Related Requirement:
+
+REQ-FE-032 (changed), REQ-FE-052 (changed), REQ-FE-053, REQ-FE-017.
+
+Related ADR:
+
+ADR-003, ADR-005
+
+Related Architecture:
+
+ARCH-FE-001 v1.0.13: D4.10, D7, D8 (tim-akun), D13.1, BG-13.
+
+File scope:
+
+- `src/lib/api/modules/sessions.ts`, `src/lib/api/modules/sessions.test.ts`
+- `src/features/team/users/access.ts`, `src/features/team/users/access.test.ts`
+- `src/features/team/users/user-detail-page.tsx` (tab for another account only; link for the own account)
+- `src/features/team/users/user-sessions-tab.tsx` (comments only if needed; error handling uses the existing copy)
+- Tests: `src/features/team/users/user-detail-page.test.tsx`, `src/features/team/users/user-detail-page.gaps.test.tsx`, and a tab test file in `src/features/team/users/` for list, force logout success, 409 SELF, 403 PROTECTED, 404, 503
+- Added at `/build` (path and comment changes only; File scope amended by the orchestrator 2026-10-15): `src/test/handlers/auth.ts` (default MSW handlers moved from `/admin/users/:userId/sessions` to `/system-users/:userId/sessions`) and `src/types/session.ts` (one comment path); new test file `src/features/team/users/user-sessions-tab.test.tsx`
+- Not in scope: `.gitignore` and `.vitest/json/output.json` (separate chore commit)
+
+Tests required (red first):
+(a) `sessions.ts` GET and DELETE use `/api/v1/system-users/{id}/sessions` (MSW path test).
+(b) `OTHER_ACCOUNT_SESSIONS_ENABLED` is `true`; `canViewUserSessions` true with `sessions:view` for another account, false for the own account; `canForceLogout` true with `sessions:revoke` for another account, false for the own account.
+(c) Detail page of another account: the "Sesi aktif" tab shows with `sessions:view`, no tab without it; force logout button only with `sessions:revoke`.
+(d) Detail page of the own account: no tab; the link to `/account/sessions` shows.
+(e) Force logout: success shows the success toast and refreshes the list; 409 `SELF_ACTION_NOT_ALLOWED`, 403 `PLATFORM_ROLE_PROTECTED` (account copy), unrecognised 409, 503, 404 show the fixed copy with the reference id and never the server text.
+(f) Force logout button is visible for a principal target (no UI gate).
+(g) GET read error keeps the generic read message.
+
+Notes:
+
+Gate commands, exactly: `tsc -b`, `eslint .`, `vitest run --passWithNoTests`; all three exit 0. Manual test by the user before any commit (PASSED 2026-10-15: other-account sessions tab, force logout with the target thrown to `/login`, non-principal to principal shows the account PROTECTED copy, own account only the "Sesi saya" link). File-provenance rows are added at `/build` (update existing rows in place). Two commits: TODO-026, then the chore.
+
+Approved by the user 2026-10-15: Unit Test Report, Code Review and QA report of TODO-026. Tech debt, Low, Gating No (not done now): L-1 (a GET 503 on the sessions list shows the server message through `describeReadFailure` in `features/tenants/shared/failure.ts`; making Tim IT reads show fixed copy would be a new TODO) and L-2 (the GET 403 copy "Anda tidak punya akses untuk aksi ini." and the "Coba lagi" button are shared by every read screen).
 
 ---
 

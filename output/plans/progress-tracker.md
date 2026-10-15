@@ -22,6 +22,10 @@ Last Updated: 2026-10-15
 
 Approved: 2026-10-10 (user, Checkpoint B gate)
 
+Change: 2026-10-15 — TODO-026 Completed (Unit Test Report PASS, 1077 passed in 79 files; Code Review Approved, 0 Critical/High/Medium, 3 Low; QA Go; FP-017, 020, 021, 030, 256, 257, 258, 260, 261 updated, FP-265 added). Progress 25 of 26 (96.2%). Pending: the user's manual test, approvals, commits (TODO-026, then the .vitest chore).
+
+Change: 2026-10-15 — TODO-026 added (Not Started, Medium; enable the sessions of another system account on the account detail page; SP-BG-14 Closed; gate ARCH-FE-001 v1.0.13; user plan approval 2026-10-15). Total becomes 26 TODOs; 24 of 26 Completed. No TODO status changed.
+
 Change: 2026-10-15 — TODO-025 Completed (Unit Test Report PASS, 1066 passed in 78 files; Code Review Approved; QA Go; FP-036, FP-037, FP-039, FP-215 updated). Progress 24 of 25 (96.0%). Pending: the user's manual test, approvals, commit.
 
 Change: 2026-10-15 — TODO-025 added (Not Started, Low; user bug report: an authenticated user opening /login or /forgot-password is redirected to /; gate ARCH-FE-001 v1.0.12). Total becomes 25 TODOs; 23 of 25 Completed. No TODO status changed.

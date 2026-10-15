@@ -1,10 +1,9 @@
 /**
  * System user detail (`/system-users/:id`; REQ-FE-031, REQ-FE-032, REQ-FE-039;
  * ARCH-FE-001 D4.10, D6.4, D6.6, D7, D12.1). Tabs: Detail and "Sesi aktif"
- * (only with `sessions:view` and
- * `OTHER_ACCOUNT_SESSIONS_ENABLED`; suspended, so the own account shows a link
- * to `/account/sessions`). Actions follow `userActionAccess`: the own
- * account has no suspend, deactivate or role change. There is no "Hapus"
+ * (another account only, with `sessions:view`; the own account has no tab
+ * and shows a link to `/account/sessions`). Actions follow `userActionAccess`:
+ * the own account has no suspend, deactivate or role change. There is no "Hapus"
  * action (REQ-FE-054).
  */
 
@@ -118,7 +117,7 @@ function UserDetailView({ user }: { readonly user: SystemUser }) {
   const { me } = useAuth()
   const permissions = me?.permissions ?? []
   const access = userActionAccess(permissions, me?.userId ?? null, user)
-  const showSessions = canViewUserSessions(permissions)
+  const showSessions = canViewUserSessions(permissions, access.isSelf)
   const [tab, setTab] = useState<DetailTab>("detail")
   const [changingRole, setChangingRole] = useState(false)
   const actions = useUserActions()
@@ -192,7 +191,7 @@ function UserDetailView({ user }: { readonly user: SystemUser }) {
               </dl>
             </CardContent>
           </Card>
-          {access.isSelf && !showSessions ? <OwnSessionsLink /> : null}
+          {access.isSelf ? <OwnSessionsLink /> : null}
         </TabsContent>
         {showSessions ? (
           <TabsContent value="sessions" className="flex flex-col gap-4">
