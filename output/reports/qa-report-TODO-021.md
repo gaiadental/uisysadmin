@@ -3,8 +3,8 @@ id: QA-TODO-021
 title: QA Report TODO-021
 owner: qa
 status: Approved
-version: 1.0
-last_updated: 2026-10-12 14:30
+version: 1.1
+last_updated: 2026-10-12 14:40
 source_requirements: [REQ-FE-035, REQ-FE-018, REQ-FE-036, REQ-FE-040, REQ-FE-048]
 related_artifacts: [TODO-021, ARCH-FE-001 v1.0.4, ADR-002, ADR-003, ADR-005, CODE-REVIEW-TODO-021, unit-test-report-TODO-021]
 blocking_open_questions: 0
@@ -16,9 +16,9 @@ Owner: qa
 
 Status: Approved
 
-Version: 1.0
+Version: 1.1
 
-Last Updated: 2026-10-12 14:30
+Last Updated: 2026-10-12 14:40
 
 Source Requirements:
 - REQ-FE-035, REQ-FE-018, REQ-FE-036, REQ-FE-040, REQ-FE-048
@@ -31,7 +31,7 @@ Related Artifacts:
 ## At a Glance
 
 - Verifies TODO-021: Permission catalog is read-only; edit of name and description only, with a server re-fetch before PATCH.
-- Recommendation: Go. No Critical or High defect. One Medium (M1) is recommended for a fix before release.
+- Recommendation: Go. No Critical or High defect. M1 and M2 resolved in the v1.1 re-check.
 - Not verified live: the stack was not reachable to QA (see Scope Tested).
 
 ## Purpose
@@ -89,13 +89,24 @@ None.
 
 ### Medium
 
-- M1 (review M1) `permission-form-dialog.tsx` lines 108-109: `fresh.active ?? true` and `fresh.customerPermitted ?? false` invent a value when the re-fetched body omits the field, and the fallback branch is untested. The PATCH is a full body, so a missing field would be written back as a default. A deactivated permission could be silently reactivated, or a customer-permitted flag silently cleared. Reproduce: serve a GET without `active` for a permission stored as inactive, edit the name, save, and inspect the PATCH body (`active: true`). Likelihood is unknown: the live GET shape was not verified. Recommendation: fix before release (fail the save with an error, or omit the field, per the FE-OQ-38 decision) and add a test. This is a small change; it is the Developer's to implement and the user's to decide.
-- M2 (review M2) Redundant `canUpdate` checks. Quality only, no behavioral risk.
+- M1 (review M1) [RESOLVED in v1.1, see Re-check] `permission-form-dialog.tsx` lines 108-109: `fresh.active ?? true` and `fresh.customerPermitted ?? false` invent a value when the re-fetched body omits the field, and the fallback branch is untested. The PATCH is a full body, so a missing field would be written back as a default. A deactivated permission could be silently reactivated, or a customer-permitted flag silently cleared. Reproduce: serve a GET without `active` for a permission stored as inactive, edit the name, save, and inspect the PATCH body (`active: true`). Likelihood is unknown: the live GET shape was not verified. Recommendation: fix before release (fail the save with an error, or omit the field, per the FE-OQ-38 decision) and add a test. This is a small change; it is the Developer's to implement and the user's to decide.
+- M2 (review M2) [RESOLVED in v1.1, see Re-check] Redundant `canUpdate` checks. Quality only, no behavioral risk.
 
 ### Low
 
 - L1 No maximum length on `description`. The server rejects an over-long value and the alert shows it. Low risk.
 - L2 The dialog shows list-row values for the read-only fields while the PATCH uses fresh ones. A user may see a stale Status or role flag for a moment; the saved data is correct. Low risk.
+
+## Re-check (M1, 2026-10-12 14:40)
+
+Scope: working tree (uncommitted) changes in `src/features/catalog/master-permissions/`.
+
+1. M1 fallbacks removed: `?? true` / `?? false` are gone. After the re-fetch, `typeof fresh.active !== "boolean" || typeof fresh.customerPermitted !== "boolean"` clears busy state, shows "Data permission dari server tidak lengkap. Perubahan tidak disimpan." and returns before `updateMasterPermission`. Verified in code.
+2. Tests: `it.each(["active","customerPermitted"])` asserts the alert, zero PATCH, dialog still open, Simpan enabled, no success toast. A further test sends active=false and customerPermitted=true unchanged and asserts the PATCH body. Existing re-fetch tests now serve both flags.
+3. M2: `showActions` is the same `master_permissions:update` check; the Ubah button now renders unconditionally inside the already-gated column. Behavior unchanged (edit button and Aksi column only with `:update`); existing gate tests pass.
+4. Gates: `tsc -p tsconfig.app.json --noEmit` exit 0; `eslint src` exit 0; `vitest run` 75 files, 912 tests passed, 0 failed (was 909; +3 new).
+
+Status: M1 Resolved. M2 Resolved. No new defect. Live behavior still not verified (OQ1, OQ2 unchanged; the guard only matters if the contract changes). Recommendation: Go.
 
 ## Risk Assessment
 
@@ -103,9 +114,9 @@ Residual risk is Low to Medium. All acceptance criteria are met in automated tes
 
 ## Release Recommendation
 
-Go
+Go (restated at v1.1 after the M1 re-check)
 
-No Critical or High defect is open. M1 is recommended for a fix before release; if the user accepts it, record it as a known limitation. QA's recommendation is not the final release decision; that stays with the user.
+No Critical, High or Medium defect is open. M1 and M2 are resolved. QA's recommendation is not the final release decision; that stays with the user.
 
 ## Open Questions
 

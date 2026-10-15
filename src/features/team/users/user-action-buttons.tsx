@@ -1,11 +1,10 @@
 /**
  * The action buttons of one system user, shared by the list row and the detail
  * page (ARCH-FE-001 D6.4, D6.6). What shows comes from `userActionAccess`, so
- * the own account never gets suspend, deactivate, delete or role change. Every
+ * the own account never gets suspend, deactivate or role change. Every
  * button is disabled while any action is in flight (no double send).
  */
 
-import { RowDeleteButton } from "@/components/delete-button"
 import { Button } from "@/components/ui/button"
 import type { SystemUser } from "@/types/system-user"
 
@@ -25,7 +24,6 @@ interface ActionSpec {
   readonly allowed: boolean
   readonly label: string
   readonly busyLabel: string
-  readonly destructive: boolean
 }
 
 export function UserActionButtons({
@@ -41,35 +39,24 @@ export function UserActionButtons({
       allowed: access.canReactivate,
       label: "Aktifkan",
       busyLabel: "Mengaktifkan...",
-      destructive: false,
     },
     {
       kind: "suspend",
       allowed: access.canSuspend,
       label: "Tangguhkan",
       busyLabel: "Menangguhkan...",
-      destructive: false,
     },
     {
       kind: "deactivate",
       allowed: access.canDeactivate,
       label: "Nonaktifkan",
       busyLabel: "Menonaktifkan...",
-      destructive: false,
     },
     {
       kind: "resetPassword",
       allowed: access.canResetPassword,
       label: "Reset password",
       busyLabel: "Mengirim...",
-      destructive: false,
-    },
-    {
-      kind: "delete",
-      allowed: access.canDelete,
-      label: "Hapus",
-      busyLabel: "Menghapus...",
-      destructive: true,
     },
   ]
   return (
@@ -88,16 +75,6 @@ export function UserActionButtons({
       {specs
         .filter((spec) => spec.allowed)
         .map((spec) => {
-          if (spec.destructive) {
-            return (
-              <RowDeleteButton
-                key={spec.kind}
-                label={`${spec.label} ${user.loginId}`}
-                disabled={busy}
-                onClick={() => void actions.run(spec.kind, user)}
-              />
-            )
-          }
           const isRunning =
             actions.pending?.userId === user.id &&
             actions.pending.kind === spec.kind

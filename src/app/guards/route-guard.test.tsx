@@ -22,6 +22,7 @@ import {
   LOGIN_PATH,
   PASSWORD_CHANGE_PATH,
   RouteGuard,
+  resolveRouteAccess,
   type RouteAccess,
 } from "./route-guard"
 
@@ -359,5 +360,46 @@ describe("navigation items and routes share one gate (ARCH-FE-001 D6.3)", () => 
         me: PASSWORD_PENDING_ME,
       })
     ).toEqual([])
+  })
+})
+
+describe("guest-only public routes (ARCH-FE-001 D6.1, D10, REQ-FE-056)", () => {
+  const GUEST_ONLY: RouteAccess = { kind: "public", guestOnly: true }
+
+  it.each<[AuthStatus, Me | null, ReturnType<typeof resolveRouteAccess>]>([
+    ["authenticated", ME, { kind: "redirect", to: "/" }],
+    ["anonymous", null, { kind: "render" }],
+    [
+      "passwordChangeRequired",
+      CHANGE_REQUIRED_ME,
+      { kind: "redirect", to: PASSWORD_CHANGE_PATH },
+    ],
+    ["unknown", null, { kind: "booting" }],
+    ["error", null, { kind: "unavailable" }],
+  ])("resolveRouteAccess with status %s", (status, me, expected) => {
+    expect(resolveRouteAccess({ access: GUEST_ONLY, status, me })).toEqual(
+      expected
+    )
+  })
+
+  it("a public route that is not guest-only still renders for a session", () => {
+    expect(
+      resolveRouteAccess({ access: PUBLIC, status: "authenticated", me: ME })
+    ).toEqual({ kind: "render" })
+  })
+
+  it("/login and /forgot-password are guest-only, /reset-password is not", () => {
+    expect(routeAccessFor("/login")).toEqual({ kind: "public", guestOnly: true })
+    expect(routeAccessFor("/forgot-password")).toEqual({
+      kind: "public",
+      guestOnly: true,
+    })
+    expect(routeAccessFor("/reset-password")).toEqual({ kind: "public" })
+  })
+
+  it("an authenticated session on a guest-only route redirects to / and hides the page", () => {
+    const onRedirect = renderGuard(GUEST_ONLY, "authenticated", ME)
+    expectOutcome({ kind: "redirect", to: "/" }, onRedirect)
+    expect(onRedirect).toHaveBeenCalledTimes(1)
   })
 })

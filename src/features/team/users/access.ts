@@ -3,7 +3,7 @@
  * functions, so every gate is tested without a React tree. The backend
  * enforces; these decide only what the UI shows.
  *
- * Own account (`user.id === selfId`): no suspend, deactivate or delete, no role
+ * Own account (`user.id === selfId`): no suspend, deactivate, no role
  * change (D6.6, FE-OQ-25 default), and no force logout (the own sessions page
  * is used instead, D4.10). The backend has no such guard (SP-BG-13).
  */
@@ -13,11 +13,17 @@ import type { SystemUser } from "@/types/system-user"
 export const USERS_VIEW = "system_users:view"
 export const USERS_CREATE = "system_users:create"
 export const USERS_UPDATE = "system_users:update"
-export const USERS_DELETE = "system_users:delete"
 export const USERS_RESET_PASSWORD = "system_users:reset_password"
 export const ROLES_VIEW = "system_roles:view"
 export const SESSIONS_VIEW = "sessions:view"
 export const SESSIONS_REVOKE = "sessions:revoke"
+
+/**
+ * Other-account sessions are suspended (REQ-FE-052, D4.10) until SP-BG-14
+ * (the system-user sessions endpoint) is Closed. Flip only by an architecture
+ * amendment.
+ */
+export const OTHER_ACCOUNT_SESSIONS_ENABLED = false
 
 export interface UserActionAccess {
   readonly isSelf: boolean
@@ -25,7 +31,6 @@ export interface UserActionAccess {
   readonly canSuspend: boolean
   readonly canDeactivate: boolean
   readonly canReactivate: boolean
-  readonly canDelete: boolean
   readonly canResetPassword: boolean
 }
 
@@ -40,7 +45,7 @@ export function canCreateUser(permissions: readonly string[]): boolean {
 
 /** The "Sesi aktif" tab (D4.10). */
 export function canViewUserSessions(permissions: readonly string[]): boolean {
-  return has(permissions, SESSIONS_VIEW)
+  return OTHER_ACCOUNT_SESSIONS_ENABLED && has(permissions, SESSIONS_VIEW)
 }
 
 /** Force logout of another user's sessions (D4.10). Never for the own account. */
@@ -48,7 +53,9 @@ export function canForceLogout(
   permissions: readonly string[],
   isSelf: boolean
 ): boolean {
-  return has(permissions, SESSIONS_REVOKE) && !isSelf
+  return (
+    OTHER_ACCOUNT_SESSIONS_ENABLED && has(permissions, SESSIONS_REVOKE) && !isSelf
+  )
 }
 
 /**
@@ -70,7 +77,6 @@ export function userActionAccess(
     canSuspend: canUpdate && !isSelf && user.status === "ACTIVE",
     canDeactivate: canUpdate && !isSelf && user.status !== "DEACTIVATED",
     canReactivate: canUpdate && user.status !== "ACTIVE",
-    canDelete: has(permissions, USERS_DELETE) && !isSelf,
     canResetPassword: has(permissions, USERS_RESET_PASSWORD),
   }
 }
@@ -82,7 +88,6 @@ export function hasAnyUserAction(access: UserActionAccess): boolean {
     access.canSuspend ||
     access.canDeactivate ||
     access.canReactivate ||
-    access.canDelete ||
     access.canResetPassword
   )
 }

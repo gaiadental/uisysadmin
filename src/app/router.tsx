@@ -60,7 +60,7 @@ const ROUTE_SPECS: Record<RouteKey, RouteSpec> = {
   },
   "auth.login": {
     path: LOGIN_PATH,
-    access: { kind: "public" },
+    access: { kind: "public", guestOnly: true },
     Page: lazy(() =>
       import("@/features/auth/login-page").then((module) => ({
         default: module.LoginPage,
@@ -69,7 +69,7 @@ const ROUTE_SPECS: Record<RouteKey, RouteSpec> = {
   },
   "auth.forgot-password": {
     path: "/forgot-password",
-    access: { kind: "public" },
+    access: { kind: "public", guestOnly: true },
     Page: lazy(() =>
       import("@/features/auth/forgot-password-page").then((module) => ({
         default: module.ForgotPasswordPage,

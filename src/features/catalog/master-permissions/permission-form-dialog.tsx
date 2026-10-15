@@ -39,6 +39,9 @@ import type { MasterPermission } from "@/types/master-permission"
 
 import { PERMISSION_NAME_MAX, permissionEditSchema } from "./schema"
 
+const INCOMPLETE_DATA_MESSAGE =
+  "Data permission dari server tidak lengkap. Perubahan tidak disimpan."
+
 export interface PermissionDialogState {
   readonly permission: MasterPermission
 }
@@ -99,14 +102,23 @@ function EditForm({ permission, onClose, onBusyChange }: EditFormProps) {
     try {
       // Read the current server values first. A failure here stops the save.
       const fresh = await getMasterPermission(permission.id)
+      // The PATCH sends the full body, so a missing flag must not be guessed.
+      if (
+        typeof fresh.active !== "boolean" ||
+        typeof fresh.customerPermitted !== "boolean"
+      ) {
+        onBusyChange(false)
+        setAlert({ message: INCOMPLETE_DATA_MESSAGE, referenceId: null })
+        return
+      }
       await updateMasterPermission(permission.id, {
         key: fresh.key,
         name: values.name,
         description: values.description,
         category: fresh.category,
         module: fresh.module,
-        active: fresh.active ?? true,
-        customerPermitted: fresh.customerPermitted ?? false,
+        active: fresh.active,
+        customerPermitted: fresh.customerPermitted,
       })
       void applyInvalidation(queryClient, { kind: "masterPermissionWrite" })
       toast.success("Permission disimpan.")

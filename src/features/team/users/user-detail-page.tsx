@@ -1,9 +1,11 @@
 /**
  * System user detail (`/system-users/:id`; REQ-FE-031, REQ-FE-032, REQ-FE-039;
  * ARCH-FE-001 D4.10, D6.4, D6.6, D7, D12.1). Tabs: Detail and "Sesi aktif"
- * (only with `sessions:view`). Actions follow `userActionAccess`: the own
- * account has no suspend, deactivate, delete or role change. A delete returns
- * to the list.
+ * (only with `sessions:view` and
+ * `OTHER_ACCOUNT_SESSIONS_ENABLED`; suspended, so the own account shows a link
+ * to `/account/sessions`). Actions follow `userActionAccess`: the own
+ * account has no suspend, deactivate or role change. There is no "Hapus"
+ * action (REQ-FE-054).
  */
 
 import { useState, type ReactNode } from "react"
@@ -11,6 +13,7 @@ import { useQuery } from "@tanstack/react-query"
 
 import { useAuth } from "@/app/providers/auth-provider"
 import { navigateTo, splitHref, useLocationHref } from "@/app/router"
+import { AppLink } from "@/features/auth/components/app-link"
 import { FormAlert } from "@/components/custom/form-alert"
 import { PageBody } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
@@ -118,9 +121,7 @@ function UserDetailView({ user }: { readonly user: SystemUser }) {
   const showSessions = canViewUserSessions(permissions)
   const [tab, setTab] = useState<DetailTab>("detail")
   const [changingRole, setChangingRole] = useState(false)
-  const actions = useUserActions({
-    onDeleted: () => navigateTo(USER_LIST_PATH),
-  })
+  const actions = useUserActions()
   const roles = useRoleOptions()
   const role = roles.query.data?.find((item) => item.id === user.systemRoleId)
   const roleInactive = isRoleInactive(roles.query.data, user)
@@ -191,6 +192,7 @@ function UserDetailView({ user }: { readonly user: SystemUser }) {
               </dl>
             </CardContent>
           </Card>
+          {access.isSelf && !showSessions ? <OwnSessionsLink /> : null}
         </TabsContent>
         {showSessions ? (
           <TabsContent value="sessions" className="flex flex-col gap-4">
@@ -211,6 +213,18 @@ function UserDetailView({ user }: { readonly user: SystemUser }) {
         />
       ) : null}
     </PageBody>
+  )
+}
+
+/** Own account: sessions live on the account page (D4.10, REQ-FE-052). */
+function OwnSessionsLink() {
+  return (
+    <Card>
+      <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4 text-sm">
+        <span>Sesi aktif akun Anda ada di halaman sesi akun.</span>
+        <AppLink to="/account/sessions">Lihat sesi saya</AppLink>
+      </CardContent>
+    </Card>
   )
 }
 

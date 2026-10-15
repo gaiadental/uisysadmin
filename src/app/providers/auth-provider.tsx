@@ -19,6 +19,7 @@ import {
 } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 
+import { setPendingAuthNotice } from "@/features/auth/auth-notice"
 import { isUnauthorized } from "@/lib/api/errors"
 import {
   getMe,
@@ -27,9 +28,13 @@ import {
   refreshSession,
 } from "@/lib/api/modules/auth"
 import {
+  accountEndReason,
+  endSession,
+  getAccessToken,
   refreshAccessToken,
   setAccessToken,
   setLogoutHandler,
+  type SessionEndReason,
 } from "@/lib/api/refresh"
 import { applyInvalidation } from "@/lib/query/invalidation"
 import { queryKeys } from "@/lib/query/keys"
@@ -74,6 +79,10 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const queryClient = useQueryClient()
   const [view, setView] = useState<AuthView>(UNKNOWN_VIEW)
   const channelRef = useRef<BroadcastChannel | null>(null)
+  // True when an endSession ran during the current boot, for any reason. The
+  // boot `me` can reject with CancelledError after that end, so boot reads this
+  // flag instead of the error alone (REQ-FE-055, TODO-024 UT024-OQ5).
+  const bootEndedRef = useRef(false)
 
   // Ends this tab's session without a server call and without a signal.
   // Used by logout, by a forced end and by a signal from another tab.
@@ -83,11 +92,21 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     setView(ANONYMOUS_VIEW)
   }, [queryClient])
 
-  // Ends this tab's session and tells the other tabs to end theirs.
-  const endAndAnnounce = useCallback(() => {
-    endLocalSession()
-    channelRef.current?.postMessage({ type: LOGOUT_SIGNAL })
-  }, [endLocalSession])
+  // Ends this tab's session and tells the other tabs to end theirs. An account
+  // state passes its reason. The notice is stored first, so the login page
+  // reads it when the view changes (D4.11, REQ-FE-055). The boot flag is set for
+  // every end, so a boot that ends the session is anonymous (TODO-024).
+  const endAndAnnounce = useCallback(
+    (reason?: SessionEndReason) => {
+      bootEndedRef.current = true
+      if (reason !== undefined) {
+        setPendingAuthNotice(reason)
+      }
+      endLocalSession()
+      channelRef.current?.postMessage({ type: LOGOUT_SIGNAL })
+    },
+    [endLocalSession]
+  )
 
   // Registers the logout callback with the refresh module (D4.3). Also listens
   // for logout signals from other tabs. The listener never signals back.
@@ -113,14 +132,35 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
   )
 
   // Boot (D4.2): refresh once, then `me`. Under StrictMode both effect runs
-  // share the refresh and the `me` fetch.
+  // share the refresh and the `me` fetch. An account state ends the session
+  // once, whichever call raised it: a refresh error ends it in refresh.ts, and
+  // a `me` error ends it here (REQ-FE-055).
   const bootSession = useCallback(async (): Promise<AuthView> => {
+    bootEndedRef.current = false
     try {
       const token = await refreshAccessToken(null, refreshSession)
       if (token === null) return ANONYMOUS_VIEW
-      return viewOf(await loadMe())
+      try {
+        return viewOf(await loadMe())
+      } catch (error) {
+        // StrictMode runs this boot twice and both runs see this error. The
+        // first run ends the session and clears the token, so the second run
+        // skips the end and does not announce or call the handler again.
+        // A `me` 401 with any code ends the session the way a refresh 401 does,
+        // with no notice (D4.2, TODO-024). Only a 401 that survived the transport
+        // refresh gets here.
+        const reason = accountEndReason(error)
+        if (getAccessToken() !== null) {
+          if (reason !== null) endSession(reason)
+          else if (isUnauthorized(error)) endSession()
+        }
+        throw error
+      }
     } catch (error) {
-      return isUnauthorized(error) ? ANONYMOUS_VIEW : ERROR_VIEW
+      // A session end during this boot wins over the error. The cache clear of
+      // that end cancels `me`, so the error may be a CancelledError.
+      if (bootEndedRef.current) return ANONYMOUS_VIEW
+      return bootFailureView(error)
     }
   }, [loadMe])
 
@@ -165,8 +205,20 @@ export function AuthProvider({ children }: { readonly children: ReactNode }) {
     endAndAnnounce()
   }, [endAndAnnounce])
 
+  // A kept-session password change reloads `me` (D4.6). An account state here
+  // ends the session the way boot does (REQ-FE-055). The rejection then stops
+  // the change-password page from continuing. A refresh inside this call may
+  // have ended the session already (refresh.ts clears the token), so the guard
+  // skips the second end and announcement, as at boot.
   const refreshMe = useCallback(async (): Promise<AuthStatus> => {
-    const next = viewOf(await loadMe())
+    let next: AuthView
+    try {
+      next = viewOf(await loadMe())
+    } catch (error) {
+      const reason = accountEndReason(error)
+      if (reason !== null && getAccessToken() !== null) endSession(reason)
+      throw error
+    }
     setView(next)
     return next.status
   }, [loadMe])
@@ -220,6 +272,17 @@ function viewOf(me: Me): AuthView {
     status: me.pwdChangeRequired ? "passwordChangeRequired" : "authenticated",
     me,
   }
+}
+
+/**
+ * The boot view for a failed refresh or `me`. An expired session and an account
+ * state both show the login page (the account notice is already stored). Any
+ * other failure is the error screen (D4.2 step 4).
+ */
+function bootFailureView(error: unknown): AuthView {
+  return isUnauthorized(error) || accountEndReason(error) !== null
+    ? ANONYMOUS_VIEW
+    : ERROR_VIEW
 }
 
 /** Opens the session channel where BroadcastChannel exists. Returns null otherwise. */

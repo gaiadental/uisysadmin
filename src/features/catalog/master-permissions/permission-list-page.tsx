@@ -56,8 +56,7 @@ function matchesQuery(item: MasterPermission, query: string): boolean {
 export function PermissionListPage() {
   const { me } = useAuth()
   const granted = me?.permissions ?? []
-  const canUpdate = granted.includes("master_permissions:update")
-  const showActions = canUpdate
+  const showActions = granted.includes("master_permissions:update")
 
   const [dialog, setDialog] = useState<PermissionDialogState | null>(null)
 
@@ -177,17 +176,15 @@ export function PermissionListPage() {
                     {showActions ? (
                       <TableCell className="py-2 text-right">
                         <div className="flex justify-end gap-1.5">
-                          {canUpdate ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              aria-label={`Ubah permission ${permission.key}`}
-                              onClick={() => setDialog({ permission })}
-                            >
-                              Ubah
-                            </Button>
-                          ) : null}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            aria-label={`Ubah permission ${permission.key}`}
+                            onClick={() => setDialog({ permission })}
+                          >
+                            Ubah
+                          </Button>
                         </div>
                       </TableCell>
                     ) : null}

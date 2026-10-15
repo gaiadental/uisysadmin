@@ -16,6 +16,15 @@ import { createQueryClient } from "@/lib/query/client"
 import { API, errorResponse, FIXTURE_ME } from "@/test/handlers/auth"
 import { server } from "@/test/server"
 
+import {
+  CONFLICT_MESSAGE,
+  LAST_PRINCIPAL_MESSAGE,
+  PROTECTED_ACCOUNT_MESSAGE,
+  PROTECTED_ROLE_MESSAGE,
+  ROLE_IN_USE_MESSAGE,
+  SELF_ACTION_MESSAGE,
+  SERVICE_UNAVAILABLE_MESSAGE,
+} from "../shared/guard-failure"
 import { RoleDetailPage } from "./role-detail-page"
 import { RoleListPage } from "./role-list-page"
 import { ALL_ROLE_PERMISSIONS, renderWithClient } from "./test-support"
@@ -501,5 +510,187 @@ describe("detail: edit and refusal paths", () => {
     await screen.findByRole("heading", { name: "System Audit" })
     expect(btn("Ubah System Audit")).toBeEnabled()
     expect(btn("Hapus System Audit")).toBeEnabled()
+  })
+})
+
+const SERVER_TEXT = "Server text that must stay hidden."
+const GUARD_CASES: readonly (readonly [number, string, string])[] = [
+  [409, "SELF_ACTION_NOT_ALLOWED", SELF_ACTION_MESSAGE],
+  [409, "LAST_SYSTEM_PRINCIPAL", LAST_PRINCIPAL_MESSAGE],
+  [409, "SYSTEM_ROLE_IN_USE", ROLE_IN_USE_MESSAGE],
+  [503, "SERVICE_UNAVAILABLE", SERVICE_UNAVAILABLE_MESSAGE],
+  [403, "PLATFORM_ROLE_PROTECTED", PROTECTED_ROLE_MESSAGE],
+  [403, "ROLE_GUARD_VIOLATION", PROTECTED_ROLE_MESSAGE],
+  [409, "SOME_NEW_CONFLICT", CONFLICT_MESSAGE],
+  [503, "SOME_NEW_OUTAGE", SERVICE_UNAVAILABLE_MESSAGE],
+]
+
+describe("system role pages: fixed guard copy (D13.1, REQ-FE-053)", () => {
+  it.each(GUARD_CASES)(
+    "delete on the detail page: %i %s shows the fixed copy and the reference id",
+    async (status, code, expected) => {
+      server.use(
+        http.delete(`${API}/system-roles/:id`, () =>
+          errorResponse(status, code, SERVER_TEXT)
+        )
+      )
+      mount(<RoleDetailPage />, "/system-roles/2")
+      await screen.findByRole("heading", { name: "System Admin" })
+
+      await confirmDelete("System Admin")
+
+      const alert = await screen.findByRole("alert")
+      expect(alert).toHaveTextContent(expected)
+      expect(alert).toHaveTextContent("Kode referensi")
+      expect(screen.queryByText(SERVER_TEXT, { exact: false })).toBeNull()
+    }
+  )
+
+  it.each(GUARD_CASES)(
+    "delete in the list: %i %s shows the fixed copy",
+    async (status, code, expected) => {
+      threeRoles()
+      server.use(
+        http.delete(`${API}/system-roles/:id`, () =>
+          errorResponse(status, code, SERVER_TEXT)
+        )
+      )
+      mount(<RoleListPage />, "/system-roles")
+      await screen.findByRole("link", { name: "System Audit" })
+
+      await confirmDelete("System Audit")
+
+      expect(await screen.findByText(expected)).toBeInTheDocument()
+      expect(screen.queryByText(SERVER_TEXT, { exact: false })).toBeNull()
+    }
+  )
+
+  it.each(GUARD_CASES)(
+    "edit form: %i %s shows the fixed copy inside the dialog",
+    async (status, code, expected) => {
+      server.use(
+        http.patch(`${API}/system-roles/:id`, () =>
+          errorResponse(status, code, SERVER_TEXT)
+        )
+      )
+      mount(<RoleDetailPage />, "/system-roles/2")
+      await screen.findByRole("heading", { name: "System Admin" })
+
+      fireEvent.click(screen.getByRole("button", { name: "Ubah System Admin" }))
+      const dialog = await screen.findByRole("dialog")
+      fireEvent.click(within(dialog).getByRole("button", { name: "Simpan" }))
+
+      const alert = await within(dialog).findByRole("alert")
+      expect(alert).toHaveTextContent(expected)
+      expect(alert).toHaveTextContent("Kode referensi")
+      expect(alert).not.toHaveTextContent(SERVER_TEXT)
+    }
+  )
+
+  it.each(GUARD_CASES)(
+    "create form: %i %s shows the fixed copy inside the dialog",
+    async (status, code, expected) => {
+      server.use(
+        http.post(`${API}/system-roles`, () =>
+          errorResponse(status, code, SERVER_TEXT)
+        )
+      )
+      mount(<RoleListPage />, "/system-roles")
+      fireEvent.click(await screen.findByRole("button", { name: "Tambah peran" }))
+      const dialog = await screen.findByRole("dialog")
+      fireEvent.change(within(dialog).getByLabelText("Key"), {
+        target: { value: "SYS_NEW" },
+      })
+      fireEvent.change(within(dialog).getByLabelText("Nama"), {
+        target: { value: "New Role" },
+      })
+      fireEvent.click(within(dialog).getByRole("button", { name: "Buat peran" }))
+
+      const alert = await within(dialog).findByRole("alert")
+      expect(alert).toHaveTextContent(expected)
+      expect(alert).not.toHaveTextContent(SERVER_TEXT)
+    }
+  )
+
+  it.each(GUARD_CASES)(
+    "permission replace: %i %s shows the fixed copy",
+    async (status, code, expected) => {
+      server.use(
+        http.put(`${API}/system-roles/:id/permissions`, () =>
+          errorResponse(status, code, SERVER_TEXT)
+        )
+      )
+      mount(<RoleDetailPage />, "/system-roles/2")
+      await screen.findByRole("heading", { name: "System Admin" })
+      fireEvent.click(await screen.findByRole("tab", { name: "Permissions" }))
+      await screen.findByRole("checkbox", { name: /View branches/ })
+      fireEvent.click(screen.getByRole("checkbox", { name: /View reports/ }))
+      fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
+
+      const alert = await screen.findByRole("alert")
+      expect(alert).toHaveTextContent(expected)
+      expect(alert).toHaveTextContent("Kode referensi")
+      expect(alert).not.toHaveTextContent(SERVER_TEXT)
+    }
+  )
+
+  it("PLATFORM_ROLE_PROTECTED shows the role copy here, which differs from the account copy", async () => {
+    server.use(
+      http.delete(`${API}/system-roles/:id`, () =>
+        errorResponse(403, "PLATFORM_ROLE_PROTECTED", SERVER_TEXT)
+      )
+    )
+    mount(<RoleDetailPage />, "/system-roles/2")
+    await screen.findByRole("heading", { name: "System Admin" })
+    await confirmDelete("System Admin")
+
+    const alert = await screen.findByRole("alert")
+    expect(alert).toHaveTextContent(PROTECTED_ROLE_MESSAGE)
+    expect(alert).not.toHaveTextContent(PROTECTED_ACCOUNT_MESSAGE)
+    expect(PROTECTED_ROLE_MESSAGE).not.toBe(PROTECTED_ACCOUNT_MESSAGE)
+  })
+
+  it("SYSTEM_ROLE_KEY_EXISTS keeps its own field error on create", async () => {
+    server.use(
+      http.post(`${API}/system-roles`, () =>
+        errorResponse(409, "SYSTEM_ROLE_KEY_EXISTS", "Key already used.")
+      )
+    )
+    mount(<RoleListPage />, "/system-roles")
+    fireEvent.click(await screen.findByRole("button", { name: "Tambah peran" }))
+    const dialog = await screen.findByRole("dialog")
+    fireEvent.change(within(dialog).getByLabelText("Key"), {
+      target: { value: "SYS_ADMIN" },
+    })
+    fireEvent.change(within(dialog).getByLabelText("Nama"), {
+      target: { value: "Dup" },
+    })
+    fireEvent.click(within(dialog).getByRole("button", { name: "Buat peran" }))
+
+    expect(await within(dialog).findByText("Key already used.")).toBeInTheDocument()
+    expect(within(dialog).queryByText(CONFLICT_MESSAGE)).toBeNull()
+  })
+})
+
+describe("ROLE_GUARD_VIOLATION on the role detail delete (v1.0.7)", () => {
+  it("shows the fixed role copy and reference id, hides the server text and marks the role refused", async () => {
+    server.use(
+      http.delete(`${API}/system-roles/:id`, () =>
+        errorResponse(403, "ROLE_GUARD_VIOLATION", SERVER_TEXT)
+      )
+    )
+    mount(<RoleDetailPage />, "/system-roles/2")
+    await screen.findByRole("heading", { name: "System Admin" })
+
+    await confirmDelete("System Admin")
+
+    const alert = await screen.findByRole("alert")
+    expect(alert).toHaveTextContent(PROTECTED_ROLE_MESSAGE)
+    expect(alert).toHaveTextContent("Kode referensi")
+    expect(screen.queryByText(SERVER_TEXT, { exact: false })).toBeNull()
+    await waitFor(() => {
+      expect(btn("Ubah System Admin")).toBeDisabled()
+      expect(btn("Hapus System Admin")).toBeDisabled()
+    })
   })
 })

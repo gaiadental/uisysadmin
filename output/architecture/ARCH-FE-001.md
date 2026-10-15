@@ -3,8 +3,8 @@ id: ARCH-FE-001
 title: System Principal Web — Frontend Architecture
 owner: architect_frontend
 status: Approved
-version: 1.0.4
-last_updated: 2026-10-12
+version: 1.0.12
+last_updated: 2026-10-15
 artifact_kind: target
 source_requirements: [RAG-FE-SP-001]
 related_artifacts: [PROJECT-PROFILE, CLARIFICATIONS, ORCHESTRATION-STATE, PLATFORM-ARCH-SOLUTION-001, PLATFORM-ARCH-SEC-001, PLATFORM-ARCH-BE-001, PLATFORM-ADR-009, GW-ARCH-SEC-002, GW-ARCH-BE-002, AUTH-ARCH-SEC-001, AUTH-ARCH-SEC-003, AUTH-ARCH-BE-003, MDS-API-REFERENCE-v1.3]
@@ -17,15 +17,16 @@ Owner: architect_frontend
 
 Status: Approved
 
-Version: 1.0.4
+Version: 1.0.12
 
-Last Updated: 2026-10-12
+Last Updated: 2026-10-15
 
 Source Requirements:
 - RAG-FE-SP-001 "[FE Requirement] system-principal-web v1.0" (sections 0–13): the API integration contract (referred to below as "FE doc")
-- REQ-FE-001 to REQ-FE-051 (assigned in this document, see Requirements Addressed)
+- REQ-FE-001 to REQ-FE-056 (assigned in this document, see Requirements Addressed)
 
 Related Artifacts:
+- Platform clarifications SP-BG-13 (Closed 2026-10-14) and SP-BG-14 (Open), `../Microservices/gaia-platform-architecture/output/clarifications.md` v1.2
 - This repository: `output/project-profile.md`, `output/clarifications.md`, `output/plans/orchestration-state.md`
 - Platform, read-only (`../Microservices/gaia-platform-architecture/output/`): `architecture/ARCH-SOLUTION-001.md` v1.1, `architecture/ARCH-SEC-001.md` v0.4, `architecture/ARCH-BE-001.md` v0.2, `decisions/ADR-009`, `clarifications.md` (SP-DEC-01), `plans/orchestration-state.md`
 - Gateway (`../Microservices/apigateway/output/architecture/`): `ARCH-SEC-002.md`, `ARCH-BE-002.md`; operator host table `apigateway/edge-dev.local.yml` (git-excluded, read 2026-10-10)
@@ -39,14 +40,22 @@ Version History:
 - v1.0.1 (Approved, 2026-10-10): wording-only corrections: FE-OQ-37 answered (History API path routes, no routing library; Checkpoint B gate, ADR-001 v1.0.1 OQ2); D15 and RK-FE-10 cite OQ-P-09 for the dependency audit; version history rows added; SD-01 and A-10 updated to the FE-OQ-37 answer; non-blocking count changed from 24 to 23 (At a Glance and Blocking summary).
 - v1.0.3 (Approved, 2026-10-12): user-approved design change: SYS_PRINCIPAL role locked statically in the UI (no deactivate, delete or permission change), replacing refusal-driven disable; own account offers no deactivate or delete. Sections: REQ-FE-033, D6.6, Table 2 (tim-peran), BG-06 (SP-BG-13).
 - v1.0.4 (Approved, 2026-10-12; user approval "Setuju ARCH-FE-001 v1.0.4 dan TODO-021"): user product decision 2026-10-12: Katalog > Permission (`/master-permissions`) becomes read-only. Create, activate/deactivate and delete of master permissions are removed; list, detail and edit of name and description stay. Tenant permission activate/deactivate (`tenant_permissions:*`) is not affected. Sections: REQ-FE-035, D5.3, D6.4, D7, D8 Table 2 (katalog-permission), D9, D12.1, BG-12 (new), FE-OQ-32, FE-OQ-38 (new).
+- v1.0.5 (Approved, 2026-10-14; user approval "Setuju v1.0.5" recorded 2026-10-14; amendment drafted for TODO-022): user decision 2026-10-14 (a) hides the "Sesi aktif" tab and force logout for other accounts until platform item SP-BG-14 is Closed (the endpoint `/api/v1/admin/users/{userId}/sessions` serves tenant employees only and returns 404 for a system user), with a link to `/account/sessions` on the own account; (b) replaces "server message shown as is" with Indonesian copy mapped by status and `code` for the auth-service guard refusals closed in SP-BG-13. **Supersedes SP-BG-13's "No FE code change"** (platform `clarifications.md` v1.2) and the v1.0.3 line in D6.6 that said a refusal for `PLATFORM_ROLE_PROTECTED` still shows the server message. Sections: REQ-FE-032 (changed), REQ-FE-052 and REQ-FE-053 (new), D4.10, D6.6, D7, D8 Table 2 (sistem-sesi), D13 (rows CONFLICT, UNAVAILABLE, FORBIDDEN; new D13.1), D2 pointer, Table 3 (BG-13 new), FE-OQ-22, FE-OQ-39 and FE-OQ-40 (new). The fallthrough rule (D13.1, REQ-FE-053) was added at approval by user instruction: on Tim IT pages a 409 or 503 with an unrecognised code uses fixed Indonesian copy, never server text. Approved by the user 2026-10-14.
+- v1.0.6 (Approved, 2026-10-14; user approval recorded 2026-10-14; FE-OQ-41 and FE-OQ-42 answered with their documented defaults, non-blocking count changed from 26 to 24; the backend gap on `DELETE /system-users/{id}` and `PLATFORM_ROLE_PROTECTED` is taken by the user separately to the platform): user decision 2026-10-14: the system account pages (Tim IT > Akun) have no "Hapus" action in the list row or on the detail page. Reason: in auth-service `DELETE /api/v1/system-users/{id}` only sets status `DEACTIVATED` (no hard or soft delete), the same result as "Nonaktifkan", so the label is misleading. Suspend ("Tangguhkan") and deactivate ("Nonaktifkan") stay, and their confirm dialogs get explanatory text. `deleteSystemUser` may stay in the API module but no UI calls it. Sections: REQ-FE-030, REQ-FE-031, REQ-FE-039 (changed), REQ-FE-054 (new), D6.4, D6.6, D7 (routes and confirm dialogs), D8 Table 2 (tim-akun), D12.1, D13.1 (new reachability table), D19, FE-OQ-41 and FE-OQ-42 (new). Role delete, tenant category delete and country delete are unchanged.
+- v1.0.7 (Approved, 2026-10-14; user-ordered correction to v1.0.6 by user order 2026-10-14, no new design decision; bumped only to keep the history traceable, as for v1.0.1): on Tim IT pages (system accounts and system roles) the server message is never shown. `403 ROLE_GUARD_VIOLATION` on system role pages now uses the same fixed copy as `PLATFORM_ROLE_PROTECTED` in the role context, and the role is still marked refused (refused-roles, edit and delete disabled) as today. Test requirement added. Confirms (no change) that the own-account sessions entry in REQ-FE-052 and D4.10 is a link (`AppLink`) to `/account/sessions`. Sections: REQ-FE-053, D13 (rows FORBIDDEN, GUARD), D13.1. No Open Questions row existed for `ROLE_GUARD_VIOLATION` in this document (the questions OQ1 and OQ2 live only in the TODO-022 review and QA reports), so none is added or closed here.
+- v1.0.8 (Approved, 2026-10-15; user approval 2026-10-15 with one adjustment): a refresh or `GET /api/v1/auth/me` that fails with 403 `ACCOUNT_NOT_ACTIVE` or 403 `ACCOUNT_NOT_READY` ends the session. The user goes to the login page with a notice for that code. The login page shows fixed Indonesian copy for both codes and never the server `message`. The change follows the manual test of 2026-10-15 against platform SP-BG-13. Sections: REQ-FE-055 (new), D4.2, D4.3, D4.5, D6.5, D13 (ACCOUNT row), FE-OQ-43 to FE-OQ-45 (new). User adjustment: FE-OQ-44 is yes, so `ACCOUNT_NOT_READY` also ends the session (the first draft limited the session end to `ACCOUNT_NOT_ACTIVE`). FE-OQ-45 is recorded: the gateway checks the session per request (30-second cache), so a data request after a suspend gets 401, then refresh gets 403 and the session ends.
+- v1.0.9 (Approved, 2026-10-15; user decision 2026-10-15 "opsi 2"): the session end for 403 `ACCOUNT_NOT_ACTIVE` and 403 `ACCOUNT_NOT_READY` (REQ-FE-055) applies to every refresh and every `GET /api/v1/auth/me` that fails with that code, wherever the call happens: at boot, and after a kept-session password change (`keepCurrentSession = true`, `refreshMe`). The user goes to `/login` with the notice for that code. Sections: REQ-FE-055, D4.6. Reason: review M2 and QA M2 of TODO-024. The M2 scope question is answered by this version (the rule covers the `me` call after a kept-session password change, not only boot). No Open Questions row is added.
+- v1.0.10 (Approved, 2026-10-15; user decision 2026-10-15): a refresh (`POST /api/v1/auth/refresh`) that answers 401 with any error code ends the session: token and cache cleared, status `anonymous`, route to `/login` with no account notice. `AUTH_EXPIRY_CODES` (`UNAUTHORIZED`, `INVALID_TOKEN`, `SESSION_ENDED`) remains only the trigger that makes a data call run a refresh; it no longer decides the outcome of the refresh call. The 403 rule for `ACCOUNT_NOT_ACTIVE` and `ACCOUNT_NOT_READY` (REQ-FE-055) is unchanged. Reason: TODO-024 manual test failed (suspend mid-session: data call 401, refresh 401 `SESSION_TERMINATED`, error screen instead of login); found 2026-10-15. Sections: REQ-FE-010, D4.2, D4.3, D4.4. No Open Questions row is added; Blocking summary unchanged (0 blocking).
+- v1.0.11 (Approved, 2026-10-15; user decision 2026-10-15, L9): at boot, `GET /api/v1/auth/me` that answers 401 with any error code removes the token from memory and gives status `anonymous`: route to `/login` with no account notice. This is the same rule as a refresh 401 (D4.3, v1.0.10). The 403 rule for `ACCOUNT_NOT_ACTIVE` and `ACCOUNT_NOT_READY` (REQ-FE-055) is unchanged. Reason: TODO-024 code review (L9) and QA. Sections: D4.2, Open Questions (FE-OQ-46 new, non-blocking). Blocking summary: 0 blocking, non-blocking count changed from 24 to 25.
+- v1.0.12 (Approved, 2026-10-15; user decision 2026-10-15): a public route marked guest-only, opened with status `authenticated`, redirects (replace) to the dashboard `/`. Guest-only routes are `/login` and `/forgot-password`; `/reset-password` (e-mail link) is not guest-only and is unchanged. Status `passwordChangeRequired` keeps REQ-FE-012; `unknown`, `error` and `anonymous` are unchanged. Reason: bug report 2026-10-15, an authenticated user who opened `/login` (second tab, typed URL) saw the login form inside the authenticated layout. Sections: Requirements Addressed (REQ-FE-056 new), D6.1, D10. Implemented in TODO-025. No new open question; blocking count 0 and non-blocking count 25 unchanged.
 
 ## At a Glance
 
 - Frontend architecture for the System Principal (SP) web app in this repository: a Vite + React single-page app that talks only to the GAIA API Gateway. Covers topology, auth and session, gating, the API layer, server state, forms, tests, the mock-to-contract replacement plan, errors, security and accessibility.
 - Accepted base stack: Vite 8 SPA, React 19, TypeScript 6, npm, Tailwind 4, Base UI under shadcn/ui, Zod 4. Mandatory tools adopted: TanStack Query 5, React Hook Form with the Zod resolver, Vitest with React Testing Library, MSW 2.x. Accepted deviations: fetch client (no Axios) and first-party login (no NextAuth).
-- Status: Approved v1.0 at Checkpoint A (user approval 2026-10-10); v1.0.4 (master permissions read-only) is Approved (user approval 2026-10-12). 0 Blocking open questions. 24 non-blocking open questions, with documented defaults. FE-OQ-01 to FE-OQ-13 are answered. The seven ADR candidates are Pending Approval for /decision.
+- Status: Approved v1.0 at Checkpoint A (user approval 2026-10-10); v1.0.4 (master permissions read-only) is Approved (user approval 2026-10-12); v1.0.5 (sessions tab hidden for other accounts, guard-failure copy and fallthrough rule) is Approved (user approval 2026-10-14); v1.0.6 (no "Hapus" on system accounts, explanatory text in suspend and deactivate dialogs) is Approved (user approval 2026-10-14); v1.0.7 (`ROLE_GUARD_VIOLATION` fixed copy on role pages) is a user-ordered correction, Approved; v1.0.8 (session end and fixed copy for `ACCOUNT_NOT_ACTIVE` and `ACCOUNT_NOT_READY` on login, refresh and `me`) is Approved (user approval 2026-10-15); v1.0.9 (session end for `ACCOUNT_NOT_ACTIVE` and `ACCOUNT_NOT_READY` also at boot and after a kept-session password change) is Approved (user decision 2026-10-15); v1.0.10 (a refresh 401 with any code ends the session with no account notice; `AUTH_EXPIRY_CODES` is only the data-call trigger) is Approved (user decision 2026-10-15); v1.0.11 (a boot `me` 401 with any code ends the session as `anonymous`, no account notice) is Approved (user decision 2026-10-15); v1.0.12 (guest-only public routes `/login` and `/forgot-password` redirect an authenticated user to `/`) is Approved (user decision 2026-10-15). 0 Blocking open questions. 25 non-blocking open questions, with documented defaults. FE-OQ-01 to FE-OQ-13 are answered. The seven ADR candidates are Pending Approval for /decision.
 - Topology: same-origin path routing. One SP host per environment serves the static FE and sends `/api/*` to the gateway. Same-site sibling subdomains are the second option. Cross-site is not supported.
-- Platform impact: none. No platform artifact is modified. Backend needs are listed in Table 3 (BG-01 to BG-12) for routing only.
+- Platform impact: none. No platform artifact is modified. Backend needs are listed in Table 3 (BG-01 to BG-13) for routing only.
 - Scope: the platform frontend Domain Scope is Cancelled by design (split decision). See C-07.
 
 ## Purpose
@@ -98,7 +107,7 @@ Greenfield repository: this table is the requirement source for the SP web. Each
 | REQ-FE-007 | The two JSON conventions (camelCase with `data` envelope; snake_case unwrapped) are mapped in the API layer, not in components. | FE doc 0 rule 6, 2 | D5 |
 | REQ-FE-008 | Error handling branches on HTTP status and `code`, never on message text. The correlation id is shown and logged. | FE doc 0 rule 8, 2.3, 7 | D13 |
 | REQ-FE-009 | Login with the error mapping of FE doc 3.3. The tenant id is never sent for the system app. | FE doc 3.2, 3.3 | D4.5 |
-| REQ-FE-010 | Refresh is single-flight; a refreshed request is retried once; a second 401 logs out. | FE doc 3.2 | D4.3, D4.4 |
+| REQ-FE-010 | Refresh is single-flight; a refreshed request is retried once; a second 401 logs out. A 401 from the refresh call itself, with any error code, ends the session: token and cache cleared, status `anonymous`, route to `/login` with no account notice (`AUTH_EXPIRY_CODES` does not decide this; it only triggers a refresh for a data call). | FE doc 3.2; user decision 2026-10-15 (v1.0.10) | D4.2, D4.3, D4.4 |
 | REQ-FE-011 | App start and reload call refresh, then `me`. | FE doc 3.2 | D4.2 |
 | REQ-FE-012 | `pwdChangeRequired = true` blocks every route except change password. `PASSWORD_CHANGE_REQUIRED` routes to the same page. | FE doc 3.2, 7 | D4.6 |
 | REQ-FE-013 | Change password supports both `keepCurrentSession` outcomes. | FE doc 3.3 | D4.6 |
@@ -118,16 +127,16 @@ Greenfield repository: this table is the requirement source for the SP web. Each
 | REQ-FE-027 | Registration settings are an optional phase 2 feature and are not routed in v1. | FE doc 5.5 | D7 |
 | REQ-FE-028 | Tenant categories: list, create, edit, delete. `code` is immutable after create. | FE doc 6.1 | D7 |
 | REQ-FE-029 | Countries: list, create, edit, delete. Path key is `code`; input is uppercased. | FE doc 6.2 | D7, D9 |
-| REQ-FE-030 | System users: list, detail, create, role change, delete, status change, reset password. | FE doc 5.1 | D7 |
-| REQ-FE-031 | System users: role options from system roles; no suspend, deactivate or delete of the own account. | FE doc 5.1 | D6.6 |
-| REQ-FE-032 | Another user's sessions: view and force logout on the user detail page. | FE doc 5.6 | D4.10 |
+| REQ-FE-030 | System users: list, detail, create, role change, status change, reset password. No delete (REQ-FE-054). | FE doc 5.1 | D7 |
+| REQ-FE-031 | System users: role options from system roles; no suspend or deactivate of the own account. | FE doc 5.1 | D6.6 |
+| REQ-FE-032 | Another user's sessions: view and force logout on the user detail page, behind the flag `OTHER_ACCOUNT_SESSIONS_ENABLED`, which is `false` until SP-BG-14 is Closed (v1.0.5). While `false`, the tab and the force-logout action are not rendered for other accounts. | FE doc 5.6; SP-BG-14 | D4.10 |
 | REQ-FE-033 | System roles: list, create, edit, delete. The SYS_PRINCIPAL role is locked statically in the UI (no deactivate, delete or permission change). | FE doc 5.2 | D6.6 |
 | REQ-FE-034 | Role permission checklist from the master permission catalogue, saved with one PUT. | FE doc 5.2 | D7 |
 | REQ-FE-035 | Master permissions are read-only in the UI: list, detail, and edit of name and description only. No create, no activate/deactivate, no delete (user decision 2026-10-12; catalogue changes ship as Flyway migrations with the feature that uses them). Tenant permission activate/deactivate (`tenant_permissions:*`) is unaffected. | FE doc 5.3 | D6.4, D7 |
 | REQ-FE-036 | Pagination model: master-data server-side (`page`, `limit`); auth-service lists client-side. | FE doc 2.1, 2.2, 8 | D5.4 |
 | REQ-FE-037 | Dashboard counts come from `pagination.total`. | FE doc 8 | D7 |
 | REQ-FE-038 | Every async operation has loading, empty and error states. No automatic retry of reads or writes. | FE doc 7; tech-stack-frontend API Integration Standard | D3.1, D13 |
-| REQ-FE-039 | Confirm dialogs for delete, deactivate, suspend, reset password and force logout. | FE doc 12 | D7 |
+| REQ-FE-039 | Confirm dialogs for delete (tenant categories, countries, system roles; not system accounts, REQ-FE-054), deactivate, suspend, reset password and force logout. | FE doc 12 | D7 |
 | REQ-FE-040 | Immutable fields are never sent (`code` everywhere; tenant fields of FE doc 6.3). | FE doc 6.1, 6.2, 6.3, 12 | D5.3 |
 | REQ-FE-041 | Branch types, branches, facilities, social links, patient and employee flows are not built. | FE doc 6, 11 | D2 |
 | REQ-FE-042 | The acceptance checklist (FE doc 12) and smoke test (FE doc 13) are test requirements. | FE doc 12, 13 | D19 |
@@ -140,6 +149,11 @@ Greenfield repository: this table is the requirement source for the SP web. Each
 | REQ-FE-049 | Every form uses React Hook Form with the Zod resolver; validation schemas are Zod 4 schemas. | tech-stack-frontend Form Validation Standard; FE-OQ-10 | D9 |
 | REQ-FE-050 | `api/client.ts` has Vitest unit tests for single-flight refresh, 401 then refresh then retry, 204 handling and error mapping to `{code, message}`. API integration tests use MSW 2.x. | tech-stack-frontend Testing Standard; FE-OQ-12 | D19 |
 | REQ-FE-051 | TypeScript strict options required by the standard are enabled (`exactOptionalPropertyTypes`, `noImplicitReturns`, `forceConsistentCasingInFileNames`, `resolveJsonModule`). | tech-stack-frontend TypeScript Configuration Standard; FE-OQ-06 | D1.3 |
+| REQ-FE-052 | On `/system-users/:id`, while `OTHER_ACCOUNT_SESSIONS_ENABLED` is `false`: no "Sesi aktif" tab and no force-logout action for other accounts. For the own account the detail page shows a link to `/account/sessions` instead of the tab content. The flag is one constant that cites SP-BG-14. | User decision 2026-10-14; SP-BG-14 | D4.10, D7 |
+| REQ-FE-053 | Guard refusals from auth-service show fixed Indonesian copy, never the raw server `message`, mapped by HTTP status and `code` (not message text), from one shared module `features/team/shared/guard-failure.ts` used by `user-failure.ts` and `role-failure.ts`. A 409 or 503 with an unrecognised `code` on these pages also uses fixed Indonesian copy (no server text, reference id still shown); `describeWriteFailure` in `tenants/create/write-failure.ts` is unchanged because tenant pages use it. `403 PLATFORM_ROLE_PROTECTED` has two copies by context (role pages, account pages). `403 ROLE_GUARD_VIOLATION` on role pages uses the role-context `PLATFORM_ROLE_PROTECTED` copy and still marks the role refused (v1.0.7, user order 2026-10-14: on Tim IT pages the server message is never shown). Each code has a component test, plus one test that proves the two contexts differ and one that the mapping is not used on tenant paths. Scope: system account and system role pages only (FE-OQ-40). | User decision 2026-10-14; SP-BG-13 (Closed) | D13.1 |
+| REQ-FE-054 | System account pages (Tim IT > Akun) offer no "Hapus" action, on the list row or on the detail page, and no code path in the UI calls `deleteSystemUser` (the function may stay in `lib/api/modules/system-users.ts`). No UI gate uses `system_users:delete`. Reason: auth-service `DELETE /api/v1/system-users/{id}` only sets status `DEACTIVATED`, identical to deactivate. The confirm dialogs carry this text. Suspend, title `Tangguhkan akun {loginId}?`: "Blokir sementara akun ini, misalnya saat cuti atau investigasi. Semua sesinya diakhiri. Bisa diaktifkan kembali." Deactivate, title `Nonaktifkan akun {loginId}?`: "Untuk anggota yang sudah tidak bertugas. Semua sesinya diakhiri. Bisa diaktifkan kembali bila diperlukan." The old description "Akun akan dihapus dari platform." and the toast "Akun dihapus." are removed. Tests: no "Hapus" control on list row or detail for a user holding every `system_users:*` permission; dialog texts shown; `deleteSystemUser` not imported by `features/team/users` (static check). | User decision 2026-10-14; auth-service `SystemUserService.delete` behaviour | D6.4, D7, D13.1 |
+| REQ-FE-055 | A refresh, or `GET /api/v1/auth/me`, that fails with 403 `ACCOUNT_NOT_ACTIVE` or 403 `ACCOUNT_NOT_READY` ends the session: token and cache cleared, and the user goes to `/login` with a notice for that code. Other 403 codes on these calls keep the session. On `/login` the server `message` is never shown for these two codes. The fixed copy is "Akun Anda tidak aktif. Hubungi administrator." (`ACCOUNT_NOT_ACTIVE`) and "Akun Anda belum siap digunakan. Hubungi administrator." (`ACCOUNT_NOT_READY`), with the reference id. Boot with either code gives status `anonymous` with the notice, not `error`. The rule applies at boot and after a kept-session password change (any `me` call that is part of the refresh or session flows). | User decision 2026-10-15 (manual test; FE-OQ-43, FE-OQ-44); platform SP-BG-13 (Closed 2026-10-14) | D4.2, D4.3, D4.5, D6.5, D13 |
+| REQ-FE-056 | A public route marked guest-only, opened with status `authenticated`, redirects (replace) to the dashboard `/`. Guest-only routes: `/login` and `/forgot-password`. `/reset-password` (e-mail link) is not guest-only and renders as before. Status `passwordChangeRequired` keeps REQ-FE-012 (redirect to `/account/password`). Status `unknown`, `error` and `anonymous` behave as before. Tests: `authenticated` on `/login` and on `/forgot-password` replaces to `/`; `authenticated` on `/reset-password` renders the page; `passwordChangeRequired` on `/login` goes to `/account/password`; `anonymous` on both guest-only routes renders the page; `resolveRouteAccess` stays pure and returns the same result for the same input. | User decision 2026-10-15 (bug report 2026-10-15; TODO-025) | D6.1, D10 |
 
 ## Constraints
 
@@ -314,7 +328,9 @@ These client codes are FE-internal classes. They are not server codes and are ne
 2. Refresh 200: the token is stored in memory. Call `GET /api/v1/auth/me`.
    - `pwdChangeRequired = true`: status `passwordChangeRequired`, route to change password (D4.6).
    - Otherwise: status `authenticated`, render the app.
-3. Refresh 401 with `SESSION_ENDED`, `INVALID_TOKEN` or `UNAUTHORIZED`: status `anonymous`, route to `/login`.
+   - `me` 403 `ACCOUNT_NOT_ACTIVE` or `ACCOUNT_NOT_READY`: end the session (token and cache cleared, D4.3), status `anonymous`, route to `/login` with the notice for that code (D4.5, REQ-FE-055).
+   - `me` 401 with any error code: the token is removed from memory, status `anonymous`, route to `/login` with no account notice (v1.0.11, user decision 2026-10-15). This is the same rule as a refresh 401 (step 3, D4.3).
+3. Refresh 401 with any code (`SESSION_ENDED`, `INVALID_TOKEN`, `SESSION_TERMINATED`, `TOKEN_EXPIRED`, `UNAUTHORIZED` or any other): status `anonymous`, route to `/login`, with no account notice (v1.0.10). Refresh 403 `ACCOUNT_NOT_ACTIVE` or `ACCOUNT_NOT_READY`: the same, with the notice for that code (REQ-FE-055).
 4. Refresh network failure, timeout or 5xx: status `error`, show a "service unavailable" screen with a retry button. Do not show the login form as if the session had ended, and do not clear anything.
 
 React StrictMode runs effects twice in development (`main.tsx` uses StrictMode). The module-level single-flight (D4.3) makes both runs share one refresh call.
@@ -325,12 +341,14 @@ React StrictMode runs effects twice in development (`main.tsx` uses StrictMode).
 - Across tabs: the refresh call runs inside `navigator.locks.request('sp-session-refresh', ...)`. The lock is held until the response has arrived, including `Set-Cookie`, so the next tab sends the rotated cookie.
 - Why the lock is required: refresh tokens rotate on every call. Presenting an already rotated token is treated as reuse. Reuse revokes every token of the rotation chain, deactivates the sessions that reference them and blacklists the user's active access-token `jti`s (AUTH ARCH-SEC-001 sections 3 and 8). Two tabs that refresh at the same moment with the same cookie would therefore log the user out everywhere. The platform rule cannot be relaxed (for example, by a grace window), so the FE serialises the calls.
 - Fallback when `navigator.locks` is unavailable: in-tab single-flight only. The residual risk is recorded as RK-FE-01. The alternative is a leader election over `BroadcastChannel`; it adds code and gives the same guarantee, so it is not chosen for v1 (A-03).
-- Refresh result: 200 stores the new token and resolves; 401 `SESSION_ENDED` or `INVALID_TOKEN` clears the token and cache and sets `anonymous` with a notice (copy: FE-OQ-22); any other failure rejects without clearing state.
+- Refresh result: 200 stores the new token and resolves. Any 401 from the refresh call, with any error code (for example `SESSION_ENDED`, `INVALID_TOKEN`, `SESSION_TERMINATED`, `TOKEN_EXPIRED`), clears the token and cache, sets `anonymous` and routes to `/login` with no account notice (v1.0.10). 403 `ACCOUNT_NOT_ACTIVE` or `ACCOUNT_NOT_READY` does the same, and the notice is the account notice for that code (D4.5, REQ-FE-055). The session ends once, through `endSession`, which passes the reason to the logout handler. Any other failure (5xx, network, timeout, other 403) rejects without clearing state. `AUTH_EXPIRY_CODES` (D4.4) no longer decides the outcome of the refresh call: a refresh 401 ends the session whatever its code.
 - The caller retries its original request once, with the new token. If that retry returns 401 again, the client logs out (D4.4). It never loops.
+- Suspended account, mid-session (FE-OQ-45): the gateway checks the session on each request (30-second cache). A data request after the suspend gets 401. The refresh that follows answers 403 `ACCOUNT_NOT_ACTIVE` (or `ACCOUNT_NOT_READY`), so the session ends, the cache is cleared and the login page shows the notice. No page keeps showing a data error.
 
 #### D4.4 Which 401 triggers refresh (REQ-FE-010)
 
 - Refresh only when the status is 401 and the code is `UNAUTHORIZED`, `INVALID_TOKEN` or `SESSION_ENDED`, and the endpoint is not in the exempt list.
+- `AUTH_EXPIRY_CODES` (`UNAUTHORIZED`, `INVALID_TOKEN`, `SESSION_ENDED`) is the trigger for a data call only and does not decide the outcome of the refresh call, where any 401 ends the session (D4.3, v1.0.10).
 - Exempt (never refresh): `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/change-password`, `POST /api/v1/auth/forgot-password`, `POST /api/v1/auth/reset-password`, `POST /api/v1/auth/logout`.
 - `INVALID_CREDENTIALS` is never a refresh trigger. A wrong current password is not an expired session. The FE doc's reference client refreshes on every 401 except login and refresh, which would refresh on a wrong current password. This design corrects that.
 - Logout is best effort: a 401 on logout is treated as already logged out (D4.8).
@@ -342,7 +360,7 @@ React StrictMode runs effects twice in development (`main.tsx` uses StrictMode).
 - `POST /api/v1/auth/login` then `GET /api/v1/auth/me` (D4.2 rules after `me`).
 - Error mapping (FE doc 3.3, copy in FE-OQ-22):
   - 401 `INVALID_CREDENTIALS`: "Login ID atau password salah" (same text for unknown user and wrong password). Keep the login ID, clear the password.
-  - 403 `ACCOUNT_NOT_ACTIVE` or `ACCOUNT_NOT_READY`: show the server message.
+  - 403 `ACCOUNT_NOT_ACTIVE`: "Akun Anda tidak aktif. Hubungi administrator." 403 `ACCOUNT_NOT_READY`: "Akun Anda belum siap digunakan. Hubungi administrator." Show the reference id. The server `message` is never shown for these two codes (REQ-FE-055; FE-OQ-43 approved 2026-10-15).
   - 400 `VALIDATION_FAILED`: show the server message as a form alert. Keep input.
   - 429 `TOO_MANY_ATTEMPTS` or `RATE_LIMIT_EXCEEDED`: disable the submit button for 60 seconds with a visible countdown.
 - `password` uses `autocomplete="current-password"`. It is never logged or stored.
@@ -352,7 +370,7 @@ React StrictMode runs effects twice in development (`main.tsx` uses StrictMode).
 - While `passwordChangeRequired`, only `/account/password` and logout are reachable. Navigation is hidden and every other route redirects to change password.
 - Form fields: `currentPassword`, `newPassword`, `newPasswordConfirmation`, `keepCurrentSession` (boolean). Client check: the confirmation equals the new password. The server repeats it.
 - Response handling:
-  - `keepCurrentSession = true` returns `{ accessToken }`: replace the token in memory, then call `GET /api/v1/auth/me` again. The flag is now false, so the app opens.
+  - `keepCurrentSession = true` returns `{ accessToken }`: replace the token in memory, then call `GET /api/v1/auth/me` again. The flag is now false, so the app opens. The `me` call that follows the rotated token ends the session on 403 `ACCOUNT_NOT_ACTIVE` or `ACCOUNT_NOT_READY` (D4.3, REQ-FE-055): the call rejects and the user goes to `/login` with the notice for that code.
   - `keepCurrentSession = false` returns `{ status: PASSWORD_CHANGED }`: clear the token and cache, route to `/login` with the notice "Password changed, please log in again" (copy: FE-OQ-22).
 - Errors: 401 `INVALID_CREDENTIALS` ("Current password is incorrect.") under the current-password field. 400 `PASSWORD_POLICY_VIOLATION` under the new-password field. 400 `VALIDATION_FAILED` as a form alert. None of these triggers refresh (D4.4).
 
@@ -378,10 +396,13 @@ Access tokens already held by other tabs remain valid at the edge for a short wi
 - The row marked `isCurrent` shows a badge. Its revoke action is hidden; the user logs out instead.
 - "Revoke" on one row: `DELETE /api/v1/sessions/{sessionId}`. "Revoke all others": `DELETE /api/v1/sessions`. Neither logs the current tab out.
 
-#### D4.10 Another user's sessions (REQ-FE-032)
+#### D4.10 Another user's sessions (REQ-FE-032, REQ-FE-052)
 
-- On the system user detail page, tab "Sesi aktif", visible only with `sessions:view`: `GET /api/v1/admin/users/{userId}/sessions`.
-- "Force logout" with `sessions:revoke`: `DELETE /api/v1/admin/users/{userId}/sessions`, behind a confirm dialog. Hidden when the target is the own account (the own sessions page is used instead).
+- Flag: `OTHER_ACCOUNT_SESSIONS_ENABLED = false`, one exported constant in the system-users feature, with a comment citing SP-BG-14. It stays `false` until SP-BG-14 is Closed (user decision 2026-10-14).
+- Reason: `GET /api/v1/admin/users/{userId}/sessions` serves tenant employees only and always returns 404 for a system user. The upcoming contract is `GET` and `DELETE /api/v1/system-users/{id}/sessions` (`sessions:view`, `sessions:revoke`); it is not yet available, and this document does not design against it beyond the flag.
+- While the flag is `false`: the system user detail page renders no "Sesi aktif" tab and no force-logout action for any other account. No request to either sessions endpoint is made from this page.
+- Own account (target id equals the signed-in id): instead of the tab content the page shows a link to `/account/sessions` (My sessions, D7), which uses `GET /api/v1/sessions` and stays unchanged.
+- When SP-BG-14 is Closed: a new amendment sets the flag to `true`, moves the calls to `/api/v1/system-users/{id}/sessions`, and restores "Force logout" behind a confirm dialog, hidden for the own account. Until then the earlier design (tab with `sessions:view`, force logout with `sessions:revoke`) is suspended, not removed from the plan.
 
 #### D4.11 Browser storage policy (REQ-FE-005)
 
@@ -476,6 +497,8 @@ Backend enforcement is authoritative (FE doc 0 rule 7, 4). Gates only decide wha
 
 Gates combine with AND. The route guard maps `LOGIN` to `/login`, `PASSWORD_CHANGE` to `/account/password`, and `FORBIDDEN` to a 403 screen. A missing menu item is not the only protection: the route guard is.
 
+Guest-only public routes (REQ-FE-056, v1.0.12): the `public` kind of the route access type has one optional flag, `guestOnly`. A public route with `guestOnly` set, opened with status `authenticated`, redirects (replace) to the dashboard `/`; this is one branch in the pure decision `resolveRouteAccess`. `/login` and `/forgot-password` are guest-only; `/reset-password` is not. Status `passwordChangeRequired` keeps REQ-FE-012 and goes to `/account/password`; status `unknown`, `error` and `anonymous` are unchanged.
+
 #### D6.2 Master-data gate: role key, not permission key (REQ-FE-019)
 
 - Master-data (tenants, tenant categories, countries) has no permission keys in the FE doc (section 4). The only signal that matches the backend rule is the role. auth-service maps `SYS_PRINCIPAL` to the edge role SYSTEM_PRINCIPAL and gives no edge role to any other system role. The gateway copies that value into `X-Role` and never derives it (ARCH-SEC-001 sections 9.2 c and 9.6). So the UI gate is `HasRole('SYS_PRINCIPAL')`, the system role key the FE can see.
@@ -489,7 +512,7 @@ Gates combine with AND. The route guard maps `LOGIN` to `/login`, `PASSWORD_CHAN
 - A single navigation config lists each item with its label, route, and gate. The sidebar, the command palette and the route guard all read the same config, so a gate cannot differ between them.
 - The landing page, when no module is visible, shows a neutral message (copy: FE-OQ-22) rather than an empty dashboard.
 
-#### D6.4 Action gates (REQ-FE-018, REQ-FE-030, REQ-FE-035)
+#### D6.4 Action gates (REQ-FE-018, REQ-FE-030, REQ-FE-035, REQ-FE-054)
 
 | Action | Gate |
 |--------|------|
@@ -502,7 +525,7 @@ Gates combine with AND. The route guard maps `LOGIN` to `/login`, `PASSWORD_CHAN
 | System user create | `system_users:create` |
 | System user role change | `system_users:update` and `system_roles:view` (the role dropdown needs the role list) |
 | System user suspend, deactivate, reactivate | `system_users:update` (the server decides per target status; handle 403) |
-| System user delete | `system_users:delete` |
+| System user delete | No UI action (REQ-FE-054). `system_users:delete` is not checked by any UI gate; `access.ts` has no `canDelete` and no `USERS_DELETE` constant. The own-account rule (D6.6) now covers suspend and deactivate only |
 | System user reset password | `system_users:reset_password` |
 | System roles list or detail | `system_roles:view` |
 | System role create | `system_roles:create` |
@@ -516,12 +539,12 @@ Gates combine with AND. The route guard maps `LOGIN` to `/login`, `PASSWORD_CHAN
 
 #### D6.5 403 handling
 
-A 403 shows the toast "Anda tidak punya akses untuk aksi ini" (FE doc 7). It never logs the user out. The screen stays. A 403 `PASSWORD_CHANGE_REQUIRED` is the only 403 that routes (D4.6).
+A 403 shows the toast "Anda tidak punya akses untuk aksi ini" (FE doc 7). It never logs the user out. The screen stays. A 403 `PASSWORD_CHANGE_REQUIRED` is the only 403 that routes (D4.6). One exception: a refresh or `me` 403 `ACCOUNT_NOT_ACTIVE` or `ACCOUNT_NOT_READY` ends the session (D4.2, D4.3, REQ-FE-055). Every other 403, on any call, keeps this rule.
 
 #### D6.6 Self-protection and protected roles (REQ-FE-031, REQ-FE-033)
 
-- On the system user list and detail, the own account (`id === me.userId`) shows no suspend, deactivate or delete action (FE doc 5.1). Role change of the own account is hidden by default (FE-OQ-25).
-- The system role with key `SYS_PRINCIPAL` is locked statically in the UI (user decision 2026-10-12, SP-BG-13): no deactivate, no delete, no permission replacement. This replaces the refusal-driven disable. Reason: auth-service has no guard for that role, so the backend never refuses and a refusal-driven button would never disable; one deactivation would lock out all system administrators. The lock constant sits with the role constant in `lib/access/roles.ts`. For other roles, a server refusal with `PLATFORM_ROLE_PROTECTED` or `ROLE_GUARD_VIOLATION` still shows the server message. The own account offers no deactivate or delete (above; TODO-014 acceptance).
+- On the system user list and detail, the own account (`id === me.userId`) shows no suspend or deactivate action (FE doc 5.1; there is no delete action, REQ-FE-054). Role change of the own account is hidden by default (FE-OQ-25).
+- The system role with key `SYS_PRINCIPAL` is locked statically in the UI (user decision 2026-10-12, SP-BG-13): no deactivate, no delete, no permission replacement. This replaces the refusal-driven disable. Reason: auth-service has no guard for that role, so the backend never refuses and a refusal-driven button would never disable; one deactivation would lock out all system administrators. The lock constant sits with the role constant in `lib/access/roles.ts`. Server refusals (`PLATFORM_ROLE_PROTECTED`, `SELF_ACTION_NOT_ALLOWED`, `LAST_SYSTEM_PRINCIPAL`, `SYSTEM_ROLE_IN_USE`, `SERVICE_UNAVAILABLE`) are now guarded server-side (SP-BG-13 Closed 2026-10-14) and shown as fixed Indonesian copy by D13.1, never the server message (v1.0.5). The static lock and the own-account hiding stay as UX; the server is the boundary. The own account offers no suspend or deactivate (above; TODO-014 acceptance); delete is not offered to any account on the Tim IT account pages (REQ-FE-054). The role-delete lock on SYS_PRINCIPAL is unchanged.
 
 ### D7. Screens and endpoint usage (REQ-FE-018 to REQ-FE-039)
 
@@ -529,9 +552,9 @@ Table 1 — endpoint usage map (FE doc section 8, with gates and section referen
 
 | Route | Screen | Gate | Endpoints (FE doc section) |
 |-------|--------|------|----------------------------|
-| `/login` | Login | Anonymous only | POST `/api/v1/auth/login`; GET `/api/v1/auth/me` (3.3) |
-| `/forgot-password` | Forgot password | Public | POST `/api/v1/auth/forgot-password` (3.3) |
-| `/reset-password?token=` | Reset password | Public | POST `/api/v1/auth/reset-password` (3.3) |
+| `/login` | Login | Public, guest-only (REQ-FE-056) | POST `/api/v1/auth/login`; GET `/api/v1/auth/me` (3.3) |
+| `/forgot-password` | Forgot password | Public, guest-only (REQ-FE-056) | POST `/api/v1/auth/forgot-password` (3.3) |
+| `/reset-password?token=` | Reset password | Public, not guest-only | POST `/api/v1/auth/reset-password` (3.3) |
 | `/account/password` | Change password | Authenticated; forced when `pwdChangeRequired` | POST `/api/v1/auth/change-password`; GET `/api/v1/auth/me` (3.3) |
 | `/account/sessions` | My sessions | Authenticated | GET `/api/v1/sessions`; DELETE `/api/v1/sessions/{sessionId}`; DELETE `/api/v1/sessions` (3.4) |
 | `/` | Dashboard | Authenticated; master-data widgets need SYS_PRINCIPAL | GET `/api/v1/tenants?limit=1` (total; also with `is_active=true`); GET `/api/v1/tenants?limit=5`; GET `/api/v1/tenant-categories?limit=1`; GET `/api/v1/countries?limit=1` (section 8 counts) |
@@ -543,7 +566,7 @@ Table 1 — endpoint usage map (FE doc section 8, with gates and section referen
 | `/countries` | Countries | SYS_PRINCIPAL | GET, POST `/api/v1/countries`; GET, PUT, DELETE `/api/v1/countries/{code}` (6.2) |
 | `/master-permissions` | Master permissions (read-only) | `master_permissions:view`; edit `master_permissions:update` | GET `/api/v1/master-permissions`; GET, PATCH `/api/v1/master-permissions/{id}` (name and description only; no POST, no DELETE, no active toggle) (5.3) |
 | `/system-users` | System users (Tim IT > Akun) | `system_users:view` | GET, POST `/api/v1/system-users`; GET `/api/v1/system-roles` (role options; needs `system_roles:view`) (5.1) |
-| `/system-users/:id` | System user detail (tabs: Detail, Sesi aktif) | `system_users:view`; sessions tab `sessions:view` | GET, PATCH, DELETE `/api/v1/system-users/{id}`; PATCH `/api/v1/system-users/{id}/status`; POST `/api/v1/system-users/{id}/reset-password`; GET, DELETE `/api/v1/admin/users/{userId}/sessions` (5.1, 5.6) |
+| `/system-users/:id` | System user detail (tab: Detail; tab "Sesi aktif" suspended while `OTHER_ACCOUNT_SESSIONS_ENABLED` is `false`, D4.10) | `system_users:view`; sessions tab `sessions:view` when the flag is `true` | GET, PATCH `/api/v1/system-users/{id}`; DELETE `/api/v1/system-users/{id}` is never called (REQ-FE-054); PATCH `/api/v1/system-users/{id}/status`; POST `/api/v1/system-users/{id}/reset-password`; GET, DELETE `/api/v1/admin/users/{userId}/sessions` NOT CALLED while the flag is `false` (5.1, 5.6; SP-BG-14) |
 | `/system-roles` | System roles (Tim IT > Peran) | `system_roles:view` | GET, POST `/api/v1/system-roles` (5.2) |
 | `/system-roles/:id` | System role detail (tabs: Detail, Permissions) | `system_roles:view`; edit `system_roles:update` | GET, PATCH, DELETE `/api/v1/system-roles/{id}`; GET, PUT `/api/v1/system-roles/{id}/permissions`; GET `/api/v1/master-permissions` (5.2) |
 
@@ -551,7 +574,7 @@ Not routed in v1: `/tenants/:id/registration-settings` (FE doc 5.5, phase 2).
 
 Dashboard counts (REQ-FE-037): totals come from `pagination.total` of `limit=1` requests. The sidebar badges use the same totals. Badges for failed events and active sessions are removed (no contract, BG-08).
 
-Confirm dialogs (REQ-FE-039): delete (any), deactivate tenant, suspend and deactivate system user, reset password, force logout. Reactivating a user has no confirm dialog. The typed-confirmation dialog keyed to the tenant code (`src/components/dialogs/dialogs.tsx`) is removed, because tenant delete is not offered (405).
+Confirm dialogs (REQ-FE-039, REQ-FE-054): delete (tenant category, country, system role; no delete for system accounts), deactivate tenant, suspend and deactivate system user (with the explanatory text of REQ-FE-054), reset password, force logout. Reactivating a user has no confirm dialog. The typed-confirmation dialog keyed to the tenant code (`src/components/dialogs/dialogs.tsx`) is removed, because tenant delete is not offered (405).
 
 Tenant wizard (REQ-FE-021): the mock wizard has five steps. The contract has no feature-set step at create. The steps become: Identitas (code, name, category, country, logo, multi-branch), Penyimpanan (deployment type), Admin awal (tenant admin e-mail), Tinjau dan buat. Features are configured on the Permissions tab after creation (FE-OQ-24).
 
@@ -591,9 +614,9 @@ Table 2 — mock file and page replacement. Dispositions: REPLACE (contract endp
 | `pages/katalog-kategori.tsx` | UPDATE | `/tenant-categories` CRUD (6.1) | `key` becomes `code` (immutable after create); `label` becomes `name`; `is_active` added to edit; per-category count DERIVE or REMOVE-V1 (FE-OQ-35) |
 | `pages/katalog-negara.tsx` | UPDATE | `/countries` CRUD (6.2) | `iso2` becomes `code`; `dialCode` becomes `phone_code`; `nationality_name` added; `active` becomes `is_active`; count as above |
 | `pages/katalog-permission.tsx` | UPDATE | `/master-permissions` read plus name/description edit (5.3) | Read-only (REQ-FE-035): create button, enable switch and delete REMOVE; edit of name and description stays (PATCH with full current body, FE-OQ-38); `active` shown as a read-only status. `core` and bound-tenant count REMOVE-V1 (BG-07); server guard BG-12. Mock keys (`patient.view` style) are replaced by the catalogue's `resource:action` keys |
-| `pages/tim-akun.tsx` (Akun) | UPDATE | `/system-users` (5.1); `/system-roles` for options | Name and last-active REMOVE-V1 (BG-04; show `loginId`). Status `INACTIVE` maps to `DEACTIVATED` (BG-05). `PENDING_APPROVAL` REMOVE-V1 (BG-05). Self badge = `id === me.userId`. Per-user session count only on detail |
+| `pages/tim-akun.tsx` (Akun) | UPDATE | `/system-users` (5.1); `/system-roles` for options | Name and last-active REMOVE-V1 (BG-04; show `loginId`). Status `INACTIVE` maps to `DEACTIVATED` (BG-05). `PENDING_APPROVAL` REMOVE-V1 (BG-05). Self badge = `id === me.userId`. Per-user session count only on detail. No "Hapus" on the row or in the detail (REQ-FE-054); row actions: Tangguhkan, Nonaktifkan, Aktifkan, ubah peran, reset password |
 | `pages/tim-peran.tsx` (Peran) | UPDATE | `/system-roles` and `/permissions` (5.2) | `isSystem` replaced by a static lock on `SYS_PRINCIPAL` (D6.6; BG-06, SP-BG-13). Member count DERIVE from the user list. Mock role keys (OWNER, OPERATOR, VIEWER) are stale: contract keys are SYS_PRINCIPAL, SYS_ADMIN, SYS_SUPPORT and others |
-| `pages/sistem-sesi.tsx` (Sesi aktif) | UPDATE | Own sessions (3.4); admin sessions (5.6) | Tenant session aggregate REMOVE-V1 (BG-03). Cross-account list is REMOVE-V1; per-user sessions appear on user detail |
+| `pages/sistem-sesi.tsx` (Sesi aktif) | UPDATE | Own sessions (3.4); admin sessions (5.6) | Tenant session aggregate REMOVE-V1 (BG-03). Cross-account list is REMOVE-V1; per-user sessions on user detail are suspended until SP-BG-14 is Closed (D4.10); the user detail page links to this page for the own account |
 | `pages/sistem-event.tsx` | REMOVE-V1 | none | BG-08 |
 | `pages/sistem-housekeeping.tsx` | REMOVE-V1 | none | BG-08 |
 | `pages/sistem-audit.tsx` | REMOVE-V1 | none | BG-08 |
@@ -645,7 +668,7 @@ Components (kept unless marked):
 ### D10. Routing and navigation (REQ-FE-012, REQ-FE-018)
 
 - Path routes with the History API, one route table (`app/router.tsx`). The current mock uses hash routes (`#/tenant`). Path routes are needed for the reset link (D4.7) and for the FE doc's suggested paths. The routing question is answered: History API path routes, with no routing library (FE-OQ-37).
-- Each route declares its gate (D6). Route-level code splitting with `React.lazy` and one `Suspense` boundary per route.
+- Each route declares its gate (D6). A public route may set the optional `guestOnly` flag (D6.1, REQ-FE-056): `/login` and `/forgot-password` are guest-only and redirect (replace) an `authenticated` user to `/`; `/reset-password` is not guest-only. Route-level code splitting with `React.lazy` and one `Suspense` boundary per route.
 - Error boundary per route. Unknown paths show a 404 screen. Denied routes show a 403 screen.
 - Filters and pagination for lists live in search params, so the browser back button and shared links keep the view.
 - Page titles and breadcrumbs come from `routes-meta.ts`.
@@ -686,7 +709,7 @@ A mutation invalidates, in addition to its own resource, everything the table li
 | Admin-account retry | `['master','tenant', id]` |
 | Tenant category create, update, delete | `['master','tenantCategories']`, `['ref','tenantCategories']`, `['master','tenants']` (names are joined in the tenant list) |
 | Country create, update, delete | `['master','countries']`, `['ref','countries']`, `['master','tenants']` (country join) |
-| System user create, role change, status change, delete, reset password | `['system','users']`, `['system','user', id]` (role member counts derive from the user list) |
+| System user create, role change, status change, reset password (no delete, REQ-FE-054) | `['system','users']`, `['system','user', id]` (role member counts derive from the user list) |
 | Force logout (admin) | `['admin','sessions', userId]` |
 | System role create, update, delete | `['system','roles']`, `['system','role', id]`, `['system','users']` (role labels) |
 | Role permissions replace (PUT) | `['system','rolePermissions', id]`, `['system','role', id]` |
@@ -714,16 +737,58 @@ Taxonomy by disposition. Each row names what the user sees. Copy is proposed (FE
 | CREDENTIALS | 401 `INVALID_CREDENTIALS` | Login or change-password text (D4.5, D4.6) |
 | FORBIDDEN | 403 `PERMISSION_DENIED`, `FORBIDDEN` | Toast "Anda tidak punya akses untuk aksi ini"; no logout |
 | PASSWORD_CHANGE | 403 `PASSWORD_CHANGE_REQUIRED` | Route to change password |
-| ACCOUNT | 403 `ACCOUNT_NOT_ACTIVE`, `ACCOUNT_NOT_READY` | Login page message |
+| ACCOUNT | 403 `ACCOUNT_NOT_ACTIVE`, `ACCOUNT_NOT_READY` | On login: fixed copy by code (D4.5), reference id shown, server message never shown. On refresh or `me`: session ends and the login page shows the same copy as a notice (D4.2, D4.3, REQ-FE-055) |
 | NOT_FOUND | 404 `RESOURCE_NOT_FOUND`, `SYSTEM_USER_NOT_FOUND`, `SYSTEM_ROLE_NOT_FOUND`, "Tenant not found." | Detail: "Data tidak ditemukan" with back button. List action: refresh list |
-| CONFLICT | 409 `RESOURCE_CONFLICT`, `*_EXISTS`, in-use delete | Server message next to the action; form kept |
+| CONFLICT | 409 `RESOURCE_CONFLICT`, `*_EXISTS` | Server message next to the action; form kept. Exception on Tim IT pages (system accounts and roles): an unrecognised 409 code shows fixed copy (D13.1), never server text |
+| GUARD | 403 `PLATFORM_ROLE_PROTECTED`, 403 `ROLE_GUARD_VIOLATION` (role pages); 409 `SELF_ACTION_NOT_ALLOWED`, `LAST_SYSTEM_PRINCIPAL`, `SYSTEM_ROLE_IN_USE` | Fixed Indonesian copy by status and code (D13.1); never the server message; action stays available to retry after the cause is fixed |
 | RATE_LIMIT | 429 `RATE_LIMIT_EXCEEDED`, `TOO_MANY_ATTEMPTS` | "Terlalu banyak permintaan, coba lagi sebentar"; login submit disabled 60 s |
-| UNAVAILABLE | 503 `SERVICE_UNAVAILABLE` | Server message shown as is (it states what did not change); retry button; toggles keep old value |
+| UNAVAILABLE | 503 `SERVICE_UNAVAILABLE` | Fixed Indonesian copy (D13.1) on team (system user and role) mutations; elsewhere the earlier rule holds (retry button; toggles keep old value, no optimistic update) |
 | BAD_GATEWAY | 502 `INTERNAL_ERROR` | "Layanan sedang bermasalah, coba lagi" with reference id |
 | SERVER | 500 `INTERNAL_SERVER_ERROR`, `INTERNAL_ERROR` | Generic toast with reference id |
 | BAD_CLIENT | 400 `BAD_REQUEST`, `TENANT_RESOLUTION_FAILED` (gateway), 405, 406, 415 | Generic error with reference id and a console log (these are configuration or client bugs) |
 | NETWORK | kind NETWORK, TIMEOUT, NON_JSON | Generic retry message; no reference id when none exists |
 | CONTRACT | kind CONTRACT | Generic message with reference id; log the module name and missing key, never the body |
+
+#### D13.1 Guard-failure copy (REQ-FE-053)
+
+Module: `features/team/shared/guard-failure.ts`, used by `features/team/users/user-failure.ts` and `features/team/roles/role-failure.ts` (the two keep their other mappings). The mapper returns a copy key, never the server `message`; it branches on HTTP status plus `code` only (REQ-FE-008). Copy is the user's text of 2026-10-14; it still goes through the FE-OQ-22 approval but is not left to a default.
+
+| Status | Code | Context | Copy (Indonesian) |
+|--------|------|---------|-------------------|
+| 409 | `SELF_ACTION_NOT_ALLOWED` | any | Aksi ini tidak dapat dilakukan pada akun Anda sendiri. |
+| 409 | `LAST_SYSTEM_PRINCIPAL` | any | Aksi ditolak. Harus selalu ada minimal satu administrator utama yang aktif. |
+| 409 | `SYSTEM_ROLE_IN_USE` | role pages | Peran masih dipakai akun. Pindahkan akunnya ke peran lain, lalu coba lagi. |
+| 503 | `SERVICE_UNAVAILABLE` | team mutations | Layanan sedang sibuk. Perubahan belum disimpan, silakan coba lagi. |
+| 403 | `PLATFORM_ROLE_PROTECTED` | role pages | Peran administrator utama dilindungi dan tidak dapat diubah atau dihapus. |
+| 403 | `ROLE_GUARD_VIOLATION` | role pages | Peran administrator utama dilindungi dan tidak dapat diubah atau dihapus. (same string as `PLATFORM_ROLE_PROTECTED` in the role context; the role is still marked refused, edit and delete stay disabled; v1.0.7) |
+| 403 | `PLATFORM_ROLE_PROTECTED` | account pages | Hanya administrator utama yang aktif yang dapat melakukan aksi ini terhadap akun administrator utama. |
+
+- The context is passed by the caller (`role` or `account`), not inferred from the message.
+- Scope (FE-OQ-40): only system account pages (Tim IT > Akun) and system role pages (Tim IT > Peran). Tenant role paths keep current handling and never use this module; `PLATFORM_ROLE_PROTECTED` there means a protected tenant role, and `SYSTEM_ROLE_IN_USE` is not returned there.
+- Fallthrough removal (user instruction at approval, 2026-10-14), system account and system role pages only: a 409 or 503 whose `code` is not recognised does not fall through to the shared write helper and never shows server text. The correlation id is still shown.
+  - Other 409: "Perubahan bertentangan dengan data terbaru. Muat ulang halaman, lalu coba lagi."
+  - Other 503: same copy as `SERVICE_UNAVAILABLE` ("Layanan sedang sibuk. Perubahan belum disimpan, silakan coba lagi.").
+  - Codes with their own handling stay as today: `SYSTEM_USER_LOGIN_EXISTS` (`isLoginExists`) and `SYSTEM_ROLE_KEY_EXISTS` (`isRoleKeyExists`).
+  - Implemented in `guard-failure.ts`, `user-failure.ts` and `role-failure.ts`. `describeWriteFailure` in `features/tenants/create/write-failure.ts` is NOT changed (tenant pages use it).
+- Any other status or code (not 409 or 503, and not the 403 codes in the table above) falls through to the existing mapping of the page. `403 ACCOUNT_NOT_ACTIVE` stays out of scope here (login handling, row ACCOUNT).
+- The reference id rule below still applies to these toasts and alerts.
+- Tests (Vitest and RTL, MSW): one component test per row; one test that `PLATFORM_ROLE_PROTECTED` yields the role copy on a role page and the account copy on an account page, and that the two strings differ; one test that the new mapping is not used on a tenant path (verified 2026-10-14: `src/` has no tenant-role screen or call today, so this test applies when such a path is added; until then it is a guard test on `guard-failure.ts` callers, which must be only `user-failure.ts` and `role-failure.ts`); one test that the raw server `message` is never rendered for these codes; one test (v1.0.7) that a role-page 403 `ROLE_GUARD_VIOLATION` (edit and delete) with a server `message` shows exactly the role-context `PLATFORM_ROLE_PROTECTED` copy, never the server text, and that the role is still marked refused (edit and delete disabled), with the reference id shown; fallthrough tests: a 409 with an unknown code on the account page, a 409 with an unknown code on the role page, and a 503 with an unknown code (account and role pages) each show the fixed copy above and no server text, with the reference id shown; one test that the tenant create page still shows the server message for an unknown 409 (`describeWriteFailure` unchanged).
+
+##### D13.1a Guard codes reachable per remaining account action (v1.0.6, REQ-FE-054)
+
+Source: auth-service `ARCH-BE-004` section 4 and the per-operation table (read-only, `../Microservices/auth-service/output/architecture/`). Account delete is no longer a UI action, so the tests that triggered guard refusals through delete must use the actions below.
+
+| UI action (endpoint) | `SELF_ACTION_NOT_ALLOWED` | `LAST_SYSTEM_PRINCIPAL` | `PLATFORM_ROLE_PROTECTED` | `SERVICE_UNAVAILABLE` |
+|----------------------|---------------------------|-------------------------|---------------------------|-----------------------|
+| Tangguhkan, Nonaktifkan (PATCH `/system-users/{id}/status`, status not ACTIVE) | Yes (own account; UI hides the button, so MSW only) | Yes (target is the last active principal holder) | Not specified for this operation | Yes (lock timeout) |
+| Ubah peran (PATCH `/system-users/{id}`) | Yes (own account) | Yes (moving the last active principal holder away from SYS_PRINCIPAL) | Yes (assigning SYS_PRINCIPAL by an actor who is not an active principal) | Yes |
+| Reset password (POST `/system-users/{id}/reset-password`) | No (self reset is allowed) | No | Yes (target holds SYS_PRINCIPAL, actor not an active principal) | No (no holder lock) |
+| Aktifkan (PATCH `/system-users/{id}/status`, status ACTIVE) | No | No | No | No (promotion has no guard) |
+
+- `SYSTEM_ROLE_IN_USE` is a role-delete code only; it is unaffected by this amendment.
+- The account-page copy of `PLATFORM_ROLE_PROTECTED` (table above) is reachable from role change and reset password. For suspend and deactivate of a principal holder by a non-principal actor the platform documents no `PLATFORM_ROLE_PROTECTED` (FE-OQ-41); tests must not assert it on those actions.
+- TODO-022 tests that sent DELETE `/system-users/{id}` to produce `SELF_ACTION_NOT_ALLOWED`, `LAST_SYSTEM_PRINCIPAL` or `PLATFORM_ROLE_PROTECTED` are re-pointed: SELF and LAST to deactivate (status) or role change; PROTECTED to role change (assign SYS_PRINCIPAL) or reset password. Tests for the unrecognised-409/503 fallthrough re-point to any of these actions. Role-page tests (role delete, `SYSTEM_ROLE_IN_USE`, `PLATFORM_ROLE_PROTECTED` role copy) are unchanged.
+- Platform note: SP-BG-13 (Closed 2026-10-14) resolution text lists the codes without naming operations; its original request text names delete (with deactivate, suspend, change role) as guarded. That is accurate on the server (`DELETE` is deactivation) but must not be read as a reason for a UI delete.
 
 - Every toast and alert that comes from an error shows the reference id: the response `X-Correlation-ID` when readable, otherwise the request id (D3.2). Format: "Kode referensi: <id>" (copy FE-OQ-22).
 - The gateway returns `Cache-Control: no-store` on its own errors (ARCH-BE-002 section 13). No client cache handling is needed for errors.
@@ -796,7 +861,7 @@ Adopted test stack (`tech-stack-frontend.md` Testing Standard; FE-OQ-12; ADR-FE-
 |-------|-------|----------|
 | Unit (mandatory for `lib/api/client.ts`, Vitest) | HTTP pipeline and refresh | Single-flight refresh (concurrent 401s produce one refresh call); 401 then refresh then retry once; second 401 logs out; exempt endpoints never refresh; 204 returns no body; error mapping to `{code, message}` with kinds (NETWORK, TIMEOUT, NON_JSON, CONTRACT); headers allow-list and forbidden headers never sent |
 | Unit | Mappers, schemas, gates, admin-account classifier, query invalidation map | Snake-to-camel for every type; `classifyAdminAccount` for the five combinations; 401 policy table (D4.4); gate truth table (D6); invalidation map (D12.1) |
-| Component (RTL) | Screens with MSW | Login error texts; forced password change redirects; tenant create three outcomes and Retry; immutable fields read-only; PATCH sends only allowed keys; `is_active` reverts on 503; no delete control; self-protection hides suspend; React Hook Form errors reach `aria-describedby` |
+| Component (RTL) | Screens with MSW | Login error texts; forced password change redirects; tenant create three outcomes and Retry; immutable fields read-only; PATCH sends only allowed keys; `is_active` reverts on 503; no delete control (tenants; and no "Hapus" on system accounts, REQ-FE-054); self-protection hides suspend; React Hook Form errors reach `aria-describedby` |
 | Integration (MSW 2.x) | All API modules against handlers from FE doc examples; route guards; query invalidation after mutations | Permission gating per route; SP-only master-data screens; SYS_ADMIN landing; FE doc 7 error behaviour per code |
 | Static checks (CI) | Source scan | No `localStorage`/`sessionStorage` use for auth; no `X-User-ID`, `X-Role`, `X-Tenant-ID`, `X-Service-Token` string in `src`; no `dangerouslySetInnerHTML`; no `VITE_*` secret name |
 | E2E (Playwright, later) | After Tenants integration works; not initial phase | Login, forced password change, create tenant with admin FAILED then Retry, deactivate |
@@ -890,13 +955,14 @@ Table 3 — backend gaps (for routing only; not designed here). None of these bl
 | BG-03 | Tenant-wide session aggregate and revoke-all for a tenant. The mock comment proposes `DELETE /admin/tenants/{tenantId}/sessions`; that path is not in the contract and is not designed here | Sessions screen (mock) | FE doc 3.4, 5.6 are per user only | auth-service architect_backend, with security review |
 | BG-04 | System user display name and last-active time | Akun list | `SystemUser` has `loginId` and timestamps only (FE doc 5.1) | auth-service architect_backend |
 | BG-05 | System user statuses beyond ACTIVE, SUSPENDED, DEACTIVATED (mock has INACTIVE and PENDING_APPROVAL) | Akun list and filters | FE doc 5.1 status enum. Mapping INACTIVE to DEACTIVATED needs product confirmation first | solution_architect (product), then auth-service if needed |
-| BG-06 | Protected or system marker on system roles | Peran list and actions | `SystemRole` has no such field (FE doc 5.2), and auth-service has no guard for SYS_PRINCIPAL (SystemRoleService allows update, delete and permission replacement). The FE locks SYS_PRINCIPAL statically (D6.6). Escalated as SP-BG-13 (platform clarifications), which also covers the missing self-deactivation guard in SystemUserService | auth-service architect_backend |
+| BG-06 | Protected or system marker on system roles | Peran list and actions | `SystemRole` has no such field (FE doc 5.2); the guard in SystemRoleService and SystemUserService was added under SP-BG-13 (Closed 2026-10-14, v1.0.5). Original text: auth-service has no guard for SYS_PRINCIPAL (SystemRoleService allows update, delete and permission replacement). The FE locks SYS_PRINCIPAL statically (D6.6). Escalated as SP-BG-13 (platform clarifications), which also covers the missing self-deactivation guard in SystemUserService | auth-service architect_backend |
 | BG-07 | Locked (`core`) flag on master permissions and per-permission bound-tenant count | Katalog permission | `MasterPermission` has `active` and `customerPermitted` only (FE doc 5.3) | auth-service architect_backend, product |
 | BG-08 | Operations surfaces: domain events and reprocess, deletion queue and scheduler, audit log, platform settings, dashboard attention and activity feeds | Mock Sistem pages, dashboard | No endpoint in FE doc sections 3 to 6 or 8 | solution_architect (which service owns each is not defined) |
 | BG-09 | Free-text tenant search by name | Tenant list | Contract supports exact `code` only (FE doc 11) | master-data-service (only if product requires) |
 | BG-10 | `Access-Control-Expose-Headers` for `X-Correlation-ID` on cross-origin SP origins | Error reference ids | Gateway is the single CORS authority and removes `Access-Control-*` from downstream responses (SC2-HDR-13); no expose list is defined. Not needed in the recommended same-origin topology | apigateway architect_backend (ARCH-SEC-002 owner); only if the fallback topology is chosen |
 | BG-11 | Idempotency key for non-idempotent public writes (tenant create, system user create, reset-password e-mail trigger, master-data and role creates). The FE doc defines none | Tenant create, system user create, reset password | `tech-stack-backend.md` Idempotency Standard applies to retryable writes; FE does not retry (D3.1) | architect_backend of each service and platform ARCH-BE-001 owner (conformance question) |
 | BG-12 | Server-side guard: auth-service must refuse deactivate and delete of master permissions still used by active system roles (at least the core keys `system_users:*`, `system_roles:*`, `master_permissions:*`, `sessions:*`). Reason: `PermissionResolutionService` uses only active, non-deleted master permissions, so deactivating or deleting a core key revokes it from every role including SYS_PRINCIPAL and can lock out all admins. The FE removes these actions (REQ-FE-035) but the API still allows them | Katalog permission (defence in depth; same family as BG-06) | User decision 2026-10-12; handled in the platform repository as an addition to SP-BG-13 | auth-service architect_backend |
+| BG-13 | `GET` and `DELETE /api/v1/system-users/{id}/sessions` for another system user (`sessions:view`, `sessions:revoke`; own account -> 409 `SELF_ACTION_NOT_ALLOWED`; `SYS_PRINCIPAL` holder only by an active principal, else 403 `PLATFORM_ROLE_PROTECTED`). Today the admin sessions endpoint serves tenant employees only (404 for system users) | System user detail, tab "Sesi aktif" (D4.10), hidden by `OTHER_ACCOUNT_SESSIONS_ENABLED=false` | Platform item SP-BG-14 (Open); user decision 2026-10-14 | auth-service architect_backend |
 
 Table 4 — stack decision register (`tech-stack-frontend.md`). Version 0.2 records the coordinator's decisions. Every row is an ADR candidate for `/decision` (Pending Approval). No row is Blocking.
 
@@ -968,7 +1034,7 @@ Items not in Table 4 or 5 (conformance, non-blocking): client error reporting is
 | FE-OQ-19 | Which URL does the reset e-mail contain? | Reset page route (D4.7) | Reset flow end to end | auth-service architect_backend, ops | No | Open | Documented default: `/reset-password?token=` on the SP origin |
 | FE-OQ-20 | CSP, frame, referrer and image policy for the static host: `connect-src`, `img-src` for tenant logos, `style-src` (`unsafe-inline` for popper positioning, to confirm), `frame-ancestors`, `Referrer-Policy`; sibling-host analysis if the fallback topology is chosen | Security controls (D15, D4.12) | Build headers; logo rendering | security_architect, ops | No | Open | Documented default: the proposal in D15. Blocking only if the security decision changes the design (for example, a logo proxy in the gateway) |
 | FE-OQ-21 | Browser storage and idle timeout policy. The contract has no idle timeout | Session UX (D4.11, D15) | Inactivity logout | security_architect | No | Open | Documented default: theme preference only in storage; no idle logout in v1 |
-| FE-OQ-22 | UI language and error copy: Indonesian copy keyed by `code` (proposed), with server messages as fallback. Approve the copy deck | Every visible message (D13) | Copy | user, product | No | Open | Documented default: Indonesian copy for the codes named in the FE doc; server `message` shown only where D13 says so |
+| FE-OQ-22 | UI language and error copy: Indonesian copy keyed by `code` (proposed), with server messages as fallback. Approve the copy deck | Every visible message (D13) | Copy | user, product | No | Open | Documented default: Indonesian copy for the codes named in the FE doc; server `message` shown only where D13 says so. v1.0.5: the six guard-failure strings in D13.1 are fixed by the user (2026-10-14); the rest of the deck stays open |
 | FE-OQ-23 | v1 navigation scope: are the removed mock surfaces (events, housekeeping, audit, platform settings, dashboard feeds, tenant session aggregate) out of v1? | Table 2 | Navigation and scope | user, product | No | Open | Documented default: REMOVE-V1 as shown in Table 2 |
 | FE-OQ-24 | Does the mock "Fitur aktif" (feature modules and flags) map to the tenant Permissions tab (FE doc 5.4)? | Tenant detail and wizard (D7, Table 2) | Feature configuration after create | user, product | No | Open | Documented default: yes, the Permissions tab replaces it; mock flags are removed |
 | FE-OQ-25 | Should the own account be able to change its own system role in the UI? | System user detail (D6.6) | One action | user | No | Open | Documented default: hidden in the UI. Backend behaviour not defined in the contract |
@@ -985,8 +1051,16 @@ Items not in Table 4 or 5 (conformance, non-blocking): client error reporting is
 | FE-OQ-36 | Domain names for the staging and production SP hosts and the gateway host | Same-origin host (D1.2, REQ-FE-047) | Operator edge file and certificates | ops | No | Open | Documented default: `system.<env-domain>` per environment. Infrastructure decision, not a design blocker |
 | FE-OQ-37 | Routing library for path routes (or custom History API routing) | Route table (D10); the mock uses hash routes | Routing code | architect_frontend, user | No | Answered | History API path routes, with no routing library (Checkpoint B gate, 2026-10-10; ADR-001 v1.0.1 OQ2) |
 | FE-OQ-38 | Does PATCH `/api/v1/master-permissions/{id}` for name and description accept a partial body, or must it carry the full current body including `active` and `customerPermitted`? FE doc 5.3 is not explicit about partial bodies | Master permission edit (D5.3, D7) | Request body shape | auth-service architect_backend | No | Open | Documented default: send the full current body with `key`, `category`, `module`, `active`, `customerPermitted` unchanged (existing D5.3 rule "Edit sends all current values") |
+| FE-OQ-39 | When SP-BG-14 is Closed, what is the final contract for `/api/v1/system-users/{id}/sessions` and who flips `OTHER_ACCOUNT_SESSIONS_ENABLED`? | D4.10, BG-13 | A later amendment, not TODO-022 | auth-service architect_backend, architect_frontend | No | Answered | User 2026-10-14: default accepted. The flag stays `false` until SP-BG-14 is Closed in the platform `clarifications.md`, then it is flipped by a new ARCH-FE-001 amendment; no FE design for the new endpoint before that |
+| FE-OQ-40 | Do the guard-failure messages also apply to tenant role paths, and which pages are "account pages" and "role pages"? | D13.1 | Scope of `guard-failure.ts` | auth-service architect_backend, user | No | Answered | User 2026-10-14: the six messages apply only to system account pages (Tim IT > Akun) and system role pages (Tim IT > Peran). Tenant role paths are not covered: `SYSTEM_ROLE_IN_USE` is never returned there (SP-BG-13 open question (b) stays open; if answered yes the code would be `TENANT_ROLE_IN_USE`), and `PLATFORM_ROLE_PROTECTED` on a tenant path means a protected tenant role, not the principal administrator. Pages that touch tenant roles keep current handling |
+| FE-OQ-41 | Does `system_users:delete` stay in the system role permission matrices (checklist on the role detail page) and in auth-service seed data, now that the UI never uses it? And does auth-service plan to change `DELETE /system-users/{id}` (real soft delete, or removal)? | D6.4, REQ-FE-054; role permission checklist; platform SP-BG-13 follow-up | Role permission screens show an unused permission; a later real delete would need a new amendment | auth-service architect_backend, user | No | Answered | Answered by the user 2026-10-14: default adopted. Documented default: the permission stays in the catalogue and the role checklist unchanged (the UI lists whatever the catalogue returns; no FE filtering); `deleteSystemUser` stays in the API module; re-add the UI action only through a later amendment if the server gains a real delete |
+| FE-OQ-42 | Does the platform document `PLATFORM_ROLE_PROTECTED` for suspend or deactivate of a SYS_PRINCIPAL holder by a non-principal actor? ARCH-BE-004 lists it for role assignment and reset password only | D13.1a test re-pointing | Which action a test may use to produce the account-page `PLATFORM_ROLE_PROTECTED` copy | auth-service architect_backend | No | Answered | Answered by the user 2026-10-14: default adopted. Documented default: tests use role change or reset password for this code; suspend and deactivate tests do not assert it |
+| FE-OQ-43 | Copy for `403 ACCOUNT_NOT_ACTIVE` and `403 ACCOUNT_NOT_READY` on the login page, and as the login-page notice after a session end | D4.5, D13 (ACCOUNT), REQ-FE-055 | Login and notice text | user, product | No | Answered | Answered by the user 2026-10-15: "Akun Anda tidak aktif. Hubungi administrator." (ACCOUNT_NOT_ACTIVE) and "Akun Anda belum siap digunakan. Hubungi administrator." (ACCOUNT_NOT_READY). Both show the reference id; the server message is never shown |
+| FE-OQ-44 | Does `403 ACCOUNT_NOT_READY` on refresh or `me` also end the session, or only `ACCOUNT_NOT_ACTIVE`? | D4.3, REQ-FE-055 | Session end rule | user, auth-service architect_backend | No | Answered | Answered by the user 2026-10-15: yes. `ACCOUNT_NOT_READY` on refresh or `me` ends the session with its own notice, the same as `ACCOUNT_NOT_ACTIVE`. Other 403 codes keep the session |
+| FE-OQ-45 | How long does a suspended account keep working in the open app? | D4.3, D6.5 | Mid-session behaviour after a suspend | security_architect, auth-service architect_backend | No | Answered | Recorded by the user 2026-10-15: the gateway checks the session per request (30-second cache). A data request after the suspend gets 401, the refresh gets 403 `ACCOUNT_NOT_ACTIVE` and the session ends. Covered by a TODO-024 test (request 401, refresh 403, session end, cache cleared, login page with notice) |
+| FE-OQ-46 | Does auth-service accept an access token after logout or session end? | D4.2, D4.3 | Whether the FE can rely on server rejection of a stale token | security_architect | No | Open | Documented default: the FE clears the token on every session end and does not rely on server rejection |
 
-Blocking summary: Blocking open questions = 0. Answered: FE-OQ-01 to FE-OQ-13. 24 non-blocking open questions, with documented defaults (FE-OQ-14 to FE-OQ-38 except answered rows; FE-OQ-14 to FE-OQ-31 keep their v0.1 defaults). Platform blocking questions: none added.
+Blocking summary: Blocking open questions = 0. Answered: FE-OQ-01 to FE-OQ-13, FE-OQ-39, FE-OQ-40, FE-OQ-41, FE-OQ-42, FE-OQ-43, FE-OQ-44, FE-OQ-45. 25 non-blocking open questions, with documented defaults (FE-OQ-14 to FE-OQ-38 except answered rows, and FE-OQ-46; FE-OQ-14 to FE-OQ-31 keep their v0.1 defaults). Platform blocking questions: none added.
 
 ## ADR Candidates for /decision
 

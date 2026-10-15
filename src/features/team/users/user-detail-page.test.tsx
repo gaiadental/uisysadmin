@@ -12,7 +12,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { setAccessToken } from "@/lib/api/refresh"
 import { createQueryClient } from "@/lib/query/client"
-import { queryKeys } from "@/lib/query/keys"
 import {
   API,
   errorResponse,
@@ -29,7 +28,6 @@ import { server } from "@/test/server"
 
 import { ALL_USER_PERMISSIONS, renderWithClient } from "./test-support"
 import { UserDetailPage } from "./user-detail-page"
-import { confirmPermanent } from "@/test/confirm"
 
 const authMock = vi.hoisted(() => ({ permissions: [] as readonly string[] }))
 vi.mock("@/app/providers/auth-provider", () => ({
@@ -50,6 +48,21 @@ const toastMock = vi.hoisted(() => ({
 }))
 vi.mock("sonner", () => ({ toast: toastMock }))
 
+// Other-account sessions are suspended (OTHER_ACCOUNT_SESSIONS_ENABLED = false).
+// The kept tab code is exercised with the flag mocked to true; the default is
+// the real behaviour (false).
+const flagMock = vi.hoisted(() => ({ enabled: false }))
+vi.mock("./access", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./access")>()
+  return {
+    ...actual,
+    canViewUserSessions: (permissions: readonly string[]) =>
+      flagMock.enabled && permissions.includes("sessions:view"),
+    canForceLogout: (permissions: readonly string[], isSelf: boolean) =>
+      flagMock.enabled && permissions.includes("sessions:revoke") && !isSelf,
+  }
+})
+
 let queryClient: QueryClient
 
 beforeEach(() => {
@@ -57,6 +70,7 @@ beforeEach(() => {
   setAccessToken(null)
   queryClient = createQueryClient()
   authMock.permissions = ALL_USER_PERMISSIONS
+  flagMock.enabled = false
   vi.spyOn(console, "error").mockImplementation(() => undefined)
 })
 
@@ -133,7 +147,7 @@ describe("states (D13)", () => {
 })
 
 describe("self-protection (D6.6, TODO-014 amendment 2026-10-12)", () => {
-  it("shows the self badge and no suspend, deactivate, delete or role change for the own account", async () => {
+  it("shows the self badge and no suspend, deactivate or role change for the own account", async () => {
     renderDetail(FIXTURE_USER_SELF.id)
     await readyFor(FIXTURE_USER_SELF.loginId)
 
@@ -144,14 +158,14 @@ describe("self-protection (D6.6, TODO-014 amendment 2026-10-12)", () => {
     expect(button("Ubah peran")).not.toBeInTheDocument()
   })
 
-  it("offers every action on another account with the same permissions", async () => {
+  it("offers every action except Hapus on another account with the same permissions", async () => {
     renderDetail(FIXTURE_USER_ACTIVE.id)
     await readyFor(FIXTURE_USER_ACTIVE.loginId)
 
     expect(screen.queryByText("self")).not.toBeInTheDocument()
     expect(button(/Tangguhkan/)).toBeInTheDocument()
     expect(button(/Nonaktifkan/)).toBeInTheDocument()
-    expect(button(/Hapus/)).toBeInTheDocument()
+    expect(button(/Hapus/)).not.toBeInTheDocument()
     expect(button("Ubah peran")).toBeInTheDocument()
   })
 })
@@ -236,33 +250,6 @@ describe("role change (D6.4)", () => {
 })
 
 describe("actions on the detail page", () => {
-  it("deletes after confirmation, returns to the list and does not refetch the deleted user", async () => {
-    let details = 0
-    server.use(
-      http.get(`${API}/system-users/:id`, () => {
-        details += 1
-        return HttpResponse.json({ data: FIXTURE_USER_ACTIVE })
-      })
-    )
-    renderDetail(FIXTURE_USER_ACTIVE.id)
-    await readyFor(FIXTURE_USER_ACTIVE.loginId)
-
-    fireEvent.click(screen.getByRole("button", { name: /Hapus/ }))
-    const dialog = await screen.findByRole("dialog")
-    confirmPermanent(dialog, "Hapus")
-
-    await waitFor(() =>
-      expect(toastMock.success).toHaveBeenCalledWith("Akun dihapus.")
-    )
-    expect(window.location.pathname).toBe("/system-users")
-    expect(details).toBe(1)
-    expect(
-      queryClient.getQueryState(
-        queryKeys.systemUsers.detail(FIXTURE_USER_ACTIVE.id)
-      )
-    ).toBeUndefined()
-  })
-
   it("reactivates a suspended account without a dialog", async () => {
     let body: unknown
     server.use(
@@ -281,7 +268,11 @@ describe("actions on the detail page", () => {
   })
 })
 
-describe("Sesi aktif tab (D4.10)", () => {
+describe("Sesi aktif tab (D4.10, flag mocked on)", () => {
+  beforeEach(() => {
+    flagMock.enabled = true
+  })
+
   function openTab() {
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Sesi aktif" }))
     fireEvent.click(screen.getByRole("tab", { name: "Sesi aktif" }))
@@ -432,5 +423,57 @@ describe("Sesi aktif tab (D4.10)", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Anda tidak punya akses untuk aksi ini."
     )
+  })
+})
+
+describe("Sesi aktif suspended (REQ-FE-052, D4.10)", () => {
+  it("shows no tab, no force logout and makes no sessions request for another account", async () => {
+    let sessionRequests = 0
+    server.use(
+      http.get(`${API}/admin/users/:userId/sessions`, () => {
+        sessionRequests += 1
+        return HttpResponse.json({ data: [] })
+      }),
+      http.delete(`${API}/admin/users/:userId/sessions`, () => {
+        sessionRequests += 1
+        return new HttpResponse(null, { status: 204 })
+      })
+    )
+    renderDetail(FIXTURE_USER_ACTIVE.id)
+    await readyFor(FIXTURE_USER_ACTIVE.loginId)
+
+    expect(
+      screen.queryByRole("tab", { name: "Sesi aktif" })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("button", { name: "Paksa keluar" })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole("link", { name: "Lihat sesi saya" })
+    ).not.toBeInTheDocument()
+    expect(sessionRequests).toBe(0)
+  })
+
+  it("links the own account to /account/sessions", async () => {
+    let sessionRequests = 0
+    server.use(
+      http.get(`${API}/admin/users/:userId/sessions`, () => {
+        sessionRequests += 1
+        return HttpResponse.json({ data: [] })
+      })
+    )
+    renderDetail(FIXTURE_USER_SELF.id)
+    await readyFor(FIXTURE_USER_SELF.loginId)
+
+    expect(
+      screen.queryByRole("tab", { name: "Sesi aktif" })
+    ).not.toBeInTheDocument()
+    const link = screen.getByRole("link", { name: "Lihat sesi saya" })
+    expect(link).toHaveAttribute("href", "/account/sessions")
+    expect(link).not.toHaveAttribute("target")
+    expect(screen.queryByRole("button", { name: "Lihat sesi saya" })).toBeNull()
+    fireEvent.click(link)
+    expect(window.location.pathname).toBe("/account/sessions")
+    expect(sessionRequests).toBe(0)
   })
 })

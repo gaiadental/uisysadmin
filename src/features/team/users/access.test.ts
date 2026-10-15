@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest"
 import type { SystemUser } from "@/types/system-user"
 
 import {
+  OTHER_ACCOUNT_SESSIONS_ENABLED,
   canCreateUser,
   canForceLogout,
   canViewUserSessions,
@@ -36,6 +37,12 @@ function user(overrides: Partial<SystemUser> = {}): SystemUser {
 }
 
 describe("userActionAccess", () => {
+  it("has no delete capability, even with system_users:delete (REQ-FE-054)", () => {
+    expect(userActionAccess(ALL, SELF_ID, user())).not.toHaveProperty(
+      "canDelete"
+    )
+  })
+
   it("offers every action on another active user with all permissions", () => {
     expect(userActionAccess(ALL, SELF_ID, user())).toEqual({
       isSelf: false,
@@ -43,18 +50,16 @@ describe("userActionAccess", () => {
       canSuspend: true,
       canDeactivate: true,
       canReactivate: false,
-      canDelete: true,
       canResetPassword: true,
     })
   })
 
-  it("offers no suspend, deactivate, delete or role change on the own account", () => {
+  it("offers no suspend, deactivate or role change on the own account", () => {
     const access = userActionAccess(ALL, SELF_ID, user({ id: SELF_ID }))
 
     expect(access.isSelf).toBe(true)
     expect(access.canSuspend).toBe(false)
     expect(access.canDeactivate).toBe(false)
-    expect(access.canDelete).toBe(false)
     expect(access.canChangeRole).toBe(false)
   })
 
@@ -83,14 +88,10 @@ describe("userActionAccess", () => {
     expect(access.canReactivate).toBe(false)
   })
 
-  it("needs system_users:delete and system_users:reset_password for those actions", () => {
-    const perms = ALL.filter(
-      (key) =>
-        key !== "system_users:delete" && key !== "system_users:reset_password"
-    )
+  it("needs system_users:reset_password for a password reset", () => {
+    const perms = ALL.filter((key) => key !== "system_users:reset_password")
     const access = userActionAccess(perms, SELF_ID, user())
 
-    expect(access.canDelete).toBe(false)
     expect(access.canResetPassword).toBe(false)
   })
 
@@ -122,14 +123,20 @@ describe("canCreateUser", () => {
   })
 })
 
-describe("session gates (D4.10)", () => {
-  it("shows the tab only with sessions:view", () => {
-    expect(canViewUserSessions(["sessions:view"])).toBe(true)
+describe("session gates (D4.10, suspended by REQ-FE-052)", () => {
+  it("keeps the flag off until SP-BG-14 is closed", () => {
+    expect(OTHER_ACCOUNT_SESSIONS_ENABLED).toBe(false)
+  })
+
+  it("never shows the tab while the flag is off, even with sessions:view", () => {
+    expect(canViewUserSessions(["sessions:view"])).toBe(false)
+    expect(canViewUserSessions(ALL)).toBe(false)
     expect(canViewUserSessions(["sessions:revoke"])).toBe(false)
   })
 
-  it("allows force logout only with sessions:revoke and never for the own account", () => {
-    expect(canForceLogout(["sessions:revoke"], false)).toBe(true)
+  it("never allows force logout while the flag is off", () => {
+    expect(canForceLogout(["sessions:revoke"], false)).toBe(false)
+    expect(canForceLogout(ALL, false)).toBe(false)
     expect(canForceLogout(["sessions:revoke"], true)).toBe(false)
     expect(canForceLogout(["sessions:view"], false)).toBe(false)
   })

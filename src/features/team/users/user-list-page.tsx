@@ -4,7 +4,7 @@
  * D6.6, D7, D12.1). auth-service returns the whole list, so search and paging
  * run on the client (`useClientPagedList`). The list shows `loginId` only: the
  * contract has no display name or last-active time (SP-BG-04). The own
- * account carries a "self" badge and no suspend, deactivate or delete.
+ * account carries a "self" badge and no suspend or deactivate. There is no "Hapus" action (REQ-FE-054).
  */
 
 import { useState, type ReactNode } from "react"

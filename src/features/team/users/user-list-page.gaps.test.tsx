@@ -28,10 +28,10 @@ import {
 } from "@/test/handlers/system-users"
 import { server } from "@/test/server"
 
+import { CONFLICT_MESSAGE } from "../shared/guard-failure"
 import { ALL_USER_PERMISSIONS, renderWithClient } from "./test-support"
 import { USER_NOT_FOUND_MESSAGE } from "./user-failure"
 import { UserListPage } from "./user-list-page"
-import { confirmPermanent } from "@/test/confirm"
 
 const authMock = vi.hoisted(() => ({ permissions: [] as readonly string[] }))
 vi.mock("@/app/providers/auth-provider", () => ({
@@ -109,10 +109,6 @@ describe("each gate key independently (D6.4)", () => {
       },
     ],
     [
-      "system_users:delete",
-      { active: ["Hapus"], suspended: ["Hapus"], deactivated: ["Hapus"] },
-    ],
-    [
       "system_users:reset_password",
       {
         active: ["Reset password"],
@@ -172,7 +168,7 @@ describe("own account (D6.6, amendment 2026-10-12)", () => {
     )
   })
 
-  it("offers reactivate (and still no deactivate or delete) when the own status is not ACTIVE (OQ-P-32)", async () => {
+  it("offers reactivate (and still no deactivate) when the own status is not ACTIVE (OQ-P-32)", async () => {
     server.use(
       http.get(`${API}/system-users`, () =>
         HttpResponse.json({
@@ -203,7 +199,7 @@ describe("own account (D6.6, amendment 2026-10-12)", () => {
 
     expect(screen.queryByText("self")).not.toBeInTheDocument()
     expect(actionNames(FIXTURE_USER_SELF.loginId)).toContain(
-      `Hapus ${FIXTURE_USER_SELF.loginId}`
+      `Tangguhkan ${FIXTURE_USER_SELF.loginId}`
     )
   })
 })
@@ -211,7 +207,6 @@ describe("own account (D6.6, amendment 2026-10-12)", () => {
 describe("confirm dialogs cancel and confirm", () => {
   it.each([
     ["Nonaktifkan ops@gaia.com", "patch"],
-    ["Hapus ops@gaia.com", "delete"],
     ["Reset password ops@gaia.com", "post"],
   ])("cancelling %s sends nothing and leaves no toast", async (name, method) => {
     const calls: string[] = []
@@ -219,10 +214,6 @@ describe("confirm dialogs cancel and confirm", () => {
       http.patch(`${API}/system-users/:id/status`, () => {
         calls.push("patch")
         return HttpResponse.json({ data: FIXTURE_USER_ACTIVE })
-      }),
-      http.delete(`${API}/system-users/:id`, () => {
-        calls.push("delete")
-        return HttpResponse.json({ data: null })
       }),
       http.post(`${API}/system-users/:id/reset-password`, () => {
         calls.push("post")
@@ -242,9 +233,41 @@ describe("confirm dialogs cancel and confirm", () => {
   })
 
   it("names the target account in the confirm title", async () => {
-    const dialog = await openDialogFor("Hapus ops@gaia.com")
+    const dialog = await openDialogFor("Tangguhkan ops@gaia.com")
 
-    expect(within(dialog).getByText("Hapus akun ops@gaia.com?")).toBeInTheDocument()
+    expect(
+      within(dialog).getByText("Tangguhkan akun ops@gaia.com?")
+    ).toBeInTheDocument()
+  })
+
+  it.each([
+    [
+      "Tangguhkan",
+      "Blokir sementara akun ini, misalnya saat cuti atau investigasi. Semua sesinya diakhiri. Bisa diaktifkan kembali.",
+    ],
+    [
+      "Nonaktifkan",
+      "Untuk anggota yang sudah tidak bertugas. Semua sesinya diakhiri. Bisa diaktifkan kembali bila diperlukan.",
+    ],
+  ])("%s dialog shows its exact text (REQ-FE-054)", async (label, text) => {
+    const dialog = await openDialogFor(`${label} ops@gaia.com`)
+
+    expect(
+      within(dialog).getByRole("heading", { name: `${label} akun ops@gaia.com?` })
+    ).toBeInTheDocument()
+    expect(within(dialog).getByText(text)).toBeInTheDocument()
+  })
+
+  it("renders no Hapus control for any row, own or other, with every permission (REQ-FE-054)", async () => {
+    renderWithClient(<UserListPage />, queryClient)
+    await ready()
+
+    expect(
+      screen.queryByRole("button", { name: /hapus/i })
+    ).not.toBeInTheDocument()
+    for (const user of FIXTURE_USERS) {
+      expect(actionNames(user.loginId)).not.toContain(`Hapus ${user.loginId}`)
+    }
   })
 
   it("shows a status transition result: reactivate from DEACTIVATED sends ACTIVE once", async () => {
@@ -296,23 +319,19 @@ describe("error mapping on row actions (D13)", () => {
   async function confirmAndFail(
     name: string,
     confirmLabel: string,
-    handler: ReturnType<typeof http.patch | typeof http.delete | typeof http.post>
+    handler: ReturnType<typeof http.patch | typeof http.post>
   ) {
     server.use(handler)
     const dialog = await openDialogFor(name)
-    if (confirmLabel === "Hapus") {
-      confirmPermanent(dialog, confirmLabel)
-    } else {
-      fireEvent.click(within(dialog).getByRole("button", { name: confirmLabel }))
-    }
+    fireEvent.click(within(dialog).getByRole("button", { name: confirmLabel }))
     return screen.findByRole("alert")
   }
 
-  it("404 SYSTEM_USER_NOT_FOUND on delete shows the frontend not-found copy", async () => {
+  it("404 SYSTEM_USER_NOT_FOUND on a status change shows the frontend not-found copy", async () => {
     const alert = await confirmAndFail(
-      "Hapus ops@gaia.com",
-      "Hapus",
-      http.delete(`${API}/system-users/:id`, () =>
+      "Tangguhkan ops@gaia.com",
+      "Tangguhkan",
+      http.patch(`${API}/system-users/:id/status`, () =>
         errorResponse(404, "SYSTEM_USER_NOT_FOUND", "raw server text")
       )
     )
@@ -322,7 +341,7 @@ describe("error mapping on row actions (D13)", () => {
     expect(toastMock.success).not.toHaveBeenCalled()
   })
 
-  it("409 on a status change shows the server message", async () => {
+  it("409 on a status change shows the fixed conflict copy, not the server text", async () => {
     const alert = await confirmAndFail(
       "Tangguhkan ops@gaia.com",
       "Tangguhkan",
@@ -331,7 +350,8 @@ describe("error mapping on row actions (D13)", () => {
       )
     )
 
-    expect(alert).toHaveTextContent("State already changed.")
+    expect(alert).toHaveTextContent(CONFLICT_MESSAGE)
+    expect(alert).not.toHaveTextContent("State already changed.")
   })
 
   it("400 without a validation code shows the generic line, not the server text", async () => {
@@ -361,16 +381,16 @@ describe("error mapping on row actions (D13)", () => {
 
   it("500 shows the generic line and re-enables the buttons", async () => {
     const alert = await confirmAndFail(
-      "Hapus ops@gaia.com",
-      "Hapus",
-      http.delete(`${API}/system-users/:id`, () =>
+      "Tangguhkan ops@gaia.com",
+      "Tangguhkan",
+      http.patch(`${API}/system-users/:id/status`, () =>
         errorResponse(500, "INTERNAL_ERROR", "stack trace")
       )
     )
 
     expect(alert).toHaveTextContent(GENERIC_WRITE_MESSAGE)
     expect(alert).not.toHaveTextContent("stack trace")
-    expect(screen.getByRole("button", { name: "Hapus ops@gaia.com" })).toBeEnabled()
+    expect(screen.getByRole("button", { name: "Tangguhkan ops@gaia.com" })).toBeEnabled()
   })
 
   it("a failed write does not refetch the list and the row stays", async () => {
@@ -382,9 +402,9 @@ describe("error mapping on row actions (D13)", () => {
       })
     )
     await confirmAndFail(
-      "Hapus ops@gaia.com",
-      "Hapus",
-      http.delete(`${API}/system-users/:id`, () =>
+      "Tangguhkan ops@gaia.com",
+      "Tangguhkan",
+      http.patch(`${API}/system-users/:id/status`, () =>
         errorResponse(409, "SYSTEM_USER_IN_USE", "In use.")
       )
     )
@@ -396,24 +416,36 @@ describe("error mapping on row actions (D13)", () => {
   it("clears the previous failure when the next action starts", async () => {
     let calls = 0
     server.use(
-      http.delete(`${API}/system-users/:id`, () => {
+      http.patch(`${API}/system-users/:id/status`, () => {
         calls += 1
         return calls === 1
-          ? errorResponse(409, "SYSTEM_USER_IN_USE", "In use.")
-          : HttpResponse.json({ data: null })
+          ? errorResponse(409, "SYSTEM_USER_STATE_CONFLICT", "In use.")
+          : HttpResponse.json({ data: FIXTURE_USER_ACTIVE })
       })
     )
     renderWithClient(<UserListPage />, queryClient)
     await ready()
-    fireEvent.click(screen.getByRole("button", { name: "Hapus ops@gaia.com" }))
-    confirmPermanent(await screen.findByRole("dialog"), "Hapus")
+    fireEvent.click(
+      screen.getByRole("button", { name: "Tangguhkan ops@gaia.com" })
+    )
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Tangguhkan",
+      })
+    )
     await screen.findByRole("alert")
 
-    fireEvent.click(screen.getByRole("button", { name: "Hapus ops@gaia.com" }))
-    confirmPermanent(await screen.findByRole("dialog"), "Hapus")
+    fireEvent.click(
+      screen.getByRole("button", { name: "Tangguhkan ops@gaia.com" })
+    )
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Tangguhkan",
+      })
+    )
 
     await waitFor(() =>
-      expect(toastMock.success).toHaveBeenCalledWith("Akun dihapus.")
+      expect(toastMock.success).toHaveBeenCalledWith("Akun ditangguhkan.")
     )
     expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })

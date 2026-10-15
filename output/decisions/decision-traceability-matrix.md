@@ -3,9 +3,9 @@ id: DECISION-TRACEABILITY-MATRIX
 title: Decision Traceability Matrix
 owner: decision_manager
 status: Approved
-version: 1.1
-last_updated: 2026-10-10
-related_artifacts: [ARCH-FE-001, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, OPEN-DECISIONS, DECISION-INDEX]
+version: 1.3
+last_updated: 2026-10-14
+related_artifacts: [ARCH-FE-001, TODO-022, TODO-023, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, OPEN-DECISIONS, DECISION-INDEX]
 blocking_open_questions: 0
 ---
 
@@ -15,20 +15,30 @@ Owner: decision_manager
 
 Status: Approved
 
-Approved: 2026-10-10 (user, Checkpoint B gate)
+Approved: v1.3, 2026-10-14 (user, Checkpoint B gate for TODO-023). Previously approved: v1.2, 2026-10-14 (user, Checkpoint B gate for TODO-022). Earlier: v1.1, 2026-10-10 (user, Checkpoint B gate).
 
-Version: 1.1
+Version: 1.3
 
-Last Updated: 2026-10-10
+Last Updated: 2026-10-14
 
-Source Requirements: RAG-FE-SP-001 ("[FE Requirement] system-principal-web v1.0"); REQ-FE-001 to REQ-FE-051 (assigned in ARCH-FE-001)
+Change: 2026-10-14 v1.3 — Approved by the user at the Checkpoint B gate for TODO-023 (2026-10-14); DM-15 confirmed (ARCH-FE-001 v1.0.6 needs no ADR). Version stays 1.3; no content change.
 
-Related Artifacts: ARCH-FE-001 v1.0; ADR-001 to ADR-007; `output/decisions/open-decisions.md`; `output/decisions/decision-index.md`
+Change: 2026-10-14 v1.3 — Text correction by user order 2026-10-14: REQ-FE-035 row text changed to "Master permissions: list, detail, edit name/description (read-only otherwise, ARCH-FE-001 v1.0.4)". ADR column unchanged (no ADR); counts unchanged; no new version.
+
+Change: 2026-10-14 v1.3 — TODO-023 / ARCH-FE-001 v1.0.6 assessed at /decision: no net-new ADR (see decision-index.md, section ADR Assessment for ARCH-FE-001 v1.0.6). Content changed, so status is Pending Approval until the user approves the Checkpoint B gate for TODO-023. Next ADR number stays ADR-008.
+
+Change: 2026-10-14 v1.2 — TODO-022 / ARCH-FE-001 v1.0.5 assessed at /decision: no net-new ADR (see decision-index.md, section ADR Assessment for ARCH-FE-001 v1.0.5). Next ADR number stays ADR-008.
+
+Change: 2026-10-14 v1.2 — Approved by the user at the Checkpoint B gate for TODO-022 (2026-10-14); DM-14 confirmed (ARCH-FE-001 v1.0.5 needs no ADR). Version stays 1.2; no content change.
+
+Source Requirements: RAG-FE-SP-001 ("[FE Requirement] system-principal-web v1.0"); REQ-FE-001 to REQ-FE-054 (assigned in ARCH-FE-001; REQ-FE-052 and REQ-FE-053 added in v1.0.5; REQ-FE-054 added in v1.0.6)
+
+Related Artifacts: ARCH-FE-001 v1.0, v1.0.5 and v1.0.6; TODO-022; TODO-023; ADR-001 to ADR-007; `output/decisions/open-decisions.md`; `output/decisions/decision-index.md`
 
 ## At a Glance
 
 - Maps each REQ-FE to the ARCH-FE-001 section that designs it and to the ADR that governs its decision, where one exists.
-- All 51 REQ-FE rows are mapped. 27 rows have an ADR. The other 24 have no ADR candidate and are designed in ARCH-FE-001 only, with the reason stated in each row.
+- All 54 REQ-FE rows are mapped. 27 rows have an ADR. The other 27 have no ADR candidate and are designed in ARCH-FE-001 only, with the reason stated in each row.
 - Platform references are listed with what decision-manager read. Gateway and auth-service artifacts were cited, not read.
 
 ## Purpose
@@ -41,7 +51,7 @@ This repository only. Platform artifacts are cited and are not changed. Test, pl
 
 ## References
 
-- ARCH-FE-001 v1.0: Requirements Addressed table (REQ-FE-001 to REQ-FE-051) and the D sections named in each row.
+- ARCH-FE-001 v1.0: Requirements Addressed table (REQ-FE-001 to REQ-FE-054) and the D sections named in each row.
 - ADR-001 to ADR-007 (`output/decisions/`).
 - `output/decisions/open-decisions.md` (open items per ADR).
 
@@ -84,16 +94,16 @@ Basis column: the ARCH-FE-001 text that names the ADR for this section or row, o
 | REQ-FE-027 | Registration settings not routed in v1 | D7 | — | Scope (FE doc 5.5); no ADR candidate |
 | REQ-FE-028 | Tenant categories: list, create, edit, delete; `code` immutable | D7 | — | Screen design; no ADR candidate |
 | REQ-FE-029 | Countries: list, create, edit, delete; `code` key; input uppercased | D7, D9 | ADR-003 | D9 header lists REQ-FE-029 (forms) |
-| REQ-FE-030 | System users: list, detail, create, role change, delete, status, reset | D7 | — | Screen design; no ADR candidate |
-| REQ-FE-031 | Role options from system roles; no own-account suspend or delete | D6.6 | — | Gate design; no ADR candidate |
-| REQ-FE-032 | Another user's sessions: view and force logout | D4.10 | — | Screen design; no ADR candidate |
+| REQ-FE-030 | System users: list, detail, create, role change, status change, reset password. No delete (REQ-FE-054; v1.0.6). TODO-023 | D7, D6.4 | — | Screen design; no ADR candidate. v1.0.6 removal assessed 2026-10-14: no ADR (decision-index.md, ADR Assessment for v1.0.6) |
+| REQ-FE-031 | Role options from system roles; no own-account suspend or deactivate (delete is not offered to any account, REQ-FE-054; v1.0.6). TODO-023 | D6.6 | — | Gate design; no ADR candidate. v1.0.6 wording assessed 2026-10-14: no ADR |
+| REQ-FE-032 | Another user's sessions: view and force logout, behind `OTHER_ACCOUNT_SESSIONS_ENABLED` (false until SP-BG-14 Closed; v1.0.5). TODO-022 | D4.10 | — | Screen design; no ADR candidate. v1.0.5 flag assessed 2026-10-14: no ADR (decision-index.md, ADR Assessment) |
 | REQ-FE-033 | System roles: list, create, edit, delete; refused protected role disables actions | D6.6 | — | Gate design; no ADR candidate |
 | REQ-FE-034 | Role permission checklist saved with one PUT | D7 | — | Screen design; no ADR candidate |
-| REQ-FE-035 | Master permissions: list, create, edit, delete | D6.4 | — | Screen design; no ADR candidate |
+| REQ-FE-035 | Master permissions: list, detail, edit name/description (read-only otherwise, ARCH-FE-001 v1.0.4) | D6.4 | — | Screen design; no ADR candidate |
 | REQ-FE-036 | Pagination model: master-data server-side; auth-service client-side | D5.4 | — | Contract mapping; no ADR candidate |
 | REQ-FE-037 | Dashboard counts come from `pagination.total` | D7 | — | Screen design; no ADR candidate |
 | REQ-FE-038 | Loading, empty and error states; no automatic retry | D3.1, D13 | ADR-002, ADR-003 | D3 and D12 headers list REQ-FE-038 |
-| REQ-FE-039 | Confirm dialogs for delete, deactivate, suspend, reset, force logout | D7 | — | Dialog design (D11); no ADR candidate |
+| REQ-FE-039 | Confirm dialogs for delete (tenant categories, countries, system roles; not system accounts, REQ-FE-054), deactivate, suspend, reset password and force logout. v1.0.6. TODO-023 | D7 | — | Dialog design (D11); no ADR candidate. v1.0.6 assessed 2026-10-14: no ADR |
 | REQ-FE-040 | Immutable fields never sent | D5.3 | — | Write whitelists; no ADR candidate |
 | REQ-FE-041 | Branch, facility, social-link, patient and employee flows not built | D2 | — | Scope (FE doc 6, 11); no ADR candidate |
 | REQ-FE-042 | Acceptance checklist and smoke test are test requirements | D19 | ADR-005 | D19 names ADR-FE-05 |
@@ -106,8 +116,11 @@ Basis column: the ARCH-FE-001 text that names the ADR for this section or row, o
 | REQ-FE-049 | Every form uses React Hook Form with the Zod resolver | D9 | ADR-001, ADR-003 | D9 header lists REQ-FE-049; SD-06 (Zod 4) in ADR-001; SD-09 in ADR-003 |
 | REQ-FE-050 | `api/client.ts` Vitest unit tests; MSW 2.x for API integration tests | D3, D19 | ADR-002, ADR-005 | D3 header lists REQ-FE-050; D19 names ADR-FE-05 |
 | REQ-FE-051 | TypeScript strict options; package conformance | D1.3 | ADR-001, ADR-007 | SD-05 (ADR-001); package removals and moves in D1.3 (ADR-007) |
+| REQ-FE-052 | While the flag is `false`: no "Sesi aktif" tab and no force logout for other accounts; own account links to `/account/sessions`. TODO-022 | D4.10, D7 | — | Feature suspension by one constant; user decision 2026-10-14; FE-OQ-39 (Answered); no ADR (DM-14) |
+| REQ-FE-053 | Guard refusals and unrecognised 409/503 on Tim IT pages show fixed Indonesian copy by status and `code`, from `features/team/shared/guard-failure.ts`. TODO-022 | D13, D13.1 | — | Applies ADR-002 rule 8 and REQ-FE-008 without changing them; user decision 2026-10-14; FE-OQ-40 (Answered); FE-OQ-22 (Open, copy deck); no ADR (DM-14) |
+| REQ-FE-054 | System account pages (Tim IT > Akun) offer no "Hapus" action (list row or detail); no UI code path calls `deleteSystemUser`; no UI gate uses `system_users:delete`; Tangguhkan and Nonaktifkan dialogs carry explanatory text. TODO-023 | D6.4, D7, D13.1, D13.1a | — | Removal of a UI action by user decision 2026-10-14; no dependency, standard deviation or new technology; FE-OQ-41 and FE-OQ-42 (Answered); no ADR (DM-15, Answered/Closed 2026-10-14) |
 
-Count: 51 rows. With an ADR: 27 rows. With no ADR candidate: 24 rows. Counts were computed from the ADR column of this table.
+Count: 54 rows. With an ADR: 27 rows. With no ADR candidate: 27 rows. Counts were computed from the ADR column of this table (v1.2 added REQ-FE-052 and REQ-FE-053; v1.3 adds REQ-FE-054, no ADR). Rows REQ-FE-030, REQ-FE-031 and REQ-FE-039 changed wording in v1.0.6; their ADR column is unchanged.
 
 ## 2. ADR to ARCH-FE-001 sections, rows, requirements and open items
 
@@ -155,10 +168,12 @@ Numbering note: the platform repository also has ADR-001 to ADR-009. The same nu
 
 ## 5. Impacted plans and work (for project-manager)
 
-No plan or TODO exists yet. Impacted work by area, to be placed into `implementation-plan.md` and `master-todo.md` at Checkpoint B:
+Impacted work by area. Plans and TODOs exist since Checkpoint B (2026-10-10); this list is the original impact view, and TODO-022 is added below (v1.2).
 
 - Conformance and build: `tsconfig.app.json`, `index.html`, `package.json`, `vite.config.ts`, removal of `src/app/dashboard/data.json` (D1.1, D1.3; ADR-001, ADR-007).
 - Packages: install of TanStack Query, React Hook Form, `@hookform/resolvers`, Vitest, React Testing Library 16.x, MSW 2.x; removal of unused packages (ADR-003, ADR-005, ADR-007).
 - Client and auth: `lib/api/client.ts` and tests; `lib/api/refresh.ts`; login, change-password, reset and session flows (ADR-002, ADR-004).
 - Data layer: `lib/query/keys.ts` and the D12.1 invalidation map (ADR-003).
 - Deployment: operator edge file, reverse-proxy routing and the production build guard (ADR-006).
+- TODO-022 (v1.2, 2026-10-14; Not Started): suspend other-account sessions on `/system-users/:id` (REQ-FE-052, REQ-FE-032, D4.10; `src/features/team/users/access.ts`) and fixed copy for guard refusals (REQ-FE-053, D13.1; `src/features/team/shared/guard-failure.ts`, `user-failure.ts`, `role-failure.ts`). Governing ADRs: none new. Existing ADR-002 (error shape, branch on `code`) is applied, not changed. `describeWriteFailure` in `tenants/create/write-failure.ts` is unchanged. Source: ARCH-FE-001 v1.0.5 (Approved 2026-10-14). Platform watch item: SP-BG-14 (Open), which flips the flag only through a new ARCH-FE-001 amendment (FE-OQ-39).
+- TODO-023 (v1.3, 2026-10-14; Not Started): remove the "Hapus" action and its tests on the Tim IT > Akun list and detail, and add explanatory text to the Tangguhkan and Nonaktifkan dialogs (REQ-FE-054, REQ-FE-030, REQ-FE-031, REQ-FE-039, D6.4, D6.6, D7, D12.1, D13.1a; `src/features/team/users/`: `access.ts`, `user-list-page.tsx`, `user-detail-page.tsx`, `user-failure.ts` and their tests). Governing ADRs: none new. ADR-002 and ADR-003 are applied, not changed. `deleteSystemUser` stays in `lib/api/modules/system-users.ts`; role, tenant category and country delete are unchanged. Source: ARCH-FE-001 v1.0.6 (Approved 2026-10-14). Platform watch item (taken by the user separately): backend gap on `DELETE /system-users/{id}` and `PLATFORM_ROLE_PROTECTED`.
