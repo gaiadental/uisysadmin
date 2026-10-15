@@ -3,8 +3,8 @@ id: PROGRESS-TRACKER
 title: Progress Tracker — System Principal Web (Frontend)
 owner: project_manager
 status: Approved
-version: 1.17
-last_updated: 2026-10-14
+version: 1.18
+last_updated: 2026-10-15
 source_requirements: [RAG-FE-SP-001, ARCH-FE-001]
 related_artifacts: [IMPLEMENTATION-PLAN, MASTER-TODO, ARCH-FE-001, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007]
 blocking_open_questions: 0
@@ -16,11 +16,25 @@ Owner: project_manager
 
 Status: Approved
 
-Version: 1.17
+Version: 1.18
 
-Last Updated: 2026-10-14
+Last Updated: 2026-10-15
 
 Approved: 2026-10-10 (user, Checkpoint B gate)
+
+Change: 2026-10-15 — TODO-025 Completed (Unit Test Report PASS, 1066 passed in 78 files; Code Review Approved; QA Go; FP-036, FP-037, FP-039, FP-215 updated). Progress 24 of 25 (96.0%). Pending: the user's manual test, approvals, commit.
+
+Change: 2026-10-15 — TODO-025 added (Not Started, Low; user bug report: an authenticated user opening /login or /forgot-password is redirected to /; gate ARCH-FE-001 v1.0.12). Total becomes 25 TODOs; 23 of 25 Completed. No TODO status changed.
+
+Change: 2026-10-15 — TODO-024 Completed again after the failed manual test (refresh 401 any code, M3, L9; ARCH-FE-001 v1.0.11). Unit Test Report v1.6 PASS (1057 passed in 78 files; 98 in the four TODO-024 files); Code Review v1.4 Approved; QA v1.4 Go; tech doc and release notes v1.2 Pending Approval. Progress 23 of 24 (95.8%). Supersedes the test counts of the entries below (1043 tests).
+
+Change: 2026-10-15 — TODO-024 boot rework done (user decision: boot `me` 401 then refresh 403 account code gives the login page with the notice; test (b) keeps the expiry-only boot case on the error view). Unit Test Report v1.3 PASS (1043 passed in 78 files); QA boot re-check Go. Pending: user approval of Unit Test Report v1.3, QA v1.2, tech doc and release notes, and Checkpoint C/D sign-off.
+
+Change: 2026-10-15 — TODO-024 rework done (M1 StrictMode single end, M2 kept-session `me` account 403 ends the session per ARCH-FE-001 v1.0.9). Unit Test Report v1.2 `execution_overall: PASS`, 1038 passed in 78 files (Pending Approval until the user signs off v1.2); Code Review v1.2 Approved: Yes (0 Critical, 0 High); QA re-check Go. Progress 23 of 24 (95.8%). Status unchanged (Approved).
+
+Change: 2026-10-15 — TODO-024 Completed (Unit Test Report `execution_overall: PASS`, 1032 passed in 78 files; FP-013, FP-014, FP-026, FP-027, FP-079, FP-080, FP-081, FP-089). Progress 23 of 24 (95.8%); TODO-018 remains Not Started (deferred). Status unchanged (Approved).
+
+Change: 2026-10-15 — TODO-024 added (Not Started; suspended-account session end and login copy; gate ARCH-FE-001 v1.0.8 Pending Approval, must be Approved before `/build`). Total becomes 24 TODOs; 22 of 24 Completed. No TODO status changed. Status unchanged (Approved).
 
 Change: 2026-10-10 — amendment: @testing-library/dom (ADR-007 v1.2)
 

@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest"
 import { httpError, networkError } from "@/lib/api/errors"
 
 import {
+  ACCOUNT_NOT_ACTIVE_MESSAGE,
+  ACCOUNT_NOT_READY_MESSAGE,
   CURRENT_PASSWORD_MESSAGE,
   FORGOT_NEUTRAL_MESSAGE,
   GENERIC_FAILURE_MESSAGE,
@@ -49,7 +51,7 @@ describe("classifyLoginError (D4.5)", () => {
     }
   })
 
-  it("shows the server message for an account state and for a validation failure", () => {
+  it("shows fixed copy with the reference id for ACCOUNT_NOT_ACTIVE, never the server message (REQ-FE-055)", () => {
     expect(
       classifyLoginError(
         httpError(
@@ -60,9 +62,34 @@ describe("classifyLoginError (D4.5)", () => {
       )
     ).toEqual({
       kind: "notice",
-      message: "Account is not active.",
+      message: "Akun Anda tidak aktif. Hubungi administrator.",
       referenceId: REF,
     })
+    expect(ACCOUNT_NOT_ACTIVE_MESSAGE).toBe(
+      "Akun Anda tidak aktif. Hubungi administrator."
+    )
+  })
+
+  it("shows fixed copy with the reference id for ACCOUNT_NOT_READY, never the server message (REQ-FE-055)", () => {
+    expect(
+      classifyLoginError(
+        httpError(
+          403,
+          { code: "ACCOUNT_NOT_READY", message: "Account is not ready." },
+          REF
+        )
+      )
+    ).toEqual({
+      kind: "notice",
+      message: "Akun Anda belum siap digunakan. Hubungi administrator.",
+      referenceId: REF,
+    })
+    expect(ACCOUNT_NOT_READY_MESSAGE).toBe(
+      "Akun Anda belum siap digunakan. Hubungi administrator."
+    )
+  })
+
+  it("shows the server message for a validation failure (D4.5)", () => {
     expect(
       classifyLoginError(
         httpError(
@@ -228,6 +255,17 @@ describe("genericFailure and notice copy", () => {
     )
     expect(noticeText("passwordReset")).toBe(
       "Password berhasil diatur ulang. Silakan masuk."
+    )
+  })
+
+  it("gives the account notices the same fixed copy as the login error", () => {
+    expect(noticeText("accountNotActive")).toBe(ACCOUNT_NOT_ACTIVE_MESSAGE)
+    expect(noticeText("accountNotReady")).toBe(ACCOUNT_NOT_READY_MESSAGE)
+    expect(noticeText("accountNotActive")).toBe(
+      "Akun Anda tidak aktif. Hubungi administrator."
+    )
+    expect(noticeText("accountNotReady")).toBe(
+      "Akun Anda belum siap digunakan. Hubungi administrator."
     )
   })
 })

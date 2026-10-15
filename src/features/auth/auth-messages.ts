@@ -10,10 +10,16 @@
 
 import { ApiError } from "@/lib/api/errors"
 
+import type { AuthNotice } from "./auth-notice"
+
 export const LOGIN_CREDENTIALS_MESSAGE = "Login ID atau password salah"
 export const LOGIN_RATE_LIMIT_MESSAGE =
   "Terlalu banyak percobaan. Tunggu sebentar, lalu coba lagi."
 export const LOGIN_LOCK_SECONDS = 60
+export const ACCOUNT_NOT_ACTIVE_MESSAGE =
+  "Akun Anda tidak aktif. Hubungi administrator."
+export const ACCOUNT_NOT_READY_MESSAGE =
+  "Akun Anda belum siap digunakan. Hubungi administrator."
 
 export const FORGOT_NEUTRAL_MESSAGE =
   "Jika akun terdaftar, link reset sudah dikirim ke e-mail."
@@ -95,18 +101,30 @@ export function genericFailure(error: unknown): FailureNotice {
 }
 
 /** The text of a one-time notice on the login page. */
-export function noticeText(
-  notice: "passwordChanged" | "passwordReset"
-): string {
-  return notice === "passwordChanged"
-    ? PASSWORD_CHANGED_MESSAGE
-    : RESET_SUCCESS_MESSAGE
+export function noticeText(notice: AuthNotice): string {
+  switch (notice) {
+    case "passwordChanged":
+      return PASSWORD_CHANGED_MESSAGE
+    case "passwordReset":
+      return RESET_SUCCESS_MESSAGE
+    case "accountNotActive":
+      return ACCOUNT_NOT_ACTIVE_MESSAGE
+    case "accountNotReady":
+      return ACCOUNT_NOT_READY_MESSAGE
+  }
+}
+
+/** Fixed copy for an account-state code. The server message is never shown (REQ-FE-055). */
+function accountMessage(code: string): string {
+  return code === "ACCOUNT_NOT_READY"
+    ? ACCOUNT_NOT_READY_MESSAGE
+    : ACCOUNT_NOT_ACTIVE_MESSAGE
 }
 
 /**
  * Login (D4.5). INVALID_CREDENTIALS gives one text for an unknown user and a
- * wrong password. A 429 starts the 60-second lock. Account states and
- * validation show the server message.
+ * wrong password. A 429 starts the 60-second lock. Account states show fixed
+ * copy with the reference id. Validation shows the server message.
  */
 export function classifyLoginError(error: unknown): LoginFailure {
   if (isHttpError(error, 401, INVALID_CREDENTIALS_CODES)) {
@@ -115,10 +133,14 @@ export function classifyLoginError(error: unknown): LoginFailure {
   if (isHttpError(error, 429, RATE_LIMIT_CODES)) {
     return { kind: "rateLimited" }
   }
-  if (
-    isHttpError(error, 403, ACCOUNT_CODES) ||
-    isHttpError(error, 400, VALIDATION_CODES)
-  ) {
+  if (isHttpError(error, 403, ACCOUNT_CODES)) {
+    return {
+      kind: "notice",
+      message: accountMessage(error.code),
+      referenceId: error.correlationId,
+    }
+  }
+  if (isHttpError(error, 400, VALIDATION_CODES)) {
     return {
       kind: "notice",
       message: error.message,

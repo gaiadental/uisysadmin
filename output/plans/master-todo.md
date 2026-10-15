@@ -3,8 +3,8 @@ id: MASTER-TODO
 title: Master TODO — System Principal Web (Frontend)
 owner: project_manager
 status: Approved
-version: 1.20
-last_updated: 2026-10-14
+version: 1.22
+last_updated: 2026-10-15
 source_requirements: [REQ-FE-001, REQ-FE-002, REQ-FE-003, REQ-FE-004, REQ-FE-005, REQ-FE-006, REQ-FE-007, REQ-FE-008, REQ-FE-009, REQ-FE-010, REQ-FE-011, REQ-FE-012, REQ-FE-013, REQ-FE-014, REQ-FE-015, REQ-FE-016, REQ-FE-017, REQ-FE-018, REQ-FE-019, REQ-FE-020, REQ-FE-021, REQ-FE-022, REQ-FE-023, REQ-FE-024, REQ-FE-025, REQ-FE-026, REQ-FE-028, REQ-FE-029, REQ-FE-030, REQ-FE-031, REQ-FE-032, REQ-FE-033, REQ-FE-034, REQ-FE-035, REQ-FE-036, REQ-FE-037, REQ-FE-038, REQ-FE-039, REQ-FE-040, REQ-FE-041, REQ-FE-042, REQ-FE-043, REQ-FE-045, REQ-FE-046, REQ-FE-047, REQ-FE-048, REQ-FE-049, REQ-FE-050, REQ-FE-051]
 related_artifacts: [ARCH-FE-001, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, IMPLEMENTATION-PLAN, PROGRESS-TRACKER]
 blocking_open_questions: 0
@@ -16,11 +16,17 @@ Owner: project_manager
 
 Status: Approved
 
-Version: 1.20
+Version: 1.22
 
-Last Updated: 2026-10-14
+Last Updated: 2026-10-15
 
 Approved: 2026-10-10 (user, Checkpoint B gate)
+
+Change: 2026-10-15 — TODO-024 Completed (Unit Test Report `execution_overall: PASS`; `tsc -b`, `eslint .`, `vitest run` exit 0, 1032 passed in 78 files; FP-013, FP-014, FP-026, FP-027, FP-079, FP-080, FP-081, FP-089 updated in place). Checkpoint C sign-off pending the user. Status unchanged (Approved).
+
+Change: 2026-10-15 — gate cleared for TODO-024: ARCH-FE-001 v1.0.8 Approved by the user 2026-10-15 (FE-OQ-44 adjustment applied: `ACCOUNT_NOT_READY` on refresh or `me` also ends the session, with its own notice). TODO-024 scope and tests updated for it, plus the FE-OQ-45 chain test. Status of TODO-024 is still Not Started until `/build` starts. Status unchanged (Approved).
+
+Change: 2026-10-15 — TODO-024 added (Not Started; user manual test on SP-BG-13: a suspended account ends its session on refresh and `/me` 403 `ACCOUNT_NOT_ACTIVE`, and the login page shows fixed copy for the account states). Gate: ARCH-FE-001 v1.0.8 is Pending Approval and must be Approved before `/build`. Total becomes 24 TODOs; progress 22 of 24 (91.7%). No TODO status changed. Status unchanged (Approved).
 
 Change: 2026-10-14 — TODO-022 Completed again (v1.20): rework done (3c AppLink, 3d ROLE_GUARD_VIOLATION fixed role copy). Unit Test Report v1.2 `execution_overall: PASS` (`tsc -b`, `eslint .`, `vitest run --passWithNoTests` exit 0; 1001 passed in 78 files, three full runs). FP-264 added. Checkpoint D sign-off still pending. Status unchanged (Approved).
 
@@ -1362,6 +1368,159 @@ Scope decision (user, 2026-10-14): TODO-023 only removes the Hapus block and the
 Other tests to remove or adapt (all that use the Hapus button): `user-detail-page.gaps.test.tsx` (action matrix lines ~136-219, `it.each` at ~257, 403/404 on delete ~336-365, in-flight delete ~518, helper branch ~126); `user-detail-page.test.tsx` (~152-170, ~266-268; own-account test keeps asserting no Hapus); `user-list-page.test.tsx` (17 references, delete flow); `access.test.ts`. Tests required: (a) no Hapus control renders in the list or on the detail page, for any user status, own or other account, even with `system_users:delete`; (b) the Tangguhkan confirm dialog shows its explanatory text and the Nonaktifkan confirm dialog shows its text (exact strings above); (c) suspend, deactivate, reactivate, reset password and role change flows unchanged; (d) `system-users.test.ts` still PASS for `deleteSystemUser`; (e) static test (REQ-FE-054): no source under `src/features/team/users` imports or references `deleteSystemUser`; (f) no Hapus control for any status, own or other account, even with `system_users:delete` in the session (restated from (a)); (g) the two dialog texts match the strings above exactly; (h) D12.1: no invalidation is wired for system user delete; the system user create, role change, status change and reset password invalidations stay; (i) role pages (`team/roles`) and tenant, catalog delete controls are unaffected (their tests PASS unchanged).
 
 ---
+
+# TODO-024
+
+Description:
+
+Suspended accounts leave the app and the login page shows fixed copy (manual test 2026-10-15; platform SP-BG-13 resolution, Closed 2026-10-14). Today a refresh that fails with `403 ACCOUNT_NOT_ACTIVE` keeps the session, because only the 401 expiry codes end it, so every page shows "Data tidak dapat dimuat". At boot the same refusal on refresh or `/me` shows the error screen. The login page shows the server's English `message` for `ACCOUNT_NOT_ACTIVE` and `ACCOUNT_NOT_READY`.
+
+(1) Session end. A refresh that fails with `403 ACCOUNT_NOT_ACTIVE` ends the session the way the 401 expiry codes do (`lib/api/refresh.ts`, `endSession`): token and cache cleared, logout handler called once with reason `accountNotActive`. At boot, `403 ACCOUNT_NOT_ACTIVE` from refresh or from `GET /api/v1/auth/me` gives status `anonymous` with the notice, not `error`. The user then lands on `/login` with the notice "Akun Anda tidak aktif. Hubungi administrator." `403 ACCOUNT_NOT_READY` does the same, with its own notice "Akun Anda belum siap digunakan. Hubungi administrator." (FE-OQ-44, answered 2026-10-15). Other 403 codes keep the session as today. 401 handling is unchanged (D4.4).
+
+(2) Login copy. `classifyLoginError` (`features/auth/auth-messages.ts`) no longer passes the server `message` for the two account codes. `403 ACCOUNT_NOT_ACTIVE` shows "Akun Anda tidak aktif. Hubungi administrator." `403 ACCOUNT_NOT_READY` shows "Akun Anda belum siap digunakan. Hubungi administrator." (FE-OQ-43, approved 2026-10-15). The reference id stays on both. The server message stays on `400 VALIDATION_FAILED` (D4.5, unchanged). The same notice text is used on the login page after a session end (1).
+
+(3) Tests (Vitest and RTL). Listed under Tests below.
+
+Owner:
+
+developer_frontend
+
+Status:
+
+Completed (2026-10-15, rework after failed manual test: refresh 401 any code, M3, L9; ARCH-FE-001 v1.0.11)
+
+Priority:
+
+High
+
+Dependencies:
+
+Gate cleared: ARCH-FE-001 v1.0.8 (REQ-FE-055; D4.2, D4.3, D4.5, D6.5, D13 ACCOUNT row) Approved by the user 2026-10-15, with the FE-OQ-44 adjustment. Clearance is recorded in `orchestration-state.md`. Prerequisites: the auth flows built by TODO-005 (logout handler, cache clear) and TODO-006 (route guard), as named in the code comments. Platform SP-BG-13 (Closed 2026-10-14) is the server contract: `403 ACCOUNT_NOT_ACTIVE` on login, refresh and `/me`. Regression gate: TODO-005 and TODO-006 tests stay PASS.
+
+Related Requirement:
+
+REQ-FE-009 (login error mapping), REQ-FE-010 (refresh and logout), REQ-FE-011 (boot), REQ-FE-055 (v1.0.8, Approved 2026-10-15), REQ-FE-008 (error copy, no server text for these codes).
+
+Related ADR:
+
+ADR-004 (first-party login exception)
+
+Related Architecture:
+
+ARCH-FE-001 v1.0.8 (Approved 2026-10-15): D4.2, D4.3, D4.5, D6.5, D13 (ACCOUNT row), D4.11 (notice held in memory only).
+
+File scope:
+
+Production (frontend only):
+
+- `src/lib/api/refresh.ts` (`endsSession` also accepts 403 `ACCOUNT_NOT_ACTIVE` and `ACCOUNT_NOT_READY`; `endSession` takes an optional reason (`accountNotActive` or `accountNotReady`) passed to the logout handler; `setLogoutHandler` type updated)
+- `src/app/providers/auth-provider.tsx` (logout handler stores the notice for its reason before the view changes; `bootSession` maps a 403 `ACCOUNT_NOT_ACTIVE` or `ACCOUNT_NOT_READY` from refresh or `me` to `ANONYMOUS_VIEW`; the session is ended once, whichever call raised the error)
+- `src/features/auth/auth-notice.ts` (new values `accountNotActive` and `accountNotReady` in `AuthNotice`; same in-memory rule as D4.11)
+- `src/features/auth/auth-messages.ts` (fixed copy for `ACCOUNT_NOT_ACTIVE` and `ACCOUNT_NOT_READY` in `classifyLoginError`; `noticeText` handles both notice values)
+- `src/features/auth/login-page.tsx` (only if the notice render needs a change; none expected, `noticeText` already drives it)
+
+Tests:
+
+- `src/lib/api/refresh.test.ts`
+- `src/app/providers/auth-provider.test.tsx`
+- `src/features/auth/auth-messages.test.ts` (the test at line 52 that expects the server message for an account state is replaced)
+- `src/features/auth/login-page.test.tsx` (the `ACCOUNT_NOT_ACTIVE` case at line ~103 is updated to the fixed copy)
+
+Tests required:
+
+(a) Refresh 403 `ACCOUNT_NOT_ACTIVE` clears the token and calls the logout handler once, with reason `accountNotActive`.
+(a2) Refresh 403 `ACCOUNT_NOT_READY` clears the token and calls the logout handler once, with reason `accountNotReady`.
+(b) Refresh 403 with any other code (`PASSWORD_CHANGE_REQUIRED`, `FORBIDDEN`, a 403 with no usable code) keeps the token and does not call the logout handler.
+(c) Refresh 401 `SESSION_ENDED`, `INVALID_TOKEN`, `UNAUTHORIZED` still end the session with no reason (regression).
+(d) Boot: refresh 403 `ACCOUNT_NOT_ACTIVE` gives status `anonymous` with the notice, not `error`.
+(e) Boot: `me` 403 `ACCOUNT_NOT_ACTIVE` clears the token and gives `anonymous` with the notice.
+(d2) Boot: refresh 403 `ACCOUNT_NOT_READY` gives status `anonymous` with the `ACCOUNT_NOT_READY` notice, not `error`; `me` 403 `ACCOUNT_NOT_READY` clears the token and does the same.
+(f) Boot: refresh or `me` 403 with any other code (for example `PASSWORD_CHANGE_REQUIRED`) keeps the existing outcome (`error`).
+(g) Login 403 `ACCOUNT_NOT_ACTIVE` shows exactly "Akun Anda tidak aktif. Hubungi administrator." with the reference id, and the server `message` text is not rendered.
+(h) Login 403 `ACCOUNT_NOT_READY` shows exactly "Akun Anda belum siap digunakan. Hubungi administrator." with the reference id, and the server `message` text is not rendered.
+(i) Login 400 `VALIDATION_FAILED` still shows the server message (unchanged).
+(j) Login page after a session end shows the notice for its reason (`accountNotActive` or `accountNotReady`) once; the notice is cleared on mount (D4.11).
+(k) Chain (FE-OQ-45): a data request is answered 401, then the refresh that follows is answered 403 `ACCOUNT_NOT_ACTIVE`. Expect: the session ends, the query cache is cleared, the login page shows the account notice, and no page shows "Data tidak dapat dimuat". Same chain with `ACCOUNT_NOT_READY` is asserted as well.
+
+Notes:
+
+Scope limit: only refresh and `/me` end the session on `ACCOUNT_NOT_ACTIVE` and `ACCOUNT_NOT_READY` (user decision 2026-10-15, FE-OQ-44). The platform contract (SP-BG-13) names these codes on login, refresh and `/me`. D6.5 (a 403 never logs out) is unchanged for other endpoints. A still-valid access token is not checked against account status; that follows the platform contract.
+
+Gate commands, exactly: `tsc -b`, `eslint .`, `vitest run --passWithNoTests`; all three must exit 0.
+
+File-provenance rows are added at `/build`, not here. Copy and behaviour questions: ARCH-FE-001 v1.0.8 FE-OQ-43 to FE-OQ-45 (answered 2026-10-15).
+
+Low follow-up (user decision 2026-10-15, not part of TODO-024): other tabs that receive the plain logout signal go to `/login` without the account notice. No other tab shows the account notice; it appears only in the tab where the account end happened. Recorded as Low tech debt, Gating No.
+
+Checkpoint D (user decision 2026-10-15): Low tech debt, Gating No, recorded here (no `tech-debt-register.md` in this project):
+- L5: login path, `me` 401 then refresh 403 leaves a stale pending notice that the login page shows on its next mount (`auth-provider.tsx` login).
+- L6: change-password classifier has no account-code branch and the change-password page test has no account-code case (`auth-messages.ts`, `change-password-page.tsx`).
+- Observation (not a TODO-024 defect): one full gate run had 3 timeouts in `login-page.test.tsx` (D4.5 credentials test), `change-password-page.test.tsx` (D4.6 wrong current password test) and `app-sidebar-badges.test.tsx` (failed-count badge). Not reproduced in later runs; cause not proven. Second flaky observation (user decision 2026-10-15): `tenant-create-page.test.tsx` "focus moves to the heading" failed once in a full gate run and passed on rerun (outside TODO-024 scope; tenants module).
+
+Checkpoint C and D approved by the user (2026-10-15). Unit Test Report v1.3, QA report v1.2 (Go) and tech doc and release notes v1.1 (Release Version "Not assigned") are Approved. Tech debt, Low, Gating No:
+- UT024-OQ5: a boot `me` 401 followed by a refresh 401 with an expiry code (no account reason) keeps the error view with no notice. Direction (user decision 2026-10-15): when `endSession` runs during boot for any reason, the result is anonymous; the notice is shown only for `accountNotActive` and `accountNotReady`.
+- L5 and L6 (above) stay Low.
+
+Rework after the failed manual test (user decisions 2026-10-15; ARCH-FE-001 v1.0.10 and v1.0.11 Approved): a refresh 401 with any code ends the session (a mid-session suspend returns to `/login` with no account notice; "Akun Anda tidak aktif. Hubungi administrator." shows on the next login); UT024-OQ5 closed (any session end during boot gives anonymous); UT024-OQ6 accepted (non-JSON or empty 401 ends the session); M3 fixed (a refresh in flight when the session ends does not store its token); L9 fixed (boot `me` 401 with any code clears the token, anonymous). Latest evidence: Unit Test Report v1.6 PASS (1057 tests in 78 files), Code Review v1.4 Approved (0 Critical, 0 High, 0 Medium), QA v1.4 Go. Tech debt, Low, Gating No: L7 / UT024-OQ7 (a cross-tab logout during the boot `me` stage can show the error view), L10 (`inflight` keeps pointing at a discarded refresh until it settles; the retry works). Open question FE-OQ-46 (does auth-service accept an access token after logout; owner security_architect, non-blocking). Pending the user: manual browser test, approval of the reports and docs, commit.
+
+---
+
+# TODO-025
+
+Description:
+
+Redirect an authenticated user away from the guest-only auth pages (user bug report 2026-10-15, separate from TODO-024). Today a user with status `authenticated` who opens `/login` (a second tab opened or reloaded after logging in elsewhere, or a typed URL) sees the login form inside `AuthenticatedLayout`, because `auth.login` is a `public` route and the guard renders it.
+
+Rule: a public route marked guest-only, opened with status `authenticated`, redirects (replace) to the dashboard `/`. Guest-only routes: `/login` and `/forgot-password` (decision: a signed-in user changes the password through `/account/password`, so the forgot-password form is not useful for them). `/reset-password` (e-mail link) is NOT guest-only and is not changed. Status `passwordChangeRequired` keeps the existing rule (REQ-FE-012): redirect to `/account/password`. Status `unknown`, `error` and `anonymous` are unchanged. Simplest solution: one optional flag on the `public` kind of `RouteAccess` and one branch in `resolveRouteAccess` (`route-guard.tsx`); no new component.
+
+Owner:
+
+developer_frontend
+
+Status:
+
+Completed (2026-10-15; pending the user's manual test, approvals and commit)
+
+Priority:
+
+Low
+
+Dependencies:
+
+Gate: ARCH-FE-001 v1.0.12 (guest-only public routes; D6.1, D10) must be Approved by the user decision 2026-10-15 before `/build`. Prerequisites: TODO-006 (route guard). Regression gate: the route-guard, router, login and forgot-password page tests stay PASS.
+
+Related Requirement:
+
+REQ-FE-012 (password change enforcement stays), REQ-FE-056 (new in v1.0.12: authenticated users are redirected from guest-only auth pages).
+
+Related ADR:
+
+ADR-004 (first-party login)
+
+Related Architecture:
+
+ARCH-FE-001 v1.0.12 (D6.1 route guard, D10 routes)
+
+File scope:
+
+- `src/app/guards/route-guard.tsx` (optional `guestOnly` flag on the `public` kind; one branch in `resolveRouteAccess`; home path constant)
+- `src/app/router.tsx` (mark `/login` and `/forgot-password` guest-only; `/reset-password` unchanged)
+- `src/app/guards/route-guard.test.tsx` (tests below)
+- router-level test file only if the redirect must be proved through the router (use the existing router test file)
+
+Tests required (red first):
+(a) `resolveRouteAccess`: guest-only public route with status `authenticated` -> redirect to `/`; with `anonymous` -> render; with `passwordChangeRequired` -> redirect to `/account/password`; with `unknown` -> booting; with `error` -> unavailable.
+(b) A public route that is not guest-only (`/reset-password`) with status `authenticated` -> render (unchanged).
+(c) `/login` and `/forgot-password` are guest-only in the route table; `/reset-password` is not.
+(d) Rendered check: `RouteGuard` with a guest-only route and an authenticated session calls `onRedirect("/")` and does not render the login form.
+
+Notes:
+
+Gate commands, exactly: `tsc -b`, `eslint .`, `vitest run --passWithNoTests`; all three exit 0. Manual test by the user before any commit (PASSED 2026-10-15). File-provenance rows are added at `/build` (updated in place for FP-036, FP-037, FP-039, FP-215).
+
+Approved by the user 2026-10-15: Unit Test Report, Code Review and QA report of TODO-025. Tech debt, Low, Gating No: L2 (no behaviour test renders `/reset-password` while authenticated; only the route flag is asserted).
+
+Chore, Low, for later (user decision 2026-10-15, not done now): `.vitest/json/output.json` is the output of a Vitest JSON reporter run, overwritten on every run, yet it is tracked. Add it to `.gitignore` and run `git rm --cached .vitest/json/output.json` in a separate change.
 
 ---
 
