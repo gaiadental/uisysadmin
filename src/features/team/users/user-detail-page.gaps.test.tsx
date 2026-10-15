@@ -65,21 +65,6 @@ const toastMock = vi.hoisted(() => ({
 }))
 vi.mock("sonner", () => ({ toast: toastMock }))
 
-// Other-account sessions are suspended (OTHER_ACCOUNT_SESSIONS_ENABLED = false).
-// The kept tab code is exercised with the flag mocked to true; the default is
-// the real behaviour (false).
-const flagMock = vi.hoisted(() => ({ enabled: false }))
-vi.mock("./access", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./access")>()
-  return {
-    ...actual,
-    canViewUserSessions: (permissions: readonly string[]) =>
-      flagMock.enabled && permissions.includes("sessions:view"),
-    canForceLogout: (permissions: readonly string[], isSelf: boolean) =>
-      flagMock.enabled && permissions.includes("sessions:revoke") && !isSelf,
-  }
-})
-
 let queryClient: QueryClient
 
 beforeEach(() => {
@@ -87,7 +72,6 @@ beforeEach(() => {
   setAccessToken(null)
   queryClient = createQueryClient()
   authMock.permissions = ALL_USER_PERMISSIONS
-  flagMock.enabled = false
   vi.spyOn(console, "error").mockImplementation(() => undefined)
 })
 
@@ -516,11 +500,7 @@ describe("in-flight double-send guard", () => {
   })
 })
 
-describe("Sesi aktif tab gates and behaviour (D4.10, flag mocked on)", () => {
-  beforeEach(() => {
-    flagMock.enabled = true
-  })
-
+describe("Sesi aktif tab gates and behaviour (D4.10)", () => {
   function openTab() {
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Sesi aktif" }))
     fireEvent.click(screen.getByRole("tab", { name: "Sesi aktif" }))
@@ -543,7 +523,7 @@ describe("Sesi aktif tab gates and behaviour (D4.10, flag mocked on)", () => {
     authMock.permissions = ["system_users:view", "sessions:view"]
     let lists = 0
     server.use(
-      http.get(`${API}/admin/users/:userId/sessions`, () => {
+      http.get(`${API}/system-users/:userId/sessions`, () => {
         lists += 1
         return HttpResponse.json({ data: [FIXTURE_OTHER_SESSION] })
       })
@@ -560,7 +540,7 @@ describe("Sesi aktif tab gates and behaviour (D4.10, flag mocked on)", () => {
 
   it("marks the current session", async () => {
     server.use(
-      http.get(`${API}/admin/users/:userId/sessions`, () =>
+      http.get(`${API}/system-users/:userId/sessions`, () =>
         HttpResponse.json({ data: [FIXTURE_SESSION, FIXTURE_OTHER_SESSION] })
       )
     )
@@ -574,7 +554,7 @@ describe("Sesi aktif tab gates and behaviour (D4.10, flag mocked on)", () => {
 
   it("a 403 on the session list shows the forbidden copy and no table", async () => {
     server.use(
-      http.get(`${API}/admin/users/:userId/sessions`, () =>
+      http.get(`${API}/system-users/:userId/sessions`, () =>
         errorResponse(403, "PERMISSION_DENIED", "denied")
       )
     )
@@ -598,7 +578,7 @@ describe("Sesi aktif tab gates and behaviour (D4.10, flag mocked on)", () => {
     }))
     let gets = 0
     server.use(
-      http.get(`${API}/admin/users/:userId/sessions`, () => {
+      http.get(`${API}/system-users/:userId/sessions`, () => {
         gets += 1
         return HttpResponse.json({ data: many })
       })
@@ -643,11 +623,11 @@ describe("Sesi aktif tab gates and behaviour (D4.10, flag mocked on)", () => {
       async (status, code, expected) => {
         let lists = 0
         server.use(
-          http.get(`${API}/admin/users/:userId/sessions`, () => {
+          http.get(`${API}/system-users/:userId/sessions`, () => {
             lists += 1
             return HttpResponse.json({ data: [FIXTURE_OTHER_SESSION] })
           }),
-          http.delete(`${API}/admin/users/:userId/sessions`, () =>
+          http.delete(`${API}/system-users/:userId/sessions`, () =>
             errorResponse(status, code, "Sessions changed.")
           )
         )
@@ -672,7 +652,7 @@ describe("Sesi aktif tab gates and behaviour (D4.10, flag mocked on)", () => {
       })
       let deletes = 0
       server.use(
-        http.delete(`${API}/admin/users/:userId/sessions`, async () => {
+        http.delete(`${API}/system-users/:userId/sessions`, async () => {
           deletes += 1
           await gate
           return HttpResponse.json({

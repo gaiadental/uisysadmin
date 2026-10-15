@@ -48,21 +48,6 @@ const toastMock = vi.hoisted(() => ({
 }))
 vi.mock("sonner", () => ({ toast: toastMock }))
 
-// Other-account sessions are suspended (OTHER_ACCOUNT_SESSIONS_ENABLED = false).
-// The kept tab code is exercised with the flag mocked to true; the default is
-// the real behaviour (false).
-const flagMock = vi.hoisted(() => ({ enabled: false }))
-vi.mock("./access", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("./access")>()
-  return {
-    ...actual,
-    canViewUserSessions: (permissions: readonly string[]) =>
-      flagMock.enabled && permissions.includes("sessions:view"),
-    canForceLogout: (permissions: readonly string[], isSelf: boolean) =>
-      flagMock.enabled && permissions.includes("sessions:revoke") && !isSelf,
-  }
-})
-
 let queryClient: QueryClient
 
 beforeEach(() => {
@@ -70,7 +55,6 @@ beforeEach(() => {
   setAccessToken(null)
   queryClient = createQueryClient()
   authMock.permissions = ALL_USER_PERMISSIONS
-  flagMock.enabled = false
   vi.spyOn(console, "error").mockImplementation(() => undefined)
 })
 
@@ -268,11 +252,7 @@ describe("actions on the detail page", () => {
   })
 })
 
-describe("Sesi aktif tab (D4.10, flag mocked on)", () => {
-  beforeEach(() => {
-    flagMock.enabled = true
-  })
-
+describe("Sesi aktif tab (D4.10)", () => {
   function openTab() {
     fireEvent.mouseDown(screen.getByRole("tab", { name: "Sesi aktif" }))
     fireEvent.click(screen.getByRole("tab", { name: "Sesi aktif" }))
@@ -291,7 +271,7 @@ describe("Sesi aktif tab (D4.10, flag mocked on)", () => {
   it("lists the sessions of that user", async () => {
     let path = ""
     server.use(
-      http.get(`${API}/admin/users/:userId/sessions`, ({ request }) => {
+      http.get(`${API}/system-users/:userId/sessions`, ({ request }) => {
         path = new URL(request.url).pathname
         return HttpResponse.json({
           data: [FIXTURE_SESSION, FIXTURE_OTHER_SESSION],
@@ -303,12 +283,12 @@ describe("Sesi aktif tab (D4.10, flag mocked on)", () => {
     openTab()
 
     expect(await screen.findByText("10.0.0.5")).toBeInTheDocument()
-    expect(path).toBe(`/api/v1/admin/users/${FIXTURE_USER_ACTIVE.id}/sessions`)
+    expect(path).toBe(`/api/v1/system-users/${FIXTURE_USER_ACTIVE.id}/sessions`)
   })
 
   it("shows the empty state", async () => {
     server.use(
-      http.get(`${API}/admin/users/:userId/sessions`, () =>
+      http.get(`${API}/system-users/:userId/sessions`, () =>
         HttpResponse.json({ data: [] })
       )
     )
@@ -322,7 +302,7 @@ describe("Sesi aktif tab (D4.10, flag mocked on)", () => {
   it("shows an error with a retry", async () => {
     let calls = 0
     server.use(
-      http.get(`${API}/admin/users/:userId/sessions`, () => {
+      http.get(`${API}/system-users/:userId/sessions`, () => {
         calls += 1
         return calls === 1
           ? errorResponse(500, "INTERNAL_ERROR", "boom")
@@ -347,25 +327,16 @@ describe("Sesi aktif tab (D4.10, flag mocked on)", () => {
     expect(button("Paksa keluar")).not.toBeInTheDocument()
   })
 
-  it("hides force logout for the own account even with sessions:revoke", async () => {
-    renderDetail(FIXTURE_USER_SELF.id)
-    await readyFor(FIXTURE_USER_SELF.loginId)
-    openTab()
-    await screen.findByRole("table", { name: "Sesi aktif akun" })
-
-    expect(button("Paksa keluar")).not.toBeInTheDocument()
-  })
-
   it("asks for confirmation, then revokes and invalidates the admin sessions key", async () => {
     let deletes = 0
     let path = ""
     let lists = 0
     server.use(
-      http.get(`${API}/admin/users/:userId/sessions`, () => {
+      http.get(`${API}/system-users/:userId/sessions`, () => {
         lists += 1
         return HttpResponse.json({ data: [FIXTURE_OTHER_SESSION] })
       }),
-      http.delete(`${API}/admin/users/:userId/sessions`, ({ request }) => {
+      http.delete(`${API}/system-users/:userId/sessions`, ({ request }) => {
         deletes += 1
         path = new URL(request.url).pathname
         return HttpResponse.json({
@@ -399,13 +370,13 @@ describe("Sesi aktif tab (D4.10, flag mocked on)", () => {
       )
     )
     expect(deletes).toBe(1)
-    expect(path).toBe(`/api/v1/admin/users/${FIXTURE_USER_ACTIVE.id}/sessions`)
+    expect(path).toBe(`/api/v1/system-users/${FIXTURE_USER_ACTIVE.id}/sessions`)
     await waitFor(() => expect(lists).toBe(2))
   })
 
   it("shows the forbidden copy when the server refuses the force logout", async () => {
     server.use(
-      http.delete(`${API}/admin/users/:userId/sessions`, () =>
+      http.delete(`${API}/system-users/:userId/sessions`, () =>
         errorResponse(403, "PERMISSION_DENIED", "denied")
       )
     )
@@ -426,38 +397,11 @@ describe("Sesi aktif tab (D4.10, flag mocked on)", () => {
   })
 })
 
-describe("Sesi aktif suspended (REQ-FE-052, D4.10)", () => {
-  it("shows no tab, no force logout and makes no sessions request for another account", async () => {
-    let sessionRequests = 0
-    server.use(
-      http.get(`${API}/admin/users/:userId/sessions`, () => {
-        sessionRequests += 1
-        return HttpResponse.json({ data: [] })
-      }),
-      http.delete(`${API}/admin/users/:userId/sessions`, () => {
-        sessionRequests += 1
-        return new HttpResponse(null, { status: 204 })
-      })
-    )
-    renderDetail(FIXTURE_USER_ACTIVE.id)
-    await readyFor(FIXTURE_USER_ACTIVE.loginId)
-
-    expect(
-      screen.queryByRole("tab", { name: "Sesi aktif" })
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole("button", { name: "Paksa keluar" })
-    ).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole("link", { name: "Lihat sesi saya" })
-    ).not.toBeInTheDocument()
-    expect(sessionRequests).toBe(0)
-  })
-
+describe("Sesi aktif on the own account (REQ-FE-052, D4.10)", () => {
   it("links the own account to /account/sessions", async () => {
     let sessionRequests = 0
     server.use(
-      http.get(`${API}/admin/users/:userId/sessions`, () => {
+      http.get(`${API}/system-users/:userId/sessions`, () => {
         sessionRequests += 1
         return HttpResponse.json({ data: [] })
       })
@@ -475,5 +419,20 @@ describe("Sesi aktif suspended (REQ-FE-052, D4.10)", () => {
     fireEvent.click(link)
     expect(window.location.pathname).toBe("/account/sessions")
     expect(sessionRequests).toBe(0)
+  })
+
+  it("shows no tab and no force logout for the own account even with every permission", async () => {
+    renderDetail(FIXTURE_USER_SELF.id)
+    await readyFor(FIXTURE_USER_SELF.loginId)
+
+    expect(screen.queryByRole("tab", { name: "Sesi aktif" })).toBeNull()
+    expect(screen.queryByRole("button", { name: "Paksa keluar" })).toBeNull()
+  })
+
+  it("shows no link to /account/sessions for another account", async () => {
+    renderDetail(FIXTURE_USER_ACTIVE.id)
+    await readyFor(FIXTURE_USER_ACTIVE.loginId)
+
+    expect(screen.queryByRole("link", { name: "Lihat sesi saya" })).toBeNull()
   })
 })

@@ -4,8 +4,8 @@
  * enforces; these decide only what the UI shows.
  *
  * Own account (`user.id === selfId`): no suspend, deactivate, no role
- * change (D6.6, FE-OQ-25 default), and no force logout (the own sessions page
- * is used instead, D4.10). The backend has no such guard (SP-BG-13).
+ * change (D6.6, FE-OQ-25 default), and no sessions tab and no force logout (the own
+ * sessions page is used instead, D4.10). The backend has no such guard (SP-BG-13).
  */
 
 import type { SystemUser } from "@/types/system-user"
@@ -19,11 +19,10 @@ export const SESSIONS_VIEW = "sessions:view"
 export const SESSIONS_REVOKE = "sessions:revoke"
 
 /**
- * Other-account sessions are suspended (REQ-FE-052, D4.10) until SP-BG-14
- * (the system-user sessions endpoint) is Closed. Flip only by an architecture
- * amendment.
+ * Other-account sessions are enabled (REQ-FE-032, REQ-FE-052, D4.10;
+ * ARCH-FE-001 v1.0.13): SP-BG-14, the system-user sessions endpoint, is Closed.
  */
-export const OTHER_ACCOUNT_SESSIONS_ENABLED = false
+export const OTHER_ACCOUNT_SESSIONS_ENABLED = true
 
 export interface UserActionAccess {
   readonly isSelf: boolean
@@ -43,9 +42,14 @@ export function canCreateUser(permissions: readonly string[]): boolean {
   return has(permissions, USERS_CREATE) && has(permissions, ROLES_VIEW)
 }
 
-/** The "Sesi aktif" tab (D4.10). */
-export function canViewUserSessions(permissions: readonly string[]): boolean {
-  return OTHER_ACCOUNT_SESSIONS_ENABLED && has(permissions, SESSIONS_VIEW)
+/** The "Sesi aktif" tab (D4.10). Another account only; the own account links to /account/sessions. */
+export function canViewUserSessions(
+  permissions: readonly string[],
+  isSelf: boolean
+): boolean {
+  return (
+    OTHER_ACCOUNT_SESSIONS_ENABLED && has(permissions, SESSIONS_VIEW) && !isSelf
+  )
 }
 
 /** Force logout of another user's sessions (D4.10). Never for the own account. */

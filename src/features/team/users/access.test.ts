@@ -123,21 +123,31 @@ describe("canCreateUser", () => {
   })
 })
 
-describe("session gates (D4.10, suspended by REQ-FE-052)", () => {
-  it("keeps the flag off until SP-BG-14 is closed", () => {
-    expect(OTHER_ACCOUNT_SESSIONS_ENABLED).toBe(false)
+describe("session gates (D4.10, REQ-FE-032, REQ-FE-052)", () => {
+  it("has the other-account sessions flag on", () => {
+    expect(OTHER_ACCOUNT_SESSIONS_ENABLED).toBe(true)
   })
 
-  it("never shows the tab while the flag is off, even with sessions:view", () => {
-    expect(canViewUserSessions(["sessions:view"])).toBe(false)
-    expect(canViewUserSessions(ALL)).toBe(false)
-    expect(canViewUserSessions(["sessions:revoke"])).toBe(false)
+  it("shows the tab with sessions:view for another account", () => {
+    expect(canViewUserSessions(["sessions:view"], false)).toBe(true)
+    expect(canViewUserSessions(ALL, false)).toBe(true)
   })
 
-  it("never allows force logout while the flag is off", () => {
-    expect(canForceLogout(["sessions:revoke"], false)).toBe(false)
-    expect(canForceLogout(ALL, false)).toBe(false)
-    expect(canForceLogout(["sessions:revoke"], true)).toBe(false)
+  it("does not show the tab without sessions:view", () => {
+    expect(canViewUserSessions(["sessions:revoke"], false)).toBe(false)
+    expect(canViewUserSessions([], false)).toBe(false)
+  })
+
+  it("never shows the tab for the own account", () => {
+    expect(canViewUserSessions(["sessions:view"], true)).toBe(false)
+    expect(canViewUserSessions(ALL, true)).toBe(false)
+  })
+
+  it("allows force logout with sessions:revoke for another account only", () => {
+    expect(canForceLogout(["sessions:revoke"], false)).toBe(true)
+    expect(canForceLogout(ALL, false)).toBe(true)
     expect(canForceLogout(["sessions:view"], false)).toBe(false)
+    expect(canForceLogout(["sessions:revoke"], true)).toBe(false)
+    expect(canForceLogout(ALL, true)).toBe(false)
   })
 })

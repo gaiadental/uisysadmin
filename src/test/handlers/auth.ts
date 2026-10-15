@@ -108,10 +108,10 @@ export const sessionHandlers = [
   http.delete(`${API}/sessions`, () =>
     HttpResponse.json({ data: { status: "SESSIONS_REVOKED", count: 0 } })
   ),
-  http.get(`${API}/admin/users/:userId/sessions`, () =>
+  http.get(`${API}/system-users/:userId/sessions`, () =>
     HttpResponse.json({ data: [FIXTURE_SESSION] })
   ),
-  http.delete(`${API}/admin/users/:userId/sessions`, () =>
+  http.delete(`${API}/system-users/:userId/sessions`, () =>
     HttpResponse.json({ data: { status: "SESSIONS_REVOKED", count: 0 } })
   ),
 ]
