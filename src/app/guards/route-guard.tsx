@@ -33,15 +33,18 @@ import type { Me } from "@/types/auth"
 
 export const LOGIN_PATH = "/login"
 export const PASSWORD_CHANGE_PATH = "/account/password"
+export const HOME_PATH = "/"
 
 /**
  * What a route needs. `public` needs no session. A `session` route needs the
  * Authenticated gate, and PasswordChanged unless it is `exempt`. `exempt` is
  * only for the change-password page, which stays reachable while a change is
- * required (REQ-FE-012). `gates` run after those two, in order.
+ * required (REQ-FE-012). `gates` run after those two, in order. A `public`
+ * route with `guestOnly` sends an authenticated user to the home path
+ * (REQ-FE-056).
  */
 export type RouteAccess =
-  | { readonly kind: "public" }
+  | { readonly kind: "public"; readonly guestOnly?: boolean }
   | {
       readonly kind: "session"
       readonly passwordChange: "enforced" | "exempt"
@@ -90,7 +93,12 @@ export function resolveRouteAccess({
   }
 
   if (access === null) return { kind: "notFound" }
-  if (access.kind === "public") return { kind: "render" }
+  if (access.kind === "public") {
+    if (access.guestOnly === true && status === "authenticated") {
+      return { kind: "redirect", to: HOME_PATH }
+    }
+    return { kind: "render" }
+  }
 
   const gates: AccessGate[] = [
     authenticated(),

@@ -121,6 +121,18 @@ describe("root route", () => {
     await vi.waitFor(() => expect(window.location.pathname).toBe("/login"))
   })
 
+  it("sends a signed-in user at /login to / without rendering the login form (REQ-FE-056)", async () => {
+    window.history.replaceState(null, "", "/login")
+    renderApp()
+
+    await vi.waitFor(() => expect(window.location.pathname).toBe("/"))
+    await shell()
+    expect(
+      document.querySelector('form input[type="password"]')
+    ).toBeNull()
+    expect(document.getElementById("main")).not.toBeNull()
+  })
+
   it("App.tsx no longer renders LandingPage directly", () => {
     const source: string = appSource
 
