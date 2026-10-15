@@ -1520,7 +1520,7 @@ Gate commands, exactly: `tsc -b`, `eslint .`, `vitest run --passWithNoTests`; al
 
 Approved by the user 2026-10-15: Unit Test Report, Code Review and QA report of TODO-025. Tech debt, Low, Gating No: L2 (no behaviour test renders `/reset-password` while authenticated; only the route flag is asserted).
 
-Chore, Low, for later (user decision 2026-10-15, not done now): `.vitest/json/output.json` is the output of a Vitest JSON reporter run, overwritten on every run, yet it is tracked. Add it to `.gitignore` and run `git rm --cached .vitest/json/output.json` in a separate change. Scheduled with TODO-026 as a separate commit (user decision 2026-10-15); it is not part of TODO-026 File scope.
+Chore, Low, DONE 2026-10-15 in a separate commit (`.vitest/` added to `.gitignore`, `.vitest/json/output.json` untracked with `git rm --cached`; the local file stays) (user decision 2026-10-15): `.vitest/json/output.json` is the output of a Vitest JSON reporter run, overwritten on every run, yet it is tracked. Add it to `.gitignore` and run `git rm --cached .vitest/json/output.json` in a separate change. Scheduled with TODO-026 as a separate commit (user decision 2026-10-15); it is not part of TODO-026 File scope.
 
 ---
 

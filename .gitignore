@@ -31,3 +31,6 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+
+# Vitest JSON reporter output (rewritten on every run)
+.vitest/
