@@ -15,7 +15,7 @@ import { setAccessToken } from "@/lib/api/refresh"
 import { createQueryClient } from "@/lib/query/client"
 import { queryKeys } from "@/lib/query/keys"
 import { API, errorResponse, FIXTURE_ME } from "@/test/handlers/auth"
-import { FIXTURE_MASTER_PERMISSION_BRANCHES } from "@/test/handlers/tenant-permissions"
+import { FIXTURE_MASTER_PERMISSION_APPOINTMENT } from "@/test/handlers/tenant-permissions"
 import { server } from "@/test/server"
 
 import { PermissionListPage } from "./permission-list-page"
@@ -59,7 +59,7 @@ beforeEach(() => {
     http.get(`${API}/master-permissions/:id`, () =>
       HttpResponse.json({
         data: {
-          ...FIXTURE_MASTER_PERMISSION_BRANCHES,
+          ...FIXTURE_MASTER_PERMISSION_APPOINTMENT,
           active: true,
           customerPermitted: false,
         },
@@ -95,8 +95,8 @@ describe("list states", () => {
   it("shows a loading status, then the rows with no locked flag or tenant count", async () => {
     renderPage()
     expect(screen.getByRole("status")).toHaveTextContent("Memuat permission")
-    expect(await screen.findByText("branches:view")).toBeInTheDocument()
-    expect(screen.getByText("reports:view")).toBeInTheDocument()
+    expect(await screen.findByText("appointment:view")).toBeInTheDocument()
+    expect(screen.getByText("patient_profile:view")).toBeInTheDocument()
     expect(screen.queryByText(/terkunci|locked|core/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/jumlah tenant/i)).not.toBeInTheDocument()
   })
@@ -118,23 +118,23 @@ describe("list states", () => {
         calls += 1
         return calls === 1
           ? errorResponse(500, "INTERNAL_ERROR", "boom")
-          : HttpResponse.json({ data: [FIXTURE_MASTER_PERMISSION_BRANCHES] })
+          : HttpResponse.json({ data: [FIXTURE_MASTER_PERMISSION_APPOINTMENT] })
       })
     )
     renderPage()
     expect(await screen.findByRole("alert")).toBeInTheDocument()
     fireEvent.click(screen.getByRole("button", { name: "Coba lagi" }))
-    expect(await screen.findByText("branches:view")).toBeInTheDocument()
+    expect(await screen.findByText("appointment:view")).toBeInTheDocument()
   })
 
   it("filters on the client and shows a no-match message", async () => {
     renderPage()
-    await screen.findByText("branches:view")
+    await screen.findByText("appointment:view")
     fireEvent.change(screen.getByLabelText("Cari permission"), {
-      target: { value: "reports" },
+      target: { value: "patient" },
     })
-    expect(screen.queryByText("branches:view")).not.toBeInTheDocument()
-    expect(screen.getByText("reports:view")).toBeInTheDocument()
+    expect(screen.queryByText("appointment:view")).not.toBeInTheDocument()
+    expect(screen.getByText("patient_profile:view")).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText("Cari permission"), {
       target: { value: "zzz" },
     })
@@ -148,7 +148,7 @@ describe("gates (D6.4, TODO-021)", () => {
   it("offers no Ubah and no Aksi column with only :view", async () => {
     authMock.permissions = [VIEW]
     renderPage()
-    await screen.findByText("branches:view")
+    await screen.findByText("appointment:view")
     expect(
       screen.queryByRole("button", { name: /Ubah/ })
     ).not.toBeInTheDocument()
@@ -160,7 +160,7 @@ describe("gates (D6.4, TODO-021)", () => {
   it("shows Ubah with :update", async () => {
     authMock.permissions = [VIEW, "master_permissions:update"]
     renderPage()
-    await screen.findByText("branches:view")
+    await screen.findByText("appointment:view")
     expect(
       screen.getAllByRole("button", { name: /Ubah permission/ })
     ).toHaveLength(3)
@@ -174,7 +174,7 @@ describe("gates (D6.4, TODO-021)", () => {
   ])("%s alone shows no action at all", async (key) => {
     authMock.permissions = [VIEW, key]
     renderPage()
-    await screen.findByText("branches:view")
+    await screen.findByText("appointment:view")
     expect(
       screen.queryByRole("button", { name: /Ubah|Tambah|Hapus/ })
     ).toBeNull()
@@ -184,7 +184,7 @@ describe("gates (D6.4, TODO-021)", () => {
   it("renders no create, active or delete control even with every master_permissions key", async () => {
     authMock.permissions = ALL
     renderPage()
-    await screen.findByText("branches:view")
+    await screen.findByText("appointment:view")
     expect(screen.queryByRole("button", { name: /Tambah/ })).toBeNull()
     expect(screen.queryByRole("button", { name: /Hapus/ })).toBeNull()
     expect(screen.queryByRole("switch")).toBeNull()
@@ -196,7 +196,7 @@ describe("gates (D6.4, TODO-021)", () => {
 })
 
 describe("edit dialog (TODO-021)", () => {
-  async function openEdit(key = "branches:view") {
+  async function openEdit(key = "appointment:view") {
     renderPage()
     await screen.findByText(key)
     fireEvent.click(
@@ -218,7 +218,7 @@ describe("edit dialog (TODO-021)", () => {
         seen.body = (await request.json()) as Record<string, unknown>
         seen.path = new URL(request.url).pathname
         return HttpResponse.json({
-          data: { ...FIXTURE_MASTER_PERMISSION_BRANCHES, ...seen.body },
+          data: { ...FIXTURE_MASTER_PERMISSION_APPOINTMENT, ...seen.body },
         })
       })
     )
@@ -237,10 +237,10 @@ describe("edit dialog (TODO-021)", () => {
     expect(seen.count).toBe(1)
     expect(seen.path).toBe("/api/v1/master-permissions/1")
     expect(seen.body).toEqual({
-      key: "branches:view",
+      key: "appointment:view",
       name: "View all branches",
       description: "",
-      category: "branches",
+      category: "appointment",
       module: "clinic",
       active: true,
       customerPermitted: false,
@@ -254,7 +254,7 @@ describe("edit dialog (TODO-021)", () => {
       http.get(`${API}/master-permissions/:id`, () =>
         HttpResponse.json({
           data: {
-            ...FIXTURE_MASTER_PERMISSION_BRANCHES,
+            ...FIXTURE_MASTER_PERMISSION_APPOINTMENT,
             category: "branches_v2",
             module: "ops",
             active: false,
@@ -268,9 +268,9 @@ describe("edit dialog (TODO-021)", () => {
     fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
     await waitFor(() => expect(seen.count).toBe(1))
     expect(seen.body).toEqual({
-      key: "branches:view",
+      key: "appointment:view",
       name: "Renamed",
-      description: "Read branches",
+      description: "Read appointments",
       category: "branches_v2",
       module: "ops",
       active: false,
@@ -283,7 +283,7 @@ describe("edit dialog (TODO-021)", () => {
     async (missing) => {
       const seen = capturePatch()
       const incomplete: Record<string, unknown> = {
-        ...FIXTURE_MASTER_PERMISSION_BRANCHES,
+        ...FIXTURE_MASTER_PERMISSION_APPOINTMENT,
         active: true,
         customerPermitted: true,
       }
@@ -311,7 +311,7 @@ describe("edit dialog (TODO-021)", () => {
       http.get(`${API}/master-permissions/:id`, () =>
         HttpResponse.json({
           data: {
-            ...FIXTURE_MASTER_PERMISSION_BRANCHES,
+            ...FIXTURE_MASTER_PERMISSION_APPOINTMENT,
             active: false,
             customerPermitted: true,
           },
@@ -331,7 +331,7 @@ describe("edit dialog (TODO-021)", () => {
         order.push("GET")
         return HttpResponse.json({
           data: {
-            ...FIXTURE_MASTER_PERMISSION_BRANCHES,
+            ...FIXTURE_MASTER_PERMISSION_APPOINTMENT,
             active: true,
             customerPermitted: false,
           },
@@ -339,7 +339,7 @@ describe("edit dialog (TODO-021)", () => {
       }),
       http.patch(`${API}/master-permissions/:id`, () => {
         order.push("PATCH")
-        return HttpResponse.json({ data: FIXTURE_MASTER_PERMISSION_BRANCHES })
+        return HttpResponse.json({ data: FIXTURE_MASTER_PERMISSION_APPOINTMENT })
       })
     )
     await openEdit()
@@ -352,13 +352,13 @@ describe("edit dialog (TODO-021)", () => {
     server.use(
       http.get(`${API}/master-permissions`, () =>
         HttpResponse.json({
-          data: [{ ...FIXTURE_MASTER_PERMISSION_BRANCHES, active: true }],
+          data: [{ ...FIXTURE_MASTER_PERMISSION_APPOINTMENT, active: true }],
         })
       )
     )
     const dialog = await openEdit()
-    expect(dialog).toHaveTextContent("branches:view")
-    expect(dialog).toHaveTextContent("branches")
+    expect(dialog).toHaveTextContent("appointment:view")
+    expect(dialog).toHaveTextContent("appointment")
     expect(dialog).toHaveTextContent("clinic")
     expect(dialog).toHaveTextContent("Aktif")
     expect(dialog).toHaveTextContent("Internal")
@@ -437,7 +437,7 @@ describe("edit dialog (TODO-021)", () => {
         HttpResponse.json({
           data: [
             {
-              ...FIXTURE_MASTER_PERMISSION_BRANCHES,
+              ...FIXTURE_MASTER_PERMISSION_APPOINTMENT,
               active: false,
               customerPermitted: true,
             },
@@ -454,7 +454,7 @@ describe("edit dialog (TODO-021)", () => {
 describe("client pagination (D5.4)", () => {
   function manyPermissions(count: number) {
     return Array.from({ length: count }, (_, index) => ({
-      ...FIXTURE_MASTER_PERMISSION_BRANCHES,
+      ...FIXTURE_MASTER_PERMISSION_APPOINTMENT,
       id: index + 1,
       key: `item_${String(index + 1).padStart(2, "0")}:view`,
       name: `Item ${index + 1}`,
@@ -512,9 +512,9 @@ describe("invalidation (D12.1)", () => {
   it("edit invalidates master, tenant and role permission queries", async () => {
     const read = seedFamilies()
     renderPage()
-    await screen.findByText("branches:view")
+    await screen.findByText("appointment:view")
     fireEvent.click(
-      screen.getByRole("button", { name: "Ubah permission reports:view" })
+      screen.getByRole("button", { name: "Ubah permission patient_profile:view" })
     )
     fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
     await waitFor(() =>
@@ -532,13 +532,96 @@ describe("invalidation (D12.1)", () => {
       )
     )
     renderPage()
-    await screen.findByText("branches:view")
+    await screen.findByText("appointment:view")
     fireEvent.click(
-      screen.getByRole("button", { name: "Ubah permission reports:view" })
+      screen.getByRole("button", { name: "Ubah permission patient_profile:view" })
     )
     fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
     await screen.findByRole("alert")
     expect(read().tenant).toBe(false)
     expect(read().role).toBe(false)
+  })
+})
+
+describe("scope column (REQ-FE-057, TODO-027)", () => {
+  function rowOf(key: string) {
+    const row = screen.getByText(key).closest("tr")
+    if (row === null) throw new Error(`no row for ${key}`)
+    return row
+  }
+
+  it("shows a Scope column with a PLATFORM or TENANT badge per row", async () => {
+    renderPage()
+    await screen.findByText("appointment:view")
+    expect(
+      screen.getByRole("columnheader", { name: "Scope" })
+    ).toBeInTheDocument()
+    expect(rowOf("system_users:view")).toHaveTextContent("PLATFORM")
+    expect(rowOf("appointment:view")).toHaveTextContent("TENANT")
+    expect(rowOf("patient_profile:view")).toHaveTextContent("TENANT")
+  })
+
+  it("has no scope filter", async () => {
+    renderPage()
+    await screen.findByText("appointment:view")
+    expect(screen.queryByRole("combobox")).toBeNull()
+    expect(screen.queryByRole("radio")).toBeNull()
+    expect(screen.queryByLabelText(/scope/i)).toBeNull()
+    expect(screen.queryByRole("button", { name: /scope/i })).toBeNull()
+  })
+
+  it("search also matches the scope", async () => {
+    renderPage()
+    await screen.findByText("appointment:view")
+    fireEvent.change(screen.getByLabelText("Cari permission"), {
+      target: { value: "platform" },
+    })
+    expect(screen.getByText("system_users:view")).toBeInTheDocument()
+    expect(screen.queryByText("appointment:view")).not.toBeInTheDocument()
+    expect(screen.queryByText("patient_profile:view")).not.toBeInTheDocument()
+  })
+
+  it("the empty-state row spans all eight columns with Aksi", async () => {
+    server.use(
+      http.get(`${API}/master-permissions`, () =>
+        HttpResponse.json({ data: [] })
+      )
+    )
+    renderPage()
+    const message = await screen.findByText("Belum ada permission.")
+    expect(message.closest("td")).toHaveAttribute("colspan", "8")
+  })
+})
+
+describe("PATCH never sends scope (REQ-FE-057, TODO-027)", () => {
+  it("omits scope even when the re-fetched permission carries it", async () => {
+    authMock.permissions = ALL
+    const bodies: Record<string, unknown>[] = []
+    server.use(
+      http.get(`${API}/master-permissions/:id`, () =>
+        HttpResponse.json({
+          data: {
+            ...FIXTURE_MASTER_PERMISSION_APPOINTMENT,
+            active: true,
+            customerPermitted: false,
+            scope: "TENANT",
+          },
+        })
+      ),
+      http.patch(`${API}/master-permissions/:id`, async ({ request }) => {
+        bodies.push((await request.json()) as Record<string, unknown>)
+        return HttpResponse.json({
+          data: { ...FIXTURE_MASTER_PERMISSION_APPOINTMENT, scope: "TENANT" },
+        })
+      })
+    )
+    renderPage()
+    await screen.findByText("appointment:view")
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ubah permission appointment:view" })
+    )
+    fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
+    await waitFor(() => expect(bodies).toHaveLength(1))
+    expect(bodies[0]).not.toHaveProperty("scope")
   })
 })

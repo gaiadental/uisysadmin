@@ -35,6 +35,31 @@ export function isRoleKeyExists(error: unknown): error is ApiError {
   return isHttp(error) && error.status === 409 && error.code === "SYSTEM_ROLE_KEY_EXISTS"
 }
 
+export const PERMISSION_SCOPE_MESSAGE =
+  "Permission ini tidak dapat diberikan pada peran ini."
+const PERMISSION_SCOPE_CODE = "PERMISSION_SCOPE_NOT_ALLOWED"
+
+/**
+ * Copy for a failed save of the role Permissions checklist (REQ-FE-057). A 400
+ * PERMISSION_SCOPE_NOT_ALLOWED gets fixed copy and the reference id, never the
+ * server text. It is checked before the generic write copy, whose 400 branch
+ * can show the server message. Other failures use `describeRoleWriteFailure`.
+ * Only the role Permissions tab uses this; the tenant tab keeps its own copy.
+ */
+export function describeRolePermissionsFailure(error: unknown): WriteFailure {
+  if (
+    isHttp(error) &&
+    error.status === 400 &&
+    error.code === PERMISSION_SCOPE_CODE
+  ) {
+    return {
+      message: PERMISSION_SCOPE_MESSAGE,
+      referenceId: error.correlationId,
+    }
+  }
+  return describeRoleWriteFailure(error)
+}
+
 export function describeRoleWriteFailure(error: unknown): WriteFailure {
   const guard = describeGuardFailure(error, "role")
   if (guard !== null) return guard

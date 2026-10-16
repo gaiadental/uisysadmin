@@ -24,8 +24,8 @@ export const ROLE_KEY_TAKEN_MESSAGE = "System role key already exists."
 export const FIXTURE_ROLE_PERMISSION_KEYS: Readonly<
   Record<number, readonly string[]>
 > = {
-  1: ["system_users:view", "branches:view"],
-  2: ["branches:view"],
+  1: ["system_users:view", "appointment:view"],
+  2: ["appointment:view"],
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

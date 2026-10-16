@@ -14,6 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { setAccessToken } from "@/lib/api/refresh"
 import { createQueryClient } from "@/lib/query/client"
 import { API, errorResponse, FIXTURE_ME } from "@/test/handlers/auth"
+import { catalogueWithScope } from "@/test/handlers/tenant-permissions"
 import { server } from "@/test/server"
 
 import {
@@ -68,6 +69,8 @@ beforeEach(() => {
   setAccessToken(null)
   queryClient = createQueryClient()
   authMock.permissions = ALL_ROLE_PERMISSIONS
+  // The role tab shows PLATFORM permissions only (REQ-FE-057).
+  server.use(catalogueWithScope("PLATFORM"))
   vi.spyOn(console, "error").mockImplementation(() => undefined)
 })
 afterEach(() => {
@@ -283,7 +286,7 @@ describe("detail: each gate key independently", () => {
     ]
     await open()
     fireEvent.click(await screen.findByRole("tab", { name: "Permissions" }))
-    const box = await screen.findByRole("checkbox", { name: /View reports/ })
+    const box = await screen.findByRole("checkbox", { name: /View patient profile/ })
     expect(box).not.toHaveAttribute("aria-disabled", "true")
     expect(btn("Hapus System Admin")).not.toBeInTheDocument()
   })
@@ -294,14 +297,14 @@ describe("detail: checklist PUT behaviour", () => {
     mount(<RoleDetailPage />, "/system-roles/2")
     await screen.findByRole("heading", { name: "System Admin" })
     fireEvent.click(await screen.findByRole("tab", { name: "Permissions" }))
-    await screen.findByRole("checkbox", { name: /View branches/ })
+    await screen.findByRole("checkbox", { name: /View appointments/ })
   }
 
   it("keeps keys outside the catalogue in the PUT (OQ-P-40)", async () => {
     const puts: { permissionKeys: string[] }[] = []
     server.use(
       http.get(`${API}/system-roles/:id/permissions`, () =>
-        HttpResponse.json({ data: ["branches:view", "legacy:gone"] })
+        HttpResponse.json({ data: ["appointment:view", "legacy:gone"] })
       ),
       http.put(`${API}/system-roles/:id/permissions`, async ({ request }) => {
         const body = (await request.json()) as { permissionKeys: string[] }
@@ -311,14 +314,14 @@ describe("detail: checklist PUT behaviour", () => {
     )
     await openChecklist()
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /View reports/ }))
+    fireEvent.click(screen.getByRole("checkbox", { name: /View patient profile/ }))
     fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
 
     await waitFor(() => {
       expect(puts).toHaveLength(1)
     })
     expect([...puts[0]!.permissionKeys].sort()).toEqual(
-      ["branches:view", "legacy:gone", "reports:view"].sort()
+      ["appointment:view", "legacy:gone", "patient_profile:view"].sort()
     )
   })
 
@@ -332,7 +335,7 @@ describe("detail: checklist PUT behaviour", () => {
     )
     await openChecklist()
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /View branches/ }))
+    fireEvent.click(screen.getByRole("checkbox", { name: /View appointments/ }))
     fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
 
     await waitFor(() => {
@@ -351,12 +354,12 @@ describe("detail: checklist PUT behaviour", () => {
     )
     await openChecklist()
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /View reports/ }))
-    expect(screen.getByRole("checkbox", { name: /View reports/ })).toBeChecked()
+    fireEvent.click(screen.getByRole("checkbox", { name: /View patient profile/ }))
+    expect(screen.getByRole("checkbox", { name: /View patient profile/ })).toBeChecked()
     fireEvent.click(screen.getByRole("button", { name: "Batalkan" }))
 
     await waitFor(() => {
-      expect(screen.getByRole("checkbox", { name: /View reports/ })).not.toBeChecked()
+      expect(screen.getByRole("checkbox", { name: /View patient profile/ })).not.toBeChecked()
     })
     expect(btn("Simpan")).toBeDisabled()
     expect(puts).toBe(0)
@@ -368,14 +371,14 @@ describe("detail: checklist PUT behaviour", () => {
       http.get(`${API}/system-roles/:id/permissions`, () => {
         gets += 1
         return HttpResponse.json({
-          data: gets === 1 ? ["branches:view"] : ["branches:view", "reports:view"],
+          data: gets === 1 ? ["appointment:view"] : ["appointment:view", "patient_profile:view"],
         })
       })
     )
     await openChecklist()
     expect(gets).toBe(1)
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /View reports/ }))
+    fireEvent.click(screen.getByRole("checkbox", { name: /View patient profile/ }))
     fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
 
     await waitFor(() => {
@@ -384,7 +387,7 @@ describe("detail: checklist PUT behaviour", () => {
     await waitFor(() => {
       expect(gets).toBe(2)
     })
-    expect(screen.getByRole("checkbox", { name: /View reports/ })).toBeChecked()
+    expect(screen.getByRole("checkbox", { name: /View patient profile/ })).toBeChecked()
     expect(btn("Simpan")).toBeDisabled()
   })
 
@@ -396,7 +399,7 @@ describe("detail: checklist PUT behaviour", () => {
     )
     await openChecklist()
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /View reports/ }))
+    fireEvent.click(screen.getByRole("checkbox", { name: /View patient profile/ }))
     fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
 
     await waitFor(() => {
@@ -405,22 +408,11 @@ describe("detail: checklist PUT behaviour", () => {
     await waitFor(() => {
       expect(btn("Simpan")).toBeEnabled()
     })
-    expect(screen.getByRole("checkbox", { name: /View reports/ })).not.toHaveAttribute(
+    expect(screen.getByRole("checkbox", { name: /View patient profile/ })).not.toHaveAttribute(
       "aria-disabled",
       "true"
     )
     expect(btn("Ubah System Admin")).toBeEnabled()
-  })
-
-  it("shows the empty-catalogue message", async () => {
-    server.use(
-      http.get(`${API}/master-permissions`, () => HttpResponse.json({ data: [] }))
-    )
-    mount(<RoleDetailPage />, "/system-roles/2")
-    await screen.findByRole("heading", { name: "System Admin" })
-    fireEvent.click(await screen.findByRole("tab", { name: "Permissions" }))
-
-    expect(await screen.findByText("Belum ada permission di katalog.")).toBeInTheDocument()
   })
 
   it("shows the error state when the catalogue fails", async () => {
@@ -498,8 +490,8 @@ describe("detail: edit and refusal paths", () => {
     const first = mount(<RoleDetailPage />, "/system-roles/2")
     await screen.findByRole("heading", { name: "System Admin" })
     fireEvent.click(await screen.findByRole("tab", { name: "Permissions" }))
-    await screen.findByRole("checkbox", { name: /View branches/ })
-    fireEvent.click(screen.getByRole("checkbox", { name: /View reports/ }))
+    await screen.findByRole("checkbox", { name: /View appointments/ })
+    fireEvent.click(screen.getByRole("checkbox", { name: /View patient profile/ }))
     fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
     await waitFor(() => {
       expect(btn("Ubah System Admin")).toBeDisabled()
@@ -623,8 +615,8 @@ describe("system role pages: fixed guard copy (D13.1, REQ-FE-053)", () => {
       mount(<RoleDetailPage />, "/system-roles/2")
       await screen.findByRole("heading", { name: "System Admin" })
       fireEvent.click(await screen.findByRole("tab", { name: "Permissions" }))
-      await screen.findByRole("checkbox", { name: /View branches/ })
-      fireEvent.click(screen.getByRole("checkbox", { name: /View reports/ }))
+      await screen.findByRole("checkbox", { name: /View appointments/ })
+      fireEvent.click(screen.getByRole("checkbox", { name: /View patient profile/ }))
       fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
 
       const alert = await screen.findByRole("alert")

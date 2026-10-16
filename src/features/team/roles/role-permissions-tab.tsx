@@ -3,7 +3,8 @@
  * checklist of the master permission catalogue, grouped by module then
  * category, pre-checked from `GET /system-roles/{id}/permissions` (keys) and
  * saved with ONE PUT of `{ permissionKeys }` (full replacement). The tab needs
- * `master_permissions:view`; saving needs `system_roles:update`.
+ * `master_permissions:view`; saving needs `system_roles:update`. It shows only
+ * PLATFORM-scope permissions (REQ-FE-057).
  *
  * The SYS_PRINCIPAL checklist is read-only with no save (static lock). After a
  * protected-role refusal the checklist is read-only and the role is marked
@@ -22,7 +23,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Skeleton } from "@/components/ui/skeleton"
-import { groupPermissions } from "@/features/tenants/permissions/checklist"
+import {
+  filterByScope,
+  groupPermissions,
+} from "@/features/tenants/permissions/checklist"
 import type { WriteFailure } from "@/features/tenants/create/write-failure"
 import { describeReadFailure } from "@/features/tenants/shared/failure"
 import { listMasterPermissions } from "@/lib/api/modules/master-permissions"
@@ -37,7 +41,10 @@ import type { MasterPermission } from "@/types/master-permission"
 import type { SystemRole } from "@/types/system-role"
 
 import { roleActionAccess } from "./access"
-import { describeRoleWriteFailure, isRoleRefusal } from "./role-failure"
+import {
+  describeRolePermissionsFailure,
+  isRoleRefusal,
+} from "./role-failure"
 import { useRefusedRoles } from "./refused-roles"
 import {
   rolePermissionsFormSchema,
@@ -134,7 +141,12 @@ function RoleChecklist({
   const selected = form.watch("permissionKeys")
   const dirty = !sameKeySet(selected, savedKeys)
   const { isSubmitting } = form.formState
-  const groups = useMemo(() => groupPermissions(catalogue), [catalogue])
+  // Only PLATFORM permissions are shown (REQ-FE-057). Keys the role holds
+  // outside this list stay in `selected`, so the PUT keeps them.
+  const groups = useMemo(
+    () => groupPermissions(filterByScope(catalogue, "PLATFORM")),
+    [catalogue]
+  )
 
   const save = form.handleSubmit(async (values: RolePermissionsFormValues) => {
     setFailure(null)
@@ -147,7 +159,7 @@ function RoleChecklist({
       toast.success("Permission peran disimpan.")
     } catch (error) {
       if (isRoleRefusal(error)) refusals.markRefused(role.id)
-      setFailure(describeRoleWriteFailure(error))
+      setFailure(describeRolePermissionsFailure(error))
     }
   })
 
@@ -176,7 +188,7 @@ function RoleChecklist({
           />
           {groups.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Belum ada permission di katalog.
+              Belum ada permission untuk peran sistem di katalog.
             </p>
           ) : (
             <Controller

@@ -3,7 +3,10 @@
  * module then category, toggling one id and comparing two selections.
  */
 
-import type { MasterPermission } from "@/types/master-permission"
+import type {
+  MasterPermission,
+  PermissionScope,
+} from "@/types/master-permission"
 
 export interface PermissionGroup {
   readonly module: string
@@ -13,6 +16,18 @@ export interface PermissionGroup {
 
 function compareText(a: string, b: string): number {
   return a.localeCompare(b, "en")
+}
+
+/**
+ * Keeps the permissions of one scope, in the input order (REQ-FE-057). A pure
+ * display filter: the input is not changed and nothing is removed from a
+ * saved selection by it.
+ */
+export function filterByScope(
+  catalogue: readonly MasterPermission[],
+  scope: PermissionScope
+): MasterPermission[] {
+  return catalogue.filter((permission) => permission.scope === scope)
 }
 
 /** Groups by module, then category. Groups and items are sorted, so the order is stable. */

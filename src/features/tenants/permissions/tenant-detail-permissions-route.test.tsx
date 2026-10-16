@@ -56,7 +56,7 @@ describe("Permissions tab on the detail page (D7)", () => {
     renderAt(`/tenants/${FIXTURE_TENANT.id}/permissions`)
 
     expect(
-      await screen.findByRole("checkbox", { name: /View branches/ })
+      await screen.findByRole("checkbox", { name: /View appointments/ })
     ).toBeInTheDocument()
     expect(screen.getByRole("tab", { name: "Permissions" })).toHaveAttribute(
       "aria-selected",

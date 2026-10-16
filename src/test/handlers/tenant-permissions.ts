@@ -3,6 +3,8 @@
  * endpoints (ARCH-FE-001 D19; ADR-005; FE doc 5.3 and 5.4). Bodies are
  * camelCase and wrapped in `data`. The PUT and PATCH handlers echo a result
  * built from the request, so a test sees the request shape the server expects.
+ * Every catalogue fixture carries the required `scope` (REQ-FE-057): the
+ * clinic fixtures are TENANT, the system user fixture is PLATFORM.
  */
 
 import { http, HttpResponse } from "msw"
@@ -11,24 +13,29 @@ import { API } from "./auth"
 
 const STAMP = "2026-10-05T09:30:00Z"
 
-export const FIXTURE_MASTER_PERMISSION_BRANCHES = {
+export const FIXTURE_MASTER_PERMISSION_APPOINTMENT = {
   id: 1,
-  key: "branches:view",
-  name: "View branches",
-  description: "Read branches",
-  category: "branches",
+  key: "appointment:view",
+  name: "View appointments",
+  description: "Read appointments",
+  category: "appointment",
   module: "clinic",
+  scope: "TENANT",
   createdAt: STAMP,
   updatedAt: STAMP,
 } as const
 
-export const FIXTURE_MASTER_PERMISSION_REPORTS = {
+// Alias kept so the unchanged src/test/handlers/catalog.ts compiles; its default data is the appointment fixture.
+export const FIXTURE_MASTER_PERMISSION_BRANCHES = FIXTURE_MASTER_PERMISSION_APPOINTMENT
+
+export const FIXTURE_MASTER_PERMISSION_PATIENT_PROFILE = {
   id: 2,
-  key: "reports:view",
-  name: "View reports",
+  key: "patient_profile:view",
+  name: "View patient profile",
   description: null,
-  category: "reports",
+  category: "patient_profile",
   module: "clinic",
+  scope: "TENANT",
   createdAt: STAMP,
   updatedAt: STAMP,
 } as const
@@ -40,40 +47,54 @@ export const FIXTURE_MASTER_PERMISSION_USERS = {
   description: "Read users",
   category: "system_users",
   module: "auth",
+  scope: "PLATFORM",
   createdAt: STAMP,
   updatedAt: STAMP,
 } as const
 
 export const FIXTURE_MASTER_PERMISSIONS = [
-  FIXTURE_MASTER_PERMISSION_BRANCHES,
-  FIXTURE_MASTER_PERMISSION_REPORTS,
+  FIXTURE_MASTER_PERMISSION_APPOINTMENT,
+  FIXTURE_MASTER_PERMISSION_PATIENT_PROFILE,
   FIXTURE_MASTER_PERMISSION_USERS,
 ] as const
 
-export const FIXTURE_TENANT_PERMISSION_BRANCHES = {
+export const FIXTURE_TENANT_PERMISSION_APPOINTMENT = {
   id: 10,
   masterPermissionId: 1,
-  masterPermissionKey: "branches:view",
-  masterPermissionName: "View branches",
+  masterPermissionKey: "appointment:view",
+  masterPermissionName: "View appointments",
   enabled: true,
   createdAt: STAMP,
   updatedAt: STAMP,
 } as const
 
-export const FIXTURE_TENANT_PERMISSION_REPORTS = {
+export const FIXTURE_TENANT_PERMISSION_PATIENT_PROFILE = {
   id: 11,
   masterPermissionId: 2,
-  masterPermissionKey: "reports:view",
-  masterPermissionName: "View reports",
+  masterPermissionKey: "patient_profile:view",
+  masterPermissionName: "View patient profile",
   enabled: false,
   createdAt: STAMP,
   updatedAt: STAMP,
 } as const
 
 export const FIXTURE_TENANT_PERMISSIONS = [
-  FIXTURE_TENANT_PERMISSION_BRANCHES,
-  FIXTURE_TENANT_PERMISSION_REPORTS,
+  FIXTURE_TENANT_PERMISSION_APPOINTMENT,
+  FIXTURE_TENANT_PERMISSION_PATIENT_PROFILE,
 ] as const
+
+/**
+ * GET /master-permissions with every fixture marked with one scope. The shared
+ * fixture mixes both scopes, so the role tests answer PLATFORM and the tenant
+ * tests answer TENANT (REQ-FE-057); each tab then shows the rows it is about.
+ */
+export function catalogueWithScope(scope: "PLATFORM" | "TENANT") {
+  return http.get(`${API}/master-permissions`, () =>
+    HttpResponse.json({
+      data: FIXTURE_MASTER_PERMISSIONS.map((item) => ({ ...item, scope })),
+    })
+  )
+}
 
 export const tenantPermissionHandlers = [
   http.get(`${API}/master-permissions`, () =>
@@ -111,7 +132,7 @@ export const tenantPermissionHandlers = [
         (item) => String(item.id) === params.permissionId
       )
       return HttpResponse.json({
-        data: { ...(current ?? FIXTURE_TENANT_PERMISSION_BRANCHES), enabled: body.enabled },
+        data: { ...(current ?? FIXTURE_TENANT_PERMISSION_APPOINTMENT), enabled: body.enabled },
       })
     }
   ),

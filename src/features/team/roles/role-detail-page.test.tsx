@@ -13,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import { setAccessToken } from "@/lib/api/refresh"
 import { createQueryClient } from "@/lib/query/client"
 import { API, errorResponse, FIXTURE_ME } from "@/test/handlers/auth"
+import { catalogueWithScope } from "@/test/handlers/tenant-permissions"
 import { server } from "@/test/server"
 
 import { PROTECTED_ROLE_MESSAGE } from "../shared/guard-failure"
@@ -50,6 +51,8 @@ beforeEach(() => {
   setAccessToken(null)
   queryClient = createQueryClient()
   authMock.permissions = ALL_ROLE_PERMISSIONS
+  // The role tab shows PLATFORM permissions only (REQ-FE-057).
+  server.use(catalogueWithScope("PLATFORM"))
   vi.spyOn(console, "error").mockImplementation(() => undefined)
 })
 
@@ -77,7 +80,7 @@ function button(name: string | RegExp) {
 
 async function openPermissionsTab() {
   fireEvent.click(await screen.findByRole("tab", { name: "Permissions" }))
-  await screen.findByRole("checkbox", { name: /View branches/ })
+  await screen.findByRole("checkbox", { name: /View appointments/ })
 }
 
 function refuseWith(method: "patch" | "delete" | "put", code: string) {
@@ -164,13 +167,13 @@ describe("refusal-driven disable for other roles (D6.6)", () => {
     await readyFor("System Admin")
     await openPermissionsTab()
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /View reports/ }))
+    fireEvent.click(screen.getByRole("checkbox", { name: /View patient profile/ }))
     fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
 
     expect(await screen.findByText(PROTECTED_ROLE_MESSAGE)).toBeInTheDocument()
     expect(screen.queryByText(PROTECTED_MESSAGE)).not.toBeInTheDocument()
     await waitFor(() => {
-      expect(screen.getByRole("checkbox", { name: /View reports/ })).toHaveAttribute("aria-disabled", "true")
+      expect(screen.getByRole("checkbox", { name: /View patient profile/ })).toHaveAttribute("aria-disabled", "true")
     })
     expect(button("Ubah System Admin")).toBeDisabled()
   })
@@ -234,17 +237,17 @@ describe("permission checklist (REQ-FE-034)", () => {
     server.use(
       http.put(`${API}/system-roles/:id/permissions`, async ({ request }) => {
         puts.push(await request.json())
-        return HttpResponse.json({ data: ["branches:view", "reports:view"] })
+        return HttpResponse.json({ data: ["appointment:view", "patient_profile:view"] })
       })
     )
     renderDetail(ADMIN_ID)
     await readyFor("System Admin")
     await openPermissionsTab()
-    expect(screen.getByRole("checkbox", { name: /View branches/ })).toBeChecked()
-    expect(screen.getByRole("checkbox", { name: /View reports/ })).not.toBeChecked()
+    expect(screen.getByRole("checkbox", { name: /View appointments/ })).toBeChecked()
+    expect(screen.getByRole("checkbox", { name: /View patient profile/ })).not.toBeChecked()
     expect(button("Simpan")).toBeDisabled()
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /View reports/ }))
+    fireEvent.click(screen.getByRole("checkbox", { name: /View patient profile/ }))
     fireEvent.click(screen.getByRole("checkbox", { name: /View system users/ }))
     fireEvent.click(screen.getByRole("checkbox", { name: /View system users/ }))
     fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
@@ -254,7 +257,7 @@ describe("permission checklist (REQ-FE-034)", () => {
     })
     expect(puts).toHaveLength(1)
     expect(puts[0]).toEqual({
-      permissionKeys: expect.arrayContaining(["branches:view", "reports:view"]) as string[],
+      permissionKeys: expect.arrayContaining(["appointment:view", "patient_profile:view"]) as string[],
     })
     expect((puts[0] as { permissionKeys: string[] }).permissionKeys).toHaveLength(2)
   })
@@ -265,7 +268,7 @@ describe("permission checklist (REQ-FE-034)", () => {
     await openPermissionsTab()
 
     expect(screen.getByText("auth / system_users")).toBeInTheDocument()
-    expect(screen.getByText("clinic / branches")).toBeInTheDocument()
+    expect(screen.getByText("clinic / appointment")).toBeInTheDocument()
   })
 
   it("is read-only without system_roles:update, with no save button", async () => {
@@ -274,7 +277,7 @@ describe("permission checklist (REQ-FE-034)", () => {
     await readyFor("System Admin")
     await openPermissionsTab()
 
-    expect(screen.getByRole("checkbox", { name: /View branches/ })).toHaveAttribute("aria-disabled", "true")
+    expect(screen.getByRole("checkbox", { name: /View appointments/ })).toHaveAttribute("aria-disabled", "true")
     expect(button("Simpan")).not.toBeInTheDocument()
   })
 
@@ -293,7 +296,7 @@ describe("permission checklist (REQ-FE-034)", () => {
         calls += 1
         return calls === 1
           ? errorResponse(503, "SERVICE_UNAVAILABLE", "down")
-          : HttpResponse.json({ data: ["branches:view"] })
+          : HttpResponse.json({ data: ["appointment:view"] })
       })
     )
     renderDetail(ADMIN_ID)
@@ -303,7 +306,7 @@ describe("permission checklist (REQ-FE-034)", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Coba lagi" }))
 
     expect(
-      await screen.findByRole("checkbox", { name: /View branches/ })
+      await screen.findByRole("checkbox", { name: /View appointments/ })
     ).toBeChecked()
   })
 
@@ -313,7 +316,7 @@ describe("permission checklist (REQ-FE-034)", () => {
     fireEvent.click(await screen.findByRole("tab", { name: "Permissions" }))
 
     expect(screen.getByRole("status")).toHaveTextContent("Memuat permission")
-    await screen.findByRole("checkbox", { name: /View branches/ })
+    await screen.findByRole("checkbox", { name: /View appointments/ })
   })
 })
 

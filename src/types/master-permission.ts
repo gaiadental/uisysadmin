@@ -7,6 +7,13 @@
 
 import { z } from "zod"
 
+/**
+ * Scope of a master permission (REQ-FE-057, ARCH-FE-001 D5.1). Required and
+ * immutable on the server; a missing or other value is a contract failure.
+ */
+export const PermissionScopeSchema = z.enum(["PLATFORM", "TENANT"])
+export type PermissionScope = z.infer<typeof PermissionScopeSchema>
+
 export const MasterPermissionSchema = z.object({
   id: z.number().int(),
   key: z.string().min(1),
@@ -14,6 +21,7 @@ export const MasterPermissionSchema = z.object({
   description: z.string().nullish(),
   category: z.string(),
   module: z.string(),
+  scope: PermissionScopeSchema,
   active: z.boolean().optional(),
   customerPermitted: z.boolean().optional(),
   createdAt: z.string(),

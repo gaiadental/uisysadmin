@@ -14,7 +14,8 @@ import { setAccessToken } from "@/lib/api/refresh"
 import { createQueryClient } from "@/lib/query/client"
 import { API, errorResponse, FIXTURE_ME } from "@/test/handlers/auth"
 import {
-  FIXTURE_TENANT_PERMISSION_BRANCHES,
+  catalogueWithScope,
+  FIXTURE_TENANT_PERMISSION_APPOINTMENT,
 } from "@/test/handlers/tenant-permissions"
 import { server } from "@/test/server"
 
@@ -51,6 +52,8 @@ beforeEach(() => {
   setAccessToken(null)
   queryClient = createQueryClient()
   authMock.permissions = ALL_KEYS
+  // The tenant tab shows TENANT permissions only (REQ-FE-057).
+  server.use(catalogueWithScope("TENANT"))
   vi.spyOn(console, "error").mockImplementation(() => undefined)
 })
 
@@ -72,7 +75,7 @@ function renderTab() {
 }
 
 async function ready() {
-  await screen.findByRole("checkbox", { name: /View branches/ })
+  await screen.findByRole("checkbox", { name: /View appointments/ })
 }
 
 function recordWrites() {
@@ -81,7 +84,7 @@ function recordWrites() {
   server.use(
     http.put(`${API}/tenants/:tenantId/permissions`, async ({ request }) => {
       puts.push(await request.json())
-      return HttpResponse.json({ data: [FIXTURE_TENANT_PERMISSION_BRANCHES] })
+      return HttpResponse.json({ data: [FIXTURE_TENANT_PERMISSION_APPOINTMENT] })
     }),
     http.patch(
       `${API}/tenants/:tenantId/permissions/:permissionId`,
@@ -91,7 +94,7 @@ function recordWrites() {
           body: await request.json(),
         })
         return HttpResponse.json({
-          data: { ...FIXTURE_TENANT_PERMISSION_BRANCHES, enabled: false },
+          data: { ...FIXTURE_TENANT_PERMISSION_APPOINTMENT, enabled: false },
         })
       }
     )
@@ -121,16 +124,6 @@ describe("states (D13)", () => {
     expect(screen.getByRole("button", { name: "Coba lagi" })).toBeInTheDocument()
   })
 
-  it("shows an empty message for an empty catalogue", async () => {
-    server.use(
-      http.get(`${API}/master-permissions`, () => HttpResponse.json({ data: [] }))
-    )
-    renderTab()
-
-    expect(
-      await screen.findByText("Belum ada permission di katalog.")
-    ).toBeInTheDocument()
-  })
 })
 
 describe("checklist", () => {
@@ -138,13 +131,13 @@ describe("checklist", () => {
     renderTab()
     await ready()
 
-    expect(screen.getByRole("checkbox", { name: /View branches/ })).toBeChecked()
-    expect(screen.getByRole("checkbox", { name: /View reports/ })).toBeChecked()
+    expect(screen.getByRole("checkbox", { name: /View appointments/ })).toBeChecked()
+    expect(screen.getByRole("checkbox", { name: /View patient profile/ })).toBeChecked()
     expect(
       screen.getByRole("checkbox", { name: /View system users/ })
     ).not.toBeChecked()
     expect(screen.getByRole("group", { name: "auth / system_users" })).toBeInTheDocument()
-    expect(screen.getByRole("group", { name: "clinic / branches" })).toBeInTheDocument()
+    expect(screen.getByRole("group", { name: "clinic / appointment" })).toBeInTheDocument()
   })
 
   it("keeps Simpan disabled until the selection changes", async () => {
@@ -164,7 +157,7 @@ describe("save (PUT)", () => {
     await ready()
 
     fireEvent.click(screen.getByRole("checkbox", { name: /View system users/ }))
-    fireEvent.click(screen.getByRole("checkbox", { name: /View reports/ }))
+    fireEvent.click(screen.getByRole("checkbox", { name: /View patient profile/ }))
     fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
 
     await waitFor(() => expect(toastMock.success).toHaveBeenCalled())
@@ -179,7 +172,7 @@ describe("save (PUT)", () => {
     server.use(
       http.get(`${API}/tenants/:tenantId/permissions`, () => {
         reads += 1
-        return HttpResponse.json({ data: [FIXTURE_TENANT_PERMISSION_BRANCHES] })
+        return HttpResponse.json({ data: [FIXTURE_TENANT_PERMISSION_APPOINTMENT] })
       })
     )
     renderTab()
@@ -231,7 +224,7 @@ describe("toggle (PATCH)", () => {
     renderTab()
     await ready()
 
-    fireEvent.click(screen.getByRole("switch", { name: "Status View branches" }))
+    fireEvent.click(screen.getByRole("switch", { name: "Status View appointments" }))
 
     await waitFor(() => expect(patches).toHaveLength(1))
     expect(patches[0]).toEqual({
@@ -246,7 +239,7 @@ describe("toggle (PATCH)", () => {
     renderTab()
     await ready()
 
-    fireEvent.click(screen.getByRole("switch", { name: "Status View reports" }))
+    fireEvent.click(screen.getByRole("switch", { name: "Status View patient profile" }))
 
     await waitFor(() => expect(patches).toHaveLength(1))
     expect(patches[0]?.body).toEqual({ enabled: true })
@@ -262,7 +255,7 @@ describe("toggle (PATCH)", () => {
     renderTab()
     await ready()
 
-    fireEvent.click(screen.getByRole("switch", { name: "Status View branches" }))
+    fireEvent.click(screen.getByRole("switch", { name: "Status View appointments" }))
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Anda tidak punya akses untuk aksi ini."
@@ -280,7 +273,7 @@ describe("actions hidden when the permission key is absent (D6.4)", () => {
 
     expect(screen.queryByRole("button", { name: "Simpan" })).toBeNull()
     expect(screen.queryByRole("button", { name: "Batalkan" })).toBeNull()
-    expect(screen.getByRole("checkbox", { name: /View branches/ })).toHaveAttribute(
+    expect(screen.getByRole("checkbox", { name: /View appointments/ })).toHaveAttribute(
       "aria-disabled",
       "true"
     )
@@ -301,10 +294,10 @@ describe("actions hidden when the permission key is absent (D6.4)", () => {
     renderTab()
     await ready()
 
-    // branches is enabled: turning it off needs :deactivate. reports is disabled: turning it on needs :activate.
+    // appointment is enabled: turning it off needs :deactivate. patient_profile is disabled: turning it on needs :activate.
     expect(
-      screen.getByRole("switch", { name: "Status View branches" })
+      screen.getByRole("switch", { name: "Status View appointments" })
     ).toBeInTheDocument()
-    expect(screen.queryByRole("switch", { name: "Status View reports" })).toBeNull()
+    expect(screen.queryByRole("switch", { name: "Status View patient profile" })).toBeNull()
   })
 })

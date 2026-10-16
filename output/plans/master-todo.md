@@ -3,8 +3,8 @@ id: MASTER-TODO
 title: Master TODO — System Principal Web (Frontend)
 owner: project_manager
 status: Approved
-version: 1.22
-last_updated: 2026-10-15
+version: 1.25
+last_updated: 2026-10-16
 source_requirements: [REQ-FE-001, REQ-FE-002, REQ-FE-003, REQ-FE-004, REQ-FE-005, REQ-FE-006, REQ-FE-007, REQ-FE-008, REQ-FE-009, REQ-FE-010, REQ-FE-011, REQ-FE-012, REQ-FE-013, REQ-FE-014, REQ-FE-015, REQ-FE-016, REQ-FE-017, REQ-FE-018, REQ-FE-019, REQ-FE-020, REQ-FE-021, REQ-FE-022, REQ-FE-023, REQ-FE-024, REQ-FE-025, REQ-FE-026, REQ-FE-028, REQ-FE-029, REQ-FE-030, REQ-FE-031, REQ-FE-032, REQ-FE-033, REQ-FE-034, REQ-FE-035, REQ-FE-036, REQ-FE-037, REQ-FE-038, REQ-FE-039, REQ-FE-040, REQ-FE-041, REQ-FE-042, REQ-FE-043, REQ-FE-045, REQ-FE-046, REQ-FE-047, REQ-FE-048, REQ-FE-049, REQ-FE-050, REQ-FE-051]
 related_artifacts: [ARCH-FE-001, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, IMPLEMENTATION-PLAN, PROGRESS-TRACKER]
 blocking_open_questions: 0
@@ -16,11 +16,17 @@ Owner: project_manager
 
 Status: Approved
 
-Version: 1.22
+Version: 1.25
 
-Last Updated: 2026-10-15
+Last Updated: 2026-10-16
 
 Approved: 2026-10-10 (user, Checkpoint B gate)
+
+Change: 2026-10-16 — TODO-027 review follow-up (v1.25): Description fixture wording and Notes aligned with the review results; File scope unchanged; Unit Test Report re-run `execution_overall: PASS` (1104 tests). TODO-027 stays Completed. No TODO status changed. Status unchanged (Approved).
+
+Change: 2026-10-16 — TODO-027 Completed (Unit Test Report `execution_overall: PASS`, 1104 passed in 83 files, two runs; tsc -b, eslint ., vitest run exit 0). Manual browser test by the user still required before commit. No other TODO status changed. Status unchanged (Approved).
+
+Change: 2026-10-16 — TODO-027 added (Not Started, Medium; filter permissions by scope PLATFORM/TENANT; platform SP-BG-16 Closed; gate ARCH-FE-001 v1.0.14 with REQ-FE-057 must be Approved before `/build`). No TODO status changed.
 
 Change: 2026-10-15 — TODO-024 Completed (Unit Test Report `execution_overall: PASS`; `tsc -b`, `eslint .`, `vitest run` exit 0, 1032 passed in 78 files; FP-013, FP-014, FP-026, FP-027, FP-079, FP-080, FP-081, FP-089 updated in place). Checkpoint C sign-off pending the user. Status unchanged (Approved).
 
@@ -1590,6 +1596,85 @@ Notes:
 Gate commands, exactly: `tsc -b`, `eslint .`, `vitest run --passWithNoTests`; all three exit 0. Manual test by the user before any commit (PASSED 2026-10-15: other-account sessions tab, force logout with the target thrown to `/login`, non-principal to principal shows the account PROTECTED copy, own account only the "Sesi saya" link). File-provenance rows are added at `/build` (update existing rows in place). Two commits: TODO-026, then the chore.
 
 Approved by the user 2026-10-15: Unit Test Report, Code Review and QA report of TODO-026. Tech debt, Low, Gating No (not done now): L-1 (a GET 503 on the sessions list shows the server message through `describeReadFailure` in `features/tenants/shared/failure.ts`; making Tim IT reads show fixed copy would be a new TODO) and L-2 (the GET 403 copy "Anda tidak punya akses untuk aksi ini." and the "Coba lagi" button are shared by every read screen).
+
+---
+
+# TODO-027
+
+Description:
+
+Filter permissions by scope (PLATFORM / TENANT). Platform SP-BG-16 is Closed (auth-service merged). Contract: `GET /api/v1/master-permissions` returns a required, immutable field `scope: "PLATFORM" | "TENANT"`. PLATFORM: `system_users`, `system_roles`, `master_permissions`, `sessions`, `tenants`, `tenant_permissions`. TENANT: `appointment`, `patient_profile`, `profile`, `tenant_users`, `tenant_roles`, `branch_types`. The backend rejects a TENANT permission on a system role with 400 `PERMISSION_SCOPE_NOT_ALLOWED`. Editing a master permission uses `PATCH /api/v1/master-permissions/{id}`; the frontend must NOT send `scope` (the server answers `MASTER_PERMISSION_SCOPE_IMMUTABLE` if it differs).
+
+(1) `src/types/master-permission.ts`: add required `scope: z.enum(["PLATFORM","TENANT"])`; the fixture in `src/test/handlers/tenant-permissions.ts` uses the contract keys `appointment:view` and `patient_profile:view` as TENANT and `system_users` as PLATFORM; every test that builds a `MasterPermission` gets `scope`.
+(2) `src/features/tenants/permissions/checklist.ts`: pure helper `filterByScope(catalogue, scope)` (+ `checklist.test.ts`).
+(3) `src/features/team/roles/role-permissions-tab.tsx`: show ONLY PLATFORM permissions, filtered before `groupPermissions`. Keys the role holds outside the shown catalogue stay in the selection (existing default), so a save does not drop them.
+(4) `src/features/tenants/permissions/tenant-permissions-tab.tsx`: show ONLY TENANT permissions (user decision; the backend does not block, this is a display filter). A saved tenant permission with scope PLATFORM is not shown but is still sent in the PUT (full replacement), so it is not removed silently.
+(5) `src/features/catalog/master-permissions/permission-list-page.tsx`: new "Scope" column with a badge PLATFORM/TENANT, no filter; `COLUMN_COUNT` 8; search also matches scope. The edit dialog (`permission-form-dialog.tsx`, `src/lib/api/modules/master-permissions.ts`) must not send `scope` in the PATCH.
+(6) `src/features/team/roles/role-failure.ts`: HTTP 400 code `PERMISSION_SCOPE_NOT_ALLOWED` gives the fixed copy "Permission ini tidak dapat diberikan pada peran ini." with the reference id, never server text; checked before the generic 400 branch; applies to the role Permissions tab only (not the tenant tab).
+
+Owner:
+
+developer_frontend
+
+Status:
+
+Completed
+
+Priority:
+
+Medium
+
+Dependencies:
+
+Gate: ARCH-FE-001 v1.0.14 (D5.1, D6.4, D7, D13; REQ-FE-057) added by the architect and Approved by the user before `/build`. Platform SP-BG-16 Closed. Prerequisites: TODO-021, TODO-022, TODO-026. Regression gate: TODO-011, TODO-013, TODO-015, TODO-021, TODO-022, TODO-026 stay PASS.
+
+Related Requirement:
+
+REQ-FE-057 (new, to be added in ARCH-FE-001 v1.0.14), REQ-FE-034, REQ-FE-026, REQ-FE-035.
+
+Related ADR:
+
+ADR-003, ADR-005
+
+Related Architecture:
+
+ARCH-FE-001 v1.0.14: D5.1, D6.4, D7, D13.
+
+File scope:
+
+- `src/types/master-permission.ts` (and its schema test file)
+- `src/test/handlers/tenant-permissions.ts`
+- `src/features/tenants/permissions/checklist.ts`, `src/features/tenants/permissions/checklist.test.ts`
+- `src/features/team/roles/role-permissions-tab.tsx` and its tests (e.g. `src/features/team/roles/role-screens-gaps.test.tsx`)
+- `src/features/tenants/permissions/tenant-permissions-tab.tsx` and its tests
+- `src/features/catalog/master-permissions/permission-list-page.tsx` and its test
+- `src/features/catalog/master-permissions/permission-form-dialog.tsx`
+- `src/lib/api/modules/master-permissions.ts`, `src/lib/api/modules/master-permissions.test.ts`
+- `src/features/team/roles/role-failure.ts`, `src/features/team/roles/role-failure.test.ts`
+- Any other test that builds a `MasterPermission` (fixture `scope` only)
+
+Tests required (red first):
+(a) Schema: `scope` is required; an invalid value is rejected.
+(b) `filterByScope` returns only the requested scope and keeps order.
+(c) Role Permissions tab shows only PLATFORM permissions; held keys outside the shown catalogue stay in the saved selection.
+(d) Tenant Permissions tab shows only TENANT permissions; the PUT payload still contains the saved PLATFORM ids.
+(e) Catalogue page shows the scope badge, has no scope filter, and search matches scope; `COLUMN_COUNT` is 8.
+(f) PATCH body of a master permission edit has no `scope`.
+(g) Role save with 400 `PERMISSION_SCOPE_NOT_ALLOWED` shows the fixed copy with the reference id and no server text; the generic 400 branch is unchanged.
+
+Notes:
+
+Gate commands, exactly: `tsc -b`, `eslint .`, `vitest run --passWithNoTests`; all three exit 0. Manual test by the user before any commit. File-provenance rows are added at `/build` (update existing rows in place). ARCH-FE-001 is edited by the architect, not by this plan.
+
+Completed 2026-10-16 after Unit Test Report PASS; the user's manual browser test is still required before commit.
+
+Review 2026-10-16: H1 FP-269 added; M1 accepted by the user (ARCH-FE-001 v1.0.15 D6.4 assumption, TD-FE-01 Low, gating No); L1 fixtures renamed to contract keys; L2 empty-state copy per tab (D13.2); L3 older duplicate FP rows kept, cleanup later (Low, gating No); L4 catalog.ts removed from File scope; L5 alias comment; H2 Unit Test Report re-run, 1104 tests PASS.
+
+Open tech notes (non-blocking, from implementation):
+1. Fixture scopes: `branches` and `reports` fixtures are TENANT; `system_users` is PLATFORM. Judgement, to be confirmed.
+2. Tenant tab 400 `PERMISSION_SCOPE_NOT_ALLOWED` has no copy defined; the tab keeps its own write-failure copy.
+3. No DB count was possible (no DB access).
+4. No coverage provider installed (`@vitest/coverage-v8`); the 80% guideline is not verified.
 
 ---
 
