@@ -14,7 +14,8 @@ import { setAccessToken } from "@/lib/api/refresh"
 import { createQueryClient } from "@/lib/query/client"
 import { API, errorResponse, FIXTURE_ME } from "@/test/handlers/auth"
 import {
-  FIXTURE_TENANT_PERMISSION_BRANCHES,
+  catalogueWithScope,
+  FIXTURE_TENANT_PERMISSION_APPOINTMENT,
 } from "@/test/handlers/tenant-permissions"
 import { server } from "@/test/server"
 
@@ -51,6 +52,8 @@ beforeEach(() => {
   setAccessToken(null)
   queryClient = createQueryClient()
   authMock.permissions = ALL_KEYS
+  // The tenant tab shows TENANT permissions only (REQ-FE-057).
+  server.use(catalogueWithScope("TENANT"))
   vi.spyOn(console, "error").mockImplementation(() => undefined)
 })
 
@@ -72,7 +75,7 @@ function renderTab() {
 }
 
 async function ready() {
-  await screen.findByRole("checkbox", { name: /View branches/ })
+  await screen.findByRole("checkbox", { name: /View appointments/ })
 }
 
 function recordWrites() {
@@ -81,7 +84,7 @@ function recordWrites() {
   server.use(
     http.put(`${API}/tenants/:tenantId/permissions`, async ({ request }) => {
       puts.push(await request.json())
-      return HttpResponse.json({ data: [FIXTURE_TENANT_PERMISSION_BRANCHES] })
+      return HttpResponse.json({ data: [FIXTURE_TENANT_PERMISSION_APPOINTMENT] })
     }),
     http.patch(
       `${API}/tenants/:tenantId/permissions/:permissionId`,
@@ -91,7 +94,7 @@ function recordWrites() {
           body: await request.json(),
         })
         return HttpResponse.json({
-          data: { ...FIXTURE_TENANT_PERMISSION_BRANCHES, enabled: false },
+          data: { ...FIXTURE_TENANT_PERMISSION_APPOINTMENT, enabled: false },
         })
       }
     )
@@ -135,10 +138,10 @@ describe("edge cases (additional)", () => {
       )
     )
     renderTab()
-    await screen.findByRole("checkbox", { name: /View branches/ })
+    await screen.findByRole("checkbox", { name: /View appointments/ })
 
     expect(screen.queryAllByRole("switch")).toHaveLength(0)
-    expect(screen.getByRole("checkbox", { name: /View branches/ })).not.toBeChecked()
+    expect(screen.getByRole("checkbox", { name: /View appointments/ })).not.toBeChecked()
     expect(screen.getByRole("button", { name: "Simpan" })).toBeDisabled()
   })
 
@@ -147,8 +150,8 @@ describe("edge cases (additional)", () => {
     renderTab()
     await ready()
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /View branches/ }))
-    fireEvent.click(screen.getByRole("checkbox", { name: /View reports/ }))
+    fireEvent.click(screen.getByRole("checkbox", { name: /View appointments/ }))
+    fireEvent.click(screen.getByRole("checkbox", { name: /View patient profile/ }))
     fireEvent.click(screen.getByRole("button", { name: "Simpan" }))
 
     await waitFor(() => expect(puts).toHaveLength(1))
@@ -159,9 +162,9 @@ describe("edge cases (additional)", () => {
     renderTab()
     await ready()
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /View branches/ }))
+    fireEvent.click(screen.getByRole("checkbox", { name: /View appointments/ }))
 
-    expect(screen.queryByRole("switch", { name: "Status View branches" })).toBeNull()
+    expect(screen.queryByRole("switch", { name: "Status View appointments" })).toBeNull()
   })
 
   it("refetches the tenant permissions after a toggle (D12.1) and confirms with a toast", async () => {
@@ -170,14 +173,14 @@ describe("edge cases (additional)", () => {
     server.use(
       http.get(`${API}/tenants/:tenantId/permissions`, () => {
         reads += 1
-        return HttpResponse.json({ data: [FIXTURE_TENANT_PERMISSION_BRANCHES] })
+        return HttpResponse.json({ data: [FIXTURE_TENANT_PERMISSION_APPOINTMENT] })
       })
     )
     renderTab()
     await ready()
     expect(reads).toBe(1)
 
-    fireEvent.click(screen.getByRole("switch", { name: "Status View branches" }))
+    fireEvent.click(screen.getByRole("switch", { name: "Status View appointments" }))
 
     await waitFor(() => expect(reads).toBe(2))
     await waitFor(() =>
@@ -194,8 +197,8 @@ describe("edge cases (additional)", () => {
     renderTab()
     await ready()
 
-    expect(screen.getByRole("switch", { name: "Status View reports" })).toBeInTheDocument()
-    expect(screen.queryByRole("switch", { name: "Status View branches" })).toBeNull()
+    expect(screen.getByRole("switch", { name: "Status View patient profile" })).toBeInTheDocument()
+    expect(screen.queryByRole("switch", { name: "Status View appointments" })).toBeNull()
     expect(screen.getByText("Aktif")).toBeInTheDocument()
   })
 

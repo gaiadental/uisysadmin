@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { API, errorResponse } from "@/test/handlers/auth"
 import {
-  FIXTURE_MASTER_PERMISSION_BRANCHES,
+  FIXTURE_MASTER_PERMISSION_APPOINTMENT,
   FIXTURE_MASTER_PERMISSIONS,
 } from "@/test/handlers/tenant-permissions"
 import { server } from "@/test/server"
@@ -37,9 +37,9 @@ describe("listMasterPermissions (FE doc 5.3)", () => {
     expect(result).toHaveLength(FIXTURE_MASTER_PERMISSIONS.length)
     expect(result[0]).toMatchObject({
       id: 1,
-      key: "branches:view",
+      key: "appointment:view",
       module: "clinic",
-      category: "branches",
+      category: "appointment",
     })
   })
 
@@ -48,7 +48,7 @@ describe("listMasterPermissions (FE doc 5.3)", () => {
     server.use(
       http.get(`${API}/master-permissions`, ({ request }) => {
         seen = { method: request.method, path: new URL(request.url).pathname }
-        return HttpResponse.json({ data: [FIXTURE_MASTER_PERMISSION_BRANCHES] })
+        return HttpResponse.json({ data: [FIXTURE_MASTER_PERMISSION_APPOINTMENT] })
       })
     )
 
@@ -61,7 +61,7 @@ describe("listMasterPermissions (FE doc 5.3)", () => {
     server.use(
       http.get(`${API}/master-permissions`, () =>
         HttpResponse.json({
-          data: [{ ...FIXTURE_MASTER_PERMISSION_BRANCHES, future: "x" }],
+          data: [{ ...FIXTURE_MASTER_PERMISSION_APPOINTMENT, future: "x" }],
         })
       )
     )
@@ -107,7 +107,7 @@ describe("getMasterPermission (TODO-021)", () => {
         seen = { method: request.method, path: new URL(request.url).pathname }
         return HttpResponse.json({
           data: {
-            ...FIXTURE_MASTER_PERMISSION_BRANCHES,
+            ...FIXTURE_MASTER_PERMISSION_APPOINTMENT,
             active: false,
             future: "x",
           },
@@ -121,7 +121,7 @@ describe("getMasterPermission (TODO-021)", () => {
       method: "GET",
       path: "/api/v1/master-permissions/1",
     })
-    expect(result).toMatchObject({ id: 1, key: "branches:view", active: false })
+    expect(result).toMatchObject({ id: 1, key: "appointment:view", active: false })
     expect(result).not.toHaveProperty("future")
   })
 
@@ -146,8 +146,8 @@ describe("getMasterPermission (TODO-021)", () => {
 })
 
 const INPUT: MasterPermissionInput = {
-  key: "reports:view",
-  name: "View reports",
+  key: "patient_profile:view",
+  name: "View patient profile",
   description: "Lihat laporan",
   category: "REPORT",
   module: "reporting",
@@ -165,7 +165,7 @@ function captureBody(method: "patch") {
       seen.body = (await request.json()) as Record<string, unknown>
       seen.url = new URL(request.url).pathname
       return HttpResponse.json({
-        data: { ...FIXTURE_MASTER_PERMISSION_BRANCHES, ...seen.body },
+        data: { ...FIXTURE_MASTER_PERMISSION_APPOINTMENT, ...seen.body },
       })
     })
   )
@@ -179,7 +179,7 @@ describe("updateMasterPermission (TODO-013)", () => {
 
     expect(seen.url).toBe("/api/v1/master-permissions/7")
     expect(seen.body).toEqual({ ...INPUT, description: "" })
-    expect(seen.body?.key).toBe("reports:view")
+    expect(seen.body?.key).toBe("patient_profile:view")
   })
 })
 
@@ -221,7 +221,7 @@ describe("updateMasterPermission, additional cases (TODO-013)", () => {
     server.use(
       http.all(`${API}/master-permissions/:id`, ({ request }) => {
         method = request.method
-        return HttpResponse.json({ data: FIXTURE_MASTER_PERMISSION_BRANCHES })
+        return HttpResponse.json({ data: FIXTURE_MASTER_PERMISSION_APPOINTMENT })
       })
     )
     await updateMasterPermission(1, INPUT)
@@ -246,5 +246,15 @@ describe("updateMasterPermission, additional cases (TODO-013)", () => {
     await expect(updateMasterPermission(1, INPUT)).rejects.toMatchObject({
       status: 403,
     })
+  })
+})
+
+describe("updateMasterPermission never sends scope (REQ-FE-057, TODO-027)", () => {
+  it("drops a scope the caller passes, so the server never sees a change", async () => {
+    const seen = captureBody("patch")
+    // A variable, not a literal, so the excess-property check does not apply.
+    const withScope = { ...INPUT, scope: "PLATFORM" }
+    await updateMasterPermission(4, withScope)
+    expect(seen.body).not.toHaveProperty("scope")
   })
 })

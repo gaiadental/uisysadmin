@@ -2,13 +2,19 @@ import { describe, expect, it } from "vitest"
 
 import type { MasterPermission } from "@/types/master-permission"
 
-import { groupPermissions, sameIdSet, withSelection } from "./checklist"
+import {
+  filterByScope,
+  groupPermissions,
+  sameIdSet,
+  withSelection,
+} from "./checklist"
 
 function permission(
   id: number,
   key: string,
   module: string,
-  category: string
+  category: string,
+  scope: MasterPermission["scope"] = "TENANT"
 ): MasterPermission {
   return {
     id,
@@ -16,6 +22,7 @@ function permission(
     name: key,
     category,
     module,
+    scope,
     createdAt: "2026-10-01T00:00:00Z",
     updatedAt: "2026-10-01T00:00:00Z",
   }
@@ -43,6 +50,35 @@ describe("groupPermissions", () => {
 
   it("returns no groups for an empty catalogue", () => {
     expect(groupPermissions([])).toEqual([])
+  })
+})
+
+describe("filterByScope (REQ-FE-057)", () => {
+  const catalogue = [
+    permission(1, "system_users:view", "auth", "system_users", "PLATFORM"),
+    permission(2, "appointment:view", "clinic", "appointment", "TENANT"),
+    permission(3, "tenants:view", "tenant", "tenants", "PLATFORM"),
+    permission(4, "profile:view", "clinic", "profile", "TENANT"),
+  ]
+
+  it("keeps only the given scope and the catalogue order", () => {
+    expect(
+      filterByScope(catalogue, "PLATFORM").map((item) => item.id)
+    ).toEqual([1, 3])
+    expect(filterByScope(catalogue, "TENANT").map((item) => item.id)).toEqual([
+      2, 4,
+    ])
+  })
+
+  it("returns an empty list when no permission has the scope", () => {
+    expect(filterByScope([catalogue[1]!], "PLATFORM")).toEqual([])
+    expect(filterByScope([], "TENANT")).toEqual([])
+  })
+
+  it("does not change the input list", () => {
+    const before = catalogue.map((item) => item.id)
+    filterByScope(catalogue, "PLATFORM")
+    expect(catalogue.map((item) => item.id)).toEqual(before)
   })
 })
 

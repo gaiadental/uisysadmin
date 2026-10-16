@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { API, errorResponse } from "@/test/handlers/auth"
 import {
-  FIXTURE_TENANT_PERMISSION_BRANCHES,
+  FIXTURE_TENANT_PERMISSION_APPOINTMENT,
   FIXTURE_TENANT_PERMISSIONS,
 } from "@/test/handlers/tenant-permissions"
 import { server } from "@/test/server"
@@ -35,7 +35,7 @@ describe("listTenantPermissions (FE doc 5.4)", () => {
     const result = await listTenantPermissions(TENANT_ID)
 
     expect(result).toHaveLength(FIXTURE_TENANT_PERMISSIONS.length)
-    expect(result[0]).toEqual(FIXTURE_TENANT_PERMISSION_BRANCHES)
+    expect(result[0]).toEqual(FIXTURE_TENANT_PERMISSION_APPOINTMENT)
   })
 
   it("encodes the tenant id in the path", async () => {
@@ -54,7 +54,7 @@ describe("listTenantPermissions (FE doc 5.4)", () => {
 
   it("rejects an item without `enabled` as CONTRACT", async () => {
     const withoutEnabled: Record<string, unknown> = {
-      ...FIXTURE_TENANT_PERMISSION_BRANCHES,
+      ...FIXTURE_TENANT_PERMISSION_APPOINTMENT,
     }
     delete withoutEnabled.enabled
     server.use(
@@ -75,7 +75,7 @@ describe("replaceTenantPermissions", () => {
     server.use(
       http.put(`${API}/tenants/:tenantId/permissions`, async ({ request }) => {
         calls.push({ method: request.method, body: await request.json() })
-        return HttpResponse.json({ data: [FIXTURE_TENANT_PERMISSION_BRANCHES] })
+        return HttpResponse.json({ data: [FIXTURE_TENANT_PERMISSION_APPOINTMENT] })
       })
     )
 
@@ -84,7 +84,7 @@ describe("replaceTenantPermissions", () => {
     })
 
     expect(calls).toEqual([{ method: "PUT", body: { masterPermissionIds: [1, 2] } }])
-    expect(result).toEqual([FIXTURE_TENANT_PERMISSION_BRANCHES])
+    expect(result).toEqual([FIXTURE_TENANT_PERMISSION_APPOINTMENT])
   })
 
   it("sends an empty list as a full replacement", async () => {
@@ -127,7 +127,7 @@ describe("setTenantPermissionEnabled", () => {
             body: await request.json(),
           })
           return HttpResponse.json({
-            data: { ...FIXTURE_TENANT_PERMISSION_BRANCHES, enabled: false },
+            data: { ...FIXTURE_TENANT_PERMISSION_APPOINTMENT, enabled: false },
           })
         }
       )

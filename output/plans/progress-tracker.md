@@ -3,8 +3,8 @@ id: PROGRESS-TRACKER
 title: Progress Tracker — System Principal Web (Frontend)
 owner: project_manager
 status: Approved
-version: 1.18
-last_updated: 2026-10-15
+version: 1.21
+last_updated: 2026-10-16
 source_requirements: [RAG-FE-SP-001, ARCH-FE-001]
 related_artifacts: [IMPLEMENTATION-PLAN, MASTER-TODO, ARCH-FE-001, ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007]
 blocking_open_questions: 0
@@ -16,11 +16,17 @@ Owner: project_manager
 
 Status: Approved
 
-Version: 1.18
+Version: 1.21
 
-Last Updated: 2026-10-15
+Last Updated: 2026-10-16
 
 Approved: 2026-10-10 (user, Checkpoint B gate)
+
+Change: 2026-10-16 — TODO-027 review follow-up (v1.21): unit test report re-run `execution_overall: PASS` (1104 tests); FP-269 added; review results recorded in master-todo v1.25. TODO-027 stays Completed. Progress 26 of 27 (96.3%). No TODO status changed. Status unchanged (Approved).
+
+Change: 2026-10-16 — TODO-027 Completed (Unit Test Report `execution_overall: PASS`, 1104 passed in 83 files; tsc -b, eslint ., vitest run exit 0). Completed 2026-10-16 after Unit Test Report PASS; the user's manual browser test is still required before commit. Progress 26 of 27 (96.3%). No other TODO status changed.
+
+Change: 2026-10-16 — TODO-027 added (Not Started, Medium; filter permissions by scope PLATFORM/TENANT in the role tab, tenant tab and catalogue; platform SP-BG-16 Closed; gate ARCH-FE-001 v1.0.14 with REQ-FE-057, to be added by the architect and Approved before `/build`). Total becomes 27 TODOs; 25 of 27 Completed (92.6%). No TODO status changed.
 
 Change: 2026-10-15 — TODO-026 Completed (Unit Test Report PASS, 1077 passed in 79 files; Code Review Approved, 0 Critical/High/Medium, 3 Low; QA Go; FP-017, 020, 021, 030, 256, 257, 258, 260, 261 updated, FP-265 added). Progress 25 of 26 (96.2%). Pending: the user's manual test, approvals, commits (TODO-026, then the .vitest chore).
 
@@ -133,6 +139,7 @@ Percentage: 91.3% (21 of 23 TODOs Completed)
 | User decision change (added 2026-10-12) | TODO-021 | 1 of 1 | Completed |
 | User decision change (added 2026-10-14) | TODO-022 | 1 of 1 | Completed |
 | User decision change (added 2026-10-14) | TODO-023 | 1 of 1 | Completed |
+| Scope filter (added 2026-10-16) | TODO-027 | 1 of 1 | Completed |
 
 ## Active Phase
 
@@ -164,6 +171,7 @@ Entry conditions: OQ-P-01 and OQ-P-02 answered (done); Checkpoint B gate cleared
 - TODO-021 Katalog > Permission read-only (High; user decision 2026-10-12) — Unit Test Report v1.1 `execution_overall: PASS` (912 passed in 75 files; QA M1 rework done, review M2 also fixed; tsc, eslint PASS)
 - TODO-023 Remove "Hapus" account action in Tim IT > Akun (Medium; user decision 2026-10-14) — Unit Test Report `execution_overall: PASS` (994 passed in 78 files; tsc -b, eslint ., vitest all exit 0; FP-253 to FP-263)
 - TODO-022 Suspend other-account sessions and fixed guard-failure copy (High; user decision 2026-10-14; rework done: M1 AppLink, OQ2 ROLE_GUARD_VIOLATION fixed role copy) — Unit Test Report v1.2 `execution_overall: PASS` (1001 passed in 78 files; tsc -b, eslint ., vitest run --passWithNoTests exit 0)
+- TODO-027 Filter permissions by scope PLATFORM/TENANT (Medium; 2026-10-16) — Unit Test Report `execution_overall: PASS` (1104 passed in 83 files, two runs; tsc -b, eslint ., vitest run exit 0; manual browser test still required before commit)
 
 ## In Progress
 

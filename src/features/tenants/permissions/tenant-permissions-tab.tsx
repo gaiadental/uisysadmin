@@ -44,7 +44,12 @@ import {
   TENANT_PERMISSIONS_UPDATE,
   toggleKeyFor,
 } from "./access"
-import { groupPermissions, sameIdSet, withSelection } from "./checklist"
+import {
+  filterByScope,
+  groupPermissions,
+  sameIdSet,
+  withSelection,
+} from "./checklist"
 import {
   tenantPermissionsFormSchema,
   type TenantPermissionsFormValues,
@@ -145,7 +150,12 @@ function PermissionsChecklist({
   const selected = form.watch("masterPermissionIds")
   const dirty = !sameIdSet(selected, savedIds)
   const { isSubmitting } = form.formState
-  const groups = useMemo(() => groupPermissions(catalogue), [catalogue])
+  // Only TENANT permissions are shown (REQ-FE-057). A saved PLATFORM id is not
+  // shown, but it stays in `selected` and so in the PUT (full replacement).
+  const groups = useMemo(
+    () => groupPermissions(filterByScope(catalogue, "TENANT")),
+    [catalogue]
+  )
   const assignmentOf = useMemo(
     () => new Map(assigned.map((item) => [item.masterPermissionId, item])),
     [assigned]
@@ -215,7 +225,7 @@ function PermissionsChecklist({
           />
           {groups.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              Belum ada permission di katalog.
+              Belum ada permission untuk tenant di katalog.
             </p>
           ) : (
             <Controller

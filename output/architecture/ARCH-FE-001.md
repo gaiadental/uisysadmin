@@ -3,8 +3,8 @@ id: ARCH-FE-001
 title: System Principal Web — Frontend Architecture
 owner: architect_frontend
 status: Approved
-version: 1.0.13
-last_updated: 2026-10-15
+version: 1.0.15
+last_updated: 2026-10-16
 artifact_kind: target
 source_requirements: [RAG-FE-SP-001]
 related_artifacts: [PROJECT-PROFILE, CLARIFICATIONS, ORCHESTRATION-STATE, PLATFORM-ARCH-SOLUTION-001, PLATFORM-ARCH-SEC-001, PLATFORM-ARCH-BE-001, PLATFORM-ADR-009, GW-ARCH-SEC-002, GW-ARCH-BE-002, AUTH-ARCH-SEC-001, AUTH-ARCH-SEC-003, AUTH-ARCH-BE-003, MDS-API-REFERENCE-v1.3]
@@ -17,16 +17,16 @@ Owner: architect_frontend
 
 Status: Approved
 
-Version: 1.0.13
+Version: 1.0.15
 
-Last Updated: 2026-10-15
+Last Updated: 2026-10-16
 
 Source Requirements:
 - RAG-FE-SP-001 "[FE Requirement] system-principal-web v1.0" (sections 0–13): the API integration contract (referred to below as "FE doc")
-- REQ-FE-001 to REQ-FE-056 (assigned in this document, see Requirements Addressed)
+- REQ-FE-001 to REQ-FE-057 (assigned in this document, see Requirements Addressed)
 
 Related Artifacts:
-- Platform clarifications SP-BG-13 (Closed 2026-10-14) and SP-BG-14 (Closed 2026-10-15, user decision), `../Microservices/gaia-platform-architecture/output/clarifications.md` v1.2
+- Platform clarifications SP-BG-13 (Closed 2026-10-14) and SP-BG-14 (Closed 2026-10-15, user decision) and SP-BG-16 Closed (auth-service PR #6, V12; release gate RC-19 di auth-service tetap Open), `../Microservices/gaia-platform-architecture/output/clarifications.md` v1.2
 - This repository: `output/project-profile.md`, `output/clarifications.md`, `output/plans/orchestration-state.md`
 - Platform, read-only (`../Microservices/gaia-platform-architecture/output/`): `architecture/ARCH-SOLUTION-001.md` v1.1, `architecture/ARCH-SEC-001.md` v0.4, `architecture/ARCH-BE-001.md` v0.2, `decisions/ADR-009`, `clarifications.md` (SP-DEC-01), `plans/orchestration-state.md`
 - Gateway (`../Microservices/apigateway/output/architecture/`): `ARCH-SEC-002.md`, `ARCH-BE-002.md`; operator host table `apigateway/edge-dev.local.yml` (git-excluded, read 2026-10-10)
@@ -49,14 +49,16 @@ Version History:
 - v1.0.11 (Approved, 2026-10-15; user decision 2026-10-15, L9): at boot, `GET /api/v1/auth/me` that answers 401 with any error code removes the token from memory and gives status `anonymous`: route to `/login` with no account notice. This is the same rule as a refresh 401 (D4.3, v1.0.10). The 403 rule for `ACCOUNT_NOT_ACTIVE` and `ACCOUNT_NOT_READY` (REQ-FE-055) is unchanged. Reason: TODO-024 code review (L9) and QA. Sections: D4.2, Open Questions (FE-OQ-46 new, non-blocking). Blocking summary: 0 blocking, non-blocking count changed from 24 to 25.
 - v1.0.12 (Approved, 2026-10-15; user decision 2026-10-15): a public route marked guest-only, opened with status `authenticated`, redirects (replace) to the dashboard `/`. Guest-only routes are `/login` and `/forgot-password`; `/reset-password` (e-mail link) is not guest-only and is unchanged. Status `passwordChangeRequired` keeps REQ-FE-012; `unknown`, `error` and `anonymous` are unchanged. Reason: bug report 2026-10-15, an authenticated user who opened `/login` (second tab, typed URL) saw the login form inside the authenticated layout. Sections: Requirements Addressed (REQ-FE-056 new), D6.1, D10. Implemented in TODO-025. No new open question; blocking count 0 and non-blocking count 25 unchanged.
 - v1.0.13 (Approved, 2026-10-15; user decision 2026-10-15): platform item SP-BG-14 is Closed (user decision 2026-10-15). `OTHER_ACCOUNT_SESSIONS_ENABLED` becomes `true`: the "Sesi aktif" tab and the "Paksa keluar" action on `/system-users/:id` are enabled for another account, on `GET` and `DELETE /api/v1/system-users/{id}/sessions` (`sessions:view`, `sessions:revoke`). The own account keeps the link to `/account/sessions` and gets no tab and no force logout. Force logout for a principal target follows the suspend and role-change pattern (button visible, the server decides). Fact recorded in D4.10: `GET` has no principal protection and never answers 403 `PLATFORM_ROLE_PROTECTED`. Route labels `admin.sessions.*` are unchanged. Supersedes the v1.0.5 suspension of the sessions tab. Sections: Requirements Addressed (REQ-FE-032 and REQ-FE-052 changed), D4.10, D7, D8 Table 2 (sistem-sesi), Table 3 (BG-13 Closed), FE-OQ-39 (Answered). Implemented in TODO-026. No new open question; blocking count 0 and non-blocking count 25 unchanged (FE-OQ-39 was already counted as answered).
+- v1.0.14 (Approved, 2026-10-16; user approval "ARCH-FE-001 v1.0.14 APPROVED, termasuk nomor BG-14 di Tabel 3"; amendment drafted for TODO-027, 2026-10-16): platform item SP-BG-16 is Closed (auth-service merged). `MasterPermission` gets a required, immutable `scope` (`PLATFORM` or `TENANT`). Tim IT > Peran > Permissions shows only PLATFORM permissions; Tenant > detail > Permission shows only TENANT permissions (a display filter by user decision; the backend does not block). The catalogue page shows a Scope badge column, no filter. `PATCH /api/v1/master-permissions/{id}` never sends `scope`. A role permission save answered 400 `PERMISSION_SCOPE_NOT_ALLOWED` shows fixed copy and the reference id, never server text (role Permissions tab only). Saved PLATFORM permissions on a tenant, and role keys outside the shown catalogue, are kept in the PUT (full replacement), so nothing is removed silently. Sections: Requirements Addressed (REQ-FE-057 new), D5.1, D6.4, D7, D13.1, Table 3 (BG-14 Closed). No new open question; blocking count 0 and non-blocking count 25 unchanged.
+- v1.0.15 (Approved, 2026-10-16; user approval "ARCH-FE-001 v1.0.15 (amendemen M1: asumsi D6.4 ref SP-BG-16/V12 + tech debt Low): APPROVED"): D6.4 records the assumption that after SP-BG-16 / auth-service V12 no system role holds a TENANT-scope permission (all TENANT grants removed from system roles; trigger GA004 refuses new grants), so a system role save never carries a TENANT key the admin cannot see; no UI control is added for an out-of-scope held key. Residual risk recorded as TD-FE-01 (Low, Gating No; new Tech Debt section). D13.2 (new) adds the empty-state copy: role tab "Belum ada permission untuk peran sistem di katalog."; tenant tab "Belum ada permission untuk tenant di katalog.". Sections: D6.4, D13.2 (new), REQ-FE-038 (sections), Tech Debt (new). No new open question; blocking count 0 and non-blocking count 25 unchanged.
 
 ## At a Glance
 
 - Frontend architecture for the System Principal (SP) web app in this repository: a Vite + React single-page app that talks only to the GAIA API Gateway. Covers topology, auth and session, gating, the API layer, server state, forms, tests, the mock-to-contract replacement plan, errors, security and accessibility.
 - Accepted base stack: Vite 8 SPA, React 19, TypeScript 6, npm, Tailwind 4, Base UI under shadcn/ui, Zod 4. Mandatory tools adopted: TanStack Query 5, React Hook Form with the Zod resolver, Vitest with React Testing Library, MSW 2.x. Accepted deviations: fetch client (no Axios) and first-party login (no NextAuth).
-- Status: Approved v1.0 at Checkpoint A (user approval 2026-10-10); v1.0.4 (master permissions read-only) is Approved (user approval 2026-10-12); v1.0.5 (sessions tab hidden for other accounts, guard-failure copy and fallthrough rule) is Approved (user approval 2026-10-14); v1.0.6 (no "Hapus" on system accounts, explanatory text in suspend and deactivate dialogs) is Approved (user approval 2026-10-14); v1.0.7 (`ROLE_GUARD_VIOLATION` fixed copy on role pages) is a user-ordered correction, Approved; v1.0.8 (session end and fixed copy for `ACCOUNT_NOT_ACTIVE` and `ACCOUNT_NOT_READY` on login, refresh and `me`) is Approved (user approval 2026-10-15); v1.0.9 (session end for `ACCOUNT_NOT_ACTIVE` and `ACCOUNT_NOT_READY` also at boot and after a kept-session password change) is Approved (user decision 2026-10-15); v1.0.10 (a refresh 401 with any code ends the session with no account notice; `AUTH_EXPIRY_CODES` is only the data-call trigger) is Approved (user decision 2026-10-15); v1.0.11 (a boot `me` 401 with any code ends the session as `anonymous`, no account notice) is Approved (user decision 2026-10-15); v1.0.12 (guest-only public routes `/login` and `/forgot-password` redirect an authenticated user to `/`) is Approved (user decision 2026-10-15); v1.0.13 (sessions of another system account enabled: SP-BG-14 Closed, `OTHER_ACCOUNT_SESSIONS_ENABLED = true`, calls on `/api/v1/system-users/{id}/sessions`) is Approved (user decision 2026-10-15). 0 Blocking open questions. 25 non-blocking open questions, with documented defaults. FE-OQ-01 to FE-OQ-13 are answered. The seven ADR candidates are Pending Approval for /decision.
+- Status: Approved v1.0 at Checkpoint A (user approval 2026-10-10); v1.0.4 (master permissions read-only) is Approved (user approval 2026-10-12); v1.0.5 (sessions tab hidden for other accounts, guard-failure copy and fallthrough rule) is Approved (user approval 2026-10-14); v1.0.6 (no "Hapus" on system accounts, explanatory text in suspend and deactivate dialogs) is Approved (user approval 2026-10-14); v1.0.7 (`ROLE_GUARD_VIOLATION` fixed copy on role pages) is a user-ordered correction, Approved; v1.0.8 (session end and fixed copy for `ACCOUNT_NOT_ACTIVE` and `ACCOUNT_NOT_READY` on login, refresh and `me`) is Approved (user approval 2026-10-15); v1.0.9 (session end for `ACCOUNT_NOT_ACTIVE` and `ACCOUNT_NOT_READY` also at boot and after a kept-session password change) is Approved (user decision 2026-10-15); v1.0.10 (a refresh 401 with any code ends the session with no account notice; `AUTH_EXPIRY_CODES` is only the data-call trigger) is Approved (user decision 2026-10-15); v1.0.11 (a boot `me` 401 with any code ends the session as `anonymous`, no account notice) is Approved (user decision 2026-10-15); v1.0.12 (guest-only public routes `/login` and `/forgot-password` redirect an authenticated user to `/`) is Approved (user decision 2026-10-15); v1.0.13 (sessions of another system account enabled: SP-BG-14 Closed, `OTHER_ACCOUNT_SESSIONS_ENABLED = true`, calls on `/api/v1/system-users/{id}/sessions`) is Approved (user decision 2026-10-15); v1.0.14 (permission scope PLATFORM/TENANT display filter, SP-BG-16 Closed) is Approved (user approval 2026-10-16); v1.0.15 (M1: D6.4 assumption on TENANT scope after SP-BG-16 / V12, D13.2 empty-state copy, TD-FE-01 Low, Gating No) is Approved (user approval 2026-10-16). 0 Blocking open questions. 25 non-blocking open questions, with documented defaults. FE-OQ-01 to FE-OQ-13 are answered. The seven ADR candidates are Pending Approval for /decision.
 - Topology: same-origin path routing. One SP host per environment serves the static FE and sends `/api/*` to the gateway. Same-site sibling subdomains are the second option. Cross-site is not supported.
-- Platform impact: none. No platform artifact is modified. Backend needs are listed in Table 3 (BG-01 to BG-13) for routing only.
+- Platform impact: none. No platform artifact is modified. Backend needs are listed in Table 3 (BG-01 to BG-14) for routing only.
 - Scope: the platform frontend Domain Scope is Cancelled by design (split decision). See C-07.
 
 ## Purpose
@@ -136,7 +138,7 @@ Greenfield repository: this table is the requirement source for the SP web. Each
 | REQ-FE-035 | Master permissions are read-only in the UI: list, detail, and edit of name and description only. No create, no activate/deactivate, no delete (user decision 2026-10-12; catalogue changes ship as Flyway migrations with the feature that uses them). Tenant permission activate/deactivate (`tenant_permissions:*`) is unaffected. | FE doc 5.3 | D6.4, D7 |
 | REQ-FE-036 | Pagination model: master-data server-side (`page`, `limit`); auth-service lists client-side. | FE doc 2.1, 2.2, 8 | D5.4 |
 | REQ-FE-037 | Dashboard counts come from `pagination.total`. | FE doc 8 | D7 |
-| REQ-FE-038 | Every async operation has loading, empty and error states. No automatic retry of reads or writes. | FE doc 7; tech-stack-frontend API Integration Standard | D3.1, D13 |
+| REQ-FE-038 | Every async operation has loading, empty and error states. No automatic retry of reads or writes. | FE doc 7; tech-stack-frontend API Integration Standard | D3.1, D13, D13.2 |
 | REQ-FE-039 | Confirm dialogs for delete (tenant categories, countries, system roles; not system accounts, REQ-FE-054), deactivate, suspend, reset password and force logout. | FE doc 12 | D7 |
 | REQ-FE-040 | Immutable fields are never sent (`code` everywhere; tenant fields of FE doc 6.3). | FE doc 6.1, 6.2, 6.3, 12 | D5.3 |
 | REQ-FE-041 | Branch types, branches, facilities, social links, patient and employee flows are not built. | FE doc 6, 11 | D2 |
@@ -155,6 +157,7 @@ Greenfield repository: this table is the requirement source for the SP web. Each
 | REQ-FE-054 | System account pages (Tim IT > Akun) offer no "Hapus" action, on the list row or on the detail page, and no code path in the UI calls `deleteSystemUser` (the function may stay in `lib/api/modules/system-users.ts`). No UI gate uses `system_users:delete`. Reason: auth-service `DELETE /api/v1/system-users/{id}` only sets status `DEACTIVATED`, identical to deactivate. The confirm dialogs carry this text. Suspend, title `Tangguhkan akun {loginId}?`: "Blokir sementara akun ini, misalnya saat cuti atau investigasi. Semua sesinya diakhiri. Bisa diaktifkan kembali." Deactivate, title `Nonaktifkan akun {loginId}?`: "Untuk anggota yang sudah tidak bertugas. Semua sesinya diakhiri. Bisa diaktifkan kembali bila diperlukan." The old description "Akun akan dihapus dari platform." and the toast "Akun dihapus." are removed. Tests: no "Hapus" control on list row or detail for a user holding every `system_users:*` permission; dialog texts shown; `deleteSystemUser` not imported by `features/team/users` (static check). | User decision 2026-10-14; auth-service `SystemUserService.delete` behaviour | D6.4, D7, D13.1 |
 | REQ-FE-055 | A refresh, or `GET /api/v1/auth/me`, that fails with 403 `ACCOUNT_NOT_ACTIVE` or 403 `ACCOUNT_NOT_READY` ends the session: token and cache cleared, and the user goes to `/login` with a notice for that code. Other 403 codes on these calls keep the session. On `/login` the server `message` is never shown for these two codes. The fixed copy is "Akun Anda tidak aktif. Hubungi administrator." (`ACCOUNT_NOT_ACTIVE`) and "Akun Anda belum siap digunakan. Hubungi administrator." (`ACCOUNT_NOT_READY`), with the reference id. Boot with either code gives status `anonymous` with the notice, not `error`. The rule applies at boot and after a kept-session password change (any `me` call that is part of the refresh or session flows). | User decision 2026-10-15 (manual test; FE-OQ-43, FE-OQ-44); platform SP-BG-13 (Closed 2026-10-14) | D4.2, D4.3, D4.5, D6.5, D13 |
 | REQ-FE-056 | A public route marked guest-only, opened with status `authenticated`, redirects (replace) to the dashboard `/`. Guest-only routes: `/login` and `/forgot-password`. `/reset-password` (e-mail link) is not guest-only and renders as before. Status `passwordChangeRequired` keeps REQ-FE-012 (redirect to `/account/password`). Status `unknown`, `error` and `anonymous` behave as before. Tests: `authenticated` on `/login` and on `/forgot-password` replaces to `/`; `authenticated` on `/reset-password` renders the page; `passwordChangeRequired` on `/login` goes to `/account/password`; `anonymous` on both guest-only routes renders the page; `resolveRouteAccess` stays pure and returns the same result for the same input. | User decision 2026-10-15 (bug report 2026-10-15; TODO-025) | D6.1, D10 |
+| REQ-FE-057 | `MasterPermission` has a required, immutable `scope` (`PLATFORM` or `TENANT`); a missing or other value is `CONTRACT`. Display filter (user decision; the backend does not block): Tim IT > Peran > Permissions shows only PLATFORM permissions; Tenant > detail > Permission shows only TENANT permissions. A PLATFORM permission already saved on a tenant is not shown in the tenant tab but is still sent in the PUT (full replacement), so it is not removed silently; likewise role keys outside the shown catalogue stay in the selection. Catalogue page (`/master-permissions`): a Scope column with a PLATFORM or TENANT badge, no scope filter; search also matches scope. `PATCH /api/v1/master-permissions/{id}` never sends `scope`. A role permission save answered 400 `PERMISSION_SCOPE_NOT_ALLOWED` shows fixed copy and the reference id, never server text (role Permissions tab only). Tests: schema requires `scope`; `filterByScope` keeps order; role tab shows only PLATFORM and keeps held keys outside the catalogue; tenant tab shows only TENANT and the PUT still holds saved PLATFORM ids; catalogue badge, no filter, search by scope; PATCH body has no `scope`; 400 copy test. | User decision 2026-10-16 (TODO-027); platform SP-BG-16 (Closed 2026-10-16) | D5.1, D6.4, D7, D13.1 |
 
 ## Constraints
 
@@ -430,6 +433,7 @@ Access tokens already held by other tabs remain valid at the edge for a short wi
 #### D5.1 auth-service modules (camelCase, `{ "data": ... }`)
 
 - The module unwraps `data`. Objects are typed as they arrive (`SystemUser`, `SystemRole`, `MasterPermission`, `TenantPermission`, `Session`, `Me`). Lists are plain arrays.
+- `MasterPermission` (REQ-FE-057, v1.0.14): required, immutable field `scope: "PLATFORM" | "TENANT"` (Zod enum; missing or invalid is `CONTRACT`). PLATFORM keys: `system_users`, `system_roles`, `master_permissions`, `sessions`, `tenants`, `tenant_permissions`. TENANT keys: `appointment`, `patient_profile`, `profile`, `tenant_users`, `tenant_roles`, `branch_types`. `PATCH /api/v1/master-permissions/{id}` never sends `scope`; the server answers `MASTER_PERMISSION_SCOPE_IMMUTABLE` if it differs.
 - `delete` returns `{ data: null }` and the module returns `void`. The registration-settings delete returns 204.
 
 #### D5.2 master-data modules (snake_case, unwrapped)
@@ -515,12 +519,12 @@ Guest-only public routes (REQ-FE-056, v1.0.12): the `public` kind of the route a
 - A single navigation config lists each item with its label, route, and gate. The sidebar, the command palette and the route guard all read the same config, so a gate cannot differ between them.
 - The landing page, when no module is visible, shows a neutral message (copy: FE-OQ-22) rather than an empty dashboard.
 
-#### D6.4 Action gates (REQ-FE-018, REQ-FE-030, REQ-FE-035, REQ-FE-054)
+#### D6.4 Action gates (REQ-FE-018, REQ-FE-030, REQ-FE-035, REQ-FE-054, REQ-FE-057)
 
 | Action | Gate |
 |--------|------|
 | Tenant create, edit, deactivate, retry admin account | HasRole SYS_PRINCIPAL |
-| Tenant permissions view | SYS_PRINCIPAL and `tenant_permissions:view` and `master_permissions:view` |
+| Tenant permissions view | SYS_PRINCIPAL and `tenant_permissions:view` and `master_permissions:view`. The tab shows only TENANT-scope permissions (display filter, REQ-FE-057; the backend does not block) |
 | Tenant permissions edit (PUT) | ... and `tenant_permissions:update` |
 | Tenant permission toggle on | ... and `tenant_permissions:activate` |
 | Tenant permission toggle off | ... and `tenant_permissions:deactivate` |
@@ -532,13 +536,15 @@ Guest-only public routes (REQ-FE-056, v1.0.12): the `public` kind of the route a
 | System user reset password | `system_users:reset_password` |
 | System roles list or detail | `system_roles:view` |
 | System role create | `system_roles:create` |
-| System role edit, permissions save | `system_roles:update` (checklist also needs `master_permissions:view`) |
+| System role edit, permissions save | `system_roles:update` (checklist also needs `master_permissions:view`). The Permissions tab shows only PLATFORM-scope permissions (display filter, REQ-FE-057) |
 | System role delete | `system_roles:delete` |
 | Master permissions list | `master_permissions:view` |
 | Master permission edit (name and description) | `master_permissions:update` |
 | Master permission create, activate/deactivate, delete | No UI action (read-only page, REQ-FE-035; BG-12). `master_permissions:create`, `:delete` and the `active` toggle are not offered |
 | Admin sessions view, force logout | `sessions:view`, `sessions:revoke` |
 | Own sessions, change password | Authenticated only |
+
+Assumption (v1.0.15, SP-BG-16 / auth-service V12): after V12, no system role holds a TENANT-scope permission. All TENANT grants were removed from system roles, and trigger GA004 refuses new grants. A save of a system role therefore never carries a TENANT key that the admin cannot see. The UI has no control for an out-of-scope held key, and none is added. If the assumption fails (for example, legacy data), the server answers 400 `PERMISSION_SCOPE_NOT_ALLOWED` (BG-14), shown as fixed copy with the reference id (REQ-FE-057, D13.1). The residual risk is recorded as TD-FE-01 (Low, Gating No).
 
 #### D6.5 403 handling
 
@@ -564,14 +570,14 @@ Table 1 — endpoint usage map (FE doc section 8, with gates and section referen
 | `/tenants` | Tenant list | SYS_PRINCIPAL | GET `/api/v1/tenants` with filters; GET `/api/v1/tenant-categories` and `/api/v1/countries` (reference loaders, D5.4) (6.3, 8) |
 | `/tenants/new` | Tenant create | SYS_PRINCIPAL | GET `/api/v1/tenant-categories?is_active=true&limit=100`; GET `/api/v1/countries?is_active=true&limit=100`; POST `/api/v1/tenants`; POST `/api/v1/tenants/{id}/admin-account` (retry) (6.3) |
 | `/tenants/:id` | Tenant detail | SYS_PRINCIPAL | GET `/api/v1/tenants/{id}`; PATCH `/api/v1/tenants/{id}`; POST `/api/v1/tenants/{id}/admin-account` (6.3). DELETE is never called |
-| `/tenants/:id/permissions` | Tenant permissions | SYS_PRINCIPAL and `tenant_permissions:view` and `master_permissions:view` | GET `/api/v1/master-permissions`; GET, PUT `/api/v1/tenants/{id}/permissions`; PATCH `/api/v1/tenants/{id}/permissions/{permissionId}` (5.4) |
+| `/tenants/:id/permissions` | Tenant permissions | SYS_PRINCIPAL and `tenant_permissions:view` and `master_permissions:view` | GET `/api/v1/master-permissions`; GET, PUT `/api/v1/tenants/{id}/permissions`; PATCH `/api/v1/tenants/{id}/permissions/{permissionId}` (5.4). Shows only TENANT-scope permissions (display filter, REQ-FE-057); saved PLATFORM permissions are not shown but stay in the PUT (full replacement) |
 | `/tenant-categories` | Tenant categories | SYS_PRINCIPAL | GET, POST `/api/v1/tenant-categories`; GET, PUT, DELETE `/api/v1/tenant-categories/{id}` (6.1) |
 | `/countries` | Countries | SYS_PRINCIPAL | GET, POST `/api/v1/countries`; GET, PUT, DELETE `/api/v1/countries/{code}` (6.2) |
-| `/master-permissions` | Master permissions (read-only) | `master_permissions:view`; edit `master_permissions:update` | GET `/api/v1/master-permissions`; GET, PATCH `/api/v1/master-permissions/{id}` (name and description only; no POST, no DELETE, no active toggle) (5.3) |
+| `/master-permissions` | Master permissions (read-only) | `master_permissions:view`; edit `master_permissions:update` | GET `/api/v1/master-permissions`; GET, PATCH `/api/v1/master-permissions/{id}` (name and description only; no POST, no DELETE, no active toggle; PATCH never sends `scope`) (5.3). Scope column with PLATFORM/TENANT badge, no filter, search matches scope (REQ-FE-057) |
 | `/system-users` | System users (Tim IT > Akun) | `system_users:view` | GET, POST `/api/v1/system-users`; GET `/api/v1/system-roles` (role options; needs `system_roles:view`) (5.1) |
 | `/system-users/:id` | System user detail (tab: Detail; tab "Sesi aktif" for another account only, D4.10; the own account shows the link "Sesi saya" to `/account/sessions`) | `system_users:view`; sessions tab `sessions:view` (another account only); force logout `sessions:revoke` | GET, PATCH `/api/v1/system-users/{id}`; DELETE `/api/v1/system-users/{id}` is never called (REQ-FE-054); PATCH `/api/v1/system-users/{id}/status`; POST `/api/v1/system-users/{id}/reset-password`; GET, DELETE `/api/v1/system-users/{id}/sessions` for another account only (5.1, 5.6; SP-BG-14 Closed; v1.0.13) |
 | `/system-roles` | System roles (Tim IT > Peran) | `system_roles:view` | GET, POST `/api/v1/system-roles` (5.2) |
-| `/system-roles/:id` | System role detail (tabs: Detail, Permissions) | `system_roles:view`; edit `system_roles:update` | GET, PATCH, DELETE `/api/v1/system-roles/{id}`; GET, PUT `/api/v1/system-roles/{id}/permissions`; GET `/api/v1/master-permissions` (5.2) |
+| `/system-roles/:id` | System role detail (tabs: Detail, Permissions) | `system_roles:view`; edit `system_roles:update` | GET, PATCH, DELETE `/api/v1/system-roles/{id}`; GET, PUT `/api/v1/system-roles/{id}/permissions`; GET `/api/v1/master-permissions` (5.2). Permissions tab shows only PLATFORM-scope permissions; role keys outside the shown catalogue stay in the PUT selection (REQ-FE-057) |
 
 Not routed in v1: `/tenants/:id/registration-settings` (FE doc 5.5, phase 2).
 
@@ -765,6 +771,7 @@ Module: `features/team/shared/guard-failure.ts`, used by `features/team/users/us
 | 403 | `PLATFORM_ROLE_PROTECTED` | role pages | Peran administrator utama dilindungi dan tidak dapat diubah atau dihapus. |
 | 403 | `ROLE_GUARD_VIOLATION` | role pages | Peran administrator utama dilindungi dan tidak dapat diubah atau dihapus. (same string as `PLATFORM_ROLE_PROTECTED` in the role context; the role is still marked refused, edit and delete stay disabled; v1.0.7) |
 | 403 | `PLATFORM_ROLE_PROTECTED` | account pages | Hanya administrator utama yang aktif yang dapat melakukan aksi ini terhadap akun administrator utama. |
+| 400 | `PERMISSION_SCOPE_NOT_ALLOWED` | role Permissions tab save only (REQ-FE-057, v1.0.14) | Permission ini tidak dapat diberikan pada peran ini. (with the reference id; never server text; checked in `role-failure.ts` before the generic 400 branch; not used on the tenant Permissions tab) |
 
 - The context is passed by the caller (`role` or `account`), not inferred from the message.
 - Scope (FE-OQ-40): only system account pages (Tim IT > Akun) and system role pages (Tim IT > Peran). Tenant role paths keep current handling and never use this module; `PLATFORM_ROLE_PROTECTED` there means a protected tenant role, and `SYSTEM_ROLE_IN_USE` is not returned there.
@@ -795,6 +802,15 @@ Source: auth-service `ARCH-BE-004` section 4 and the per-operation table (read-o
 
 - Every toast and alert that comes from an error shows the reference id: the response `X-Correlation-ID` when readable, otherwise the request id (D3.2). Format: "Kode referensi: <id>" (copy FE-OQ-22).
 - The gateway returns `Cache-Control: no-store` on its own errors (ARCH-BE-002 section 13). No client cache handling is needed for errors.
+
+#### D13.2 Empty-state copy (v1.0.15, REQ-FE-038, REQ-FE-057)
+
+When the master permission catalogue (`GET /api/v1/master-permissions`) has no permission of the scope shown on a tab, the tab body shows the fixed copy below in place of the checklist. The test is the catalogue, not the keys held by the role or tenant. The copy is fixed text (user approval 2026-10-16); server text is never shown. The loading state (D12) applies while the catalogue loads, and the error state (D13) applies instead when that request fails.
+
+| Tab | Shown when the catalogue has no permission of this scope | Copy |
+|-----|----------------------------------------------------------|------|
+| Tim IT > Peran > Permissions (system role) | No PLATFORM-scope permission | "Belum ada permission untuk peran sistem di katalog." |
+| Tenant > detail > Permission | No TENANT-scope permission | "Belum ada permission untuk tenant di katalog." |
 
 ### D14. Tenant-specific rules (summary)
 
@@ -936,6 +952,12 @@ Each row records options and the disposition. The ADR candidates at the end of t
 | RK-FE-16 | Reverse proxy does not pass the Host header unchanged, so the gateway maps the SP host to the wrong context or rejects it | Medium | High | Operator edge file per environment with the SP host and context SYSTEM (REQ-FE-047); apigateway owner confirms the Host passthrough (Dependencies); post-deploy smoke test | Low |
 | RK-FE-17 | Reverse proxy sends `/internal/` or `/.well-known/` to the gateway | Low | Medium | The gateway blocks both on every host (ARCH-SEC-002); the proxy routes only `/api/` (D1.2) | Low |
 
+## Tech Debt
+
+| ID | Gap | Severity | Gating | Status | Linked | Notes |
+|----|-----|----------|--------|--------|--------|-------|
+| TD-FE-01 | A system role still holds a TENANT-scope key. This happens only if the D6.4 assumption fails (for example, legacy data). The UI has no control for an out-of-scope key, so a role save answers 400 `PERMISSION_SCOPE_NOT_ALLOWED` and the admin cannot remove the key in the UI | Low | No | Open | D6.4, D13.1, REQ-FE-057, BG-14, SP-BG-16 / auth-service V12 | Residual risk of the D6.4 assumption. If it ever occurs, the remedy is a platform-side data fix; no UI change is planned. Gating No: does not block a TODO or a checkpoint |
+
 ## Dependencies
 
 - Platform (read-only): ARCH-SOLUTION-001 v1.1; ARCH-SEC-001 v0.4; ARCH-BE-001 v0.2; ADR-009 (Approved). No platform artifact is changed by this document.
@@ -966,6 +988,7 @@ Table 3 — backend gaps (for routing only; not designed here). None of these bl
 | BG-11 | Idempotency key for non-idempotent public writes (tenant create, system user create, reset-password e-mail trigger, master-data and role creates). The FE doc defines none | Tenant create, system user create, reset password | `tech-stack-backend.md` Idempotency Standard applies to retryable writes; FE does not retry (D3.1) | architect_backend of each service and platform ARCH-BE-001 owner (conformance question) |
 | BG-12 | Server-side guard: auth-service must refuse deactivate and delete of master permissions still used by active system roles (at least the core keys `system_users:*`, `system_roles:*`, `master_permissions:*`, `sessions:*`). Reason: `PermissionResolutionService` uses only active, non-deleted master permissions, so deactivating or deleting a core key revokes it from every role including SYS_PRINCIPAL and can lock out all admins. The FE removes these actions (REQ-FE-035) but the API still allows them | Katalog permission (defence in depth; same family as BG-06) | User decision 2026-10-12; handled in the platform repository as an addition to SP-BG-13 | auth-service architect_backend |
 | BG-13 | `GET` and `DELETE /api/v1/system-users/{id}/sessions` for another system user (`sessions:view`, `sessions:revoke`; own account -> 409 `SELF_ACTION_NOT_ALLOWED`; `SYS_PRINCIPAL` holder only by an active principal, else 403 `PLATFORM_ROLE_PROTECTED`). The admin sessions endpoint `/api/v1/admin/users/{userId}/sessions` serves tenant employees only (404 for system users) and is not used for system users. GET has no principal protection (D4.10) | System user detail, tab "Sesi aktif" (D4.10), enabled by `OTHER_ACCOUNT_SESSIONS_ENABLED=true` (v1.0.13) | Platform item SP-BG-14 (Closed 2026-10-15); user decisions 2026-10-14 and 2026-10-15 | auth-service architect_backend |
+| BG-14 | `scope` (`PLATFORM` or `TENANT`, required, immutable) on `GET /api/v1/master-permissions`; 400 `PERMISSION_SCOPE_NOT_ALLOWED` when a TENANT permission is saved on a system role; `MASTER_PERMISSION_SCOPE_IMMUTABLE` on a PATCH that changes `scope` | Peran Permissions tab, tenant Permissions tab, catalogue page (REQ-FE-057) | SP-BG-16 Closed (auth-service PR #6, V12; release gate RC-19 di auth-service tetap Open) | auth-service architect_backend |
 
 Table 4 — stack decision register (`tech-stack-frontend.md`). Version 0.2 records the coordinator's decisions. Every row is an ADR candidate for `/decision` (Pending Approval). No row is Blocking.
 

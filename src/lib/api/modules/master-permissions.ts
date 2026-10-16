@@ -19,7 +19,11 @@ import { unwrapData } from "./auth"
 
 const MASTER_PERMISSIONS_PATH = "/api/v1/master-permissions"
 
-/** D5.3 request body (`MasterPermissionRequest`). */
+/**
+ * D5.3 request body (`MasterPermissionRequest`). `scope` is not part of it: the
+ * server answers MASTER_PERMISSION_SCOPE_IMMUTABLE when a PATCH changes it
+ * (REQ-FE-057), so the UI never sends it.
+ */
 export interface MasterPermissionInput {
   readonly key: string
   readonly name: string

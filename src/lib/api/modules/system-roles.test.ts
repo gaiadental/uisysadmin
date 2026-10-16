@@ -260,7 +260,7 @@ describe("role permissions (keys, not ids)", () => {
   it("GET answers a list of permission keys", async () => {
     const keys = await listRolePermissionKeys(1)
 
-    expect(keys).toEqual(["system_users:view", "branches:view"])
+    expect(keys).toEqual(["system_users:view", "appointment:view"])
   })
 
   it("rejects a list of numbers as CONTRACT", async () => {
@@ -277,17 +277,17 @@ describe("role permissions (keys, not ids)", () => {
 
   it("PUT sends one request with permissionKeys and returns the saved keys", async () => {
     const box = record("put", "/system-roles/:id/permissions", () =>
-      HttpResponse.json({ data: ["branches:view"] })
+      HttpResponse.json({ data: ["appointment:view"] })
     )
 
-    const saved = await replaceRolePermissionKeys(2, ["branches:view"])
+    const saved = await replaceRolePermissionKeys(2, ["appointment:view"])
 
     expect(box.seen).toEqual({
       method: "PUT",
       path: "/api/v1/system-roles/2/permissions",
-      body: { permissionKeys: ["branches:view"] },
+      body: { permissionKeys: ["appointment:view"] },
     })
-    expect(saved).toEqual(["branches:view"])
+    expect(saved).toEqual(["appointment:view"])
   })
 
   it("PUT with an empty list sends an empty array (full replacement)", async () => {

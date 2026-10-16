@@ -179,3 +179,11 @@ Current evidence for the TODO-024 rework: Unit Test Report v1.2 `execution_overa
 ## Gate Cleared — Checkpoint C for TODO-024 (2026-10-15)
 
 Approved by the user, 2026-10-15: `unit-test-report-TODO-024.md` (PASS, 1032 passed in 78 files). The report now reads Approved (front-matter and body). Decision: the other-tab notice is not part of TODO-024; recorded as Low tech debt (Gating No) in the TODO-024 Notes. `/validate TODO-024` starts.
+
+## Gate Cleared — ARCH-FE-001 v1.0.14 and start of TODO-027 (2026-10-16)
+
+Approved by the user, 2026-10-16: "ARCH-FE-001 v1.0.14 APPROVED, termasuk nomor BG-14 di Tabel 3". The architect flipped `ARCH-FE-001.md` (front-matter and body) to Approved. Binding recorded as "SP-BG-16 Closed (auth-service PR #6, V12; release gate RC-19 di auth-service tetap Open)". Gate for `/build TODO-027` is cleared: TODO-027 owner `developer_frontend`, File scope frontend-only, REQ-FE-057. The user's manual test is required before any commit. `/build TODO-027` starts on branch `feat/permission-scope-filter-todo-027`.
+
+## Gate Cleared — Checkpoint C and D for TODO-027 (2026-10-16)
+
+Approved by the user, 2026-10-16: Code Review Report v2.1 (Approved: Yes, 0 Critical, 0 High) and Unit Test Report v1.1 (PASS, 1104 tests; flipped to Approved as v1.2). QA report `qa-report-TODO-027.md` v2.0: Go, Approved. The user's manual browser test PASSED (role and tenant scope on the real API, catalogue Scope badge, PATCH without scope, phone width). Not run: keyboard and screen reader check (residual risk, non-blocking). Count note: 271 vs 273 on the 22 scope files, not investigated, full suite 1104 PASS, non-blocking (user decision 2026-10-16). Open tech debt: TD-FE-01 (Low, Gating No, ARCH-FE-001 v1.0.15), L3 duplicate FP rows (Low, Gating No). Commit on `feat/permission-scope-filter-todo-027`; push waits for the user's OK.

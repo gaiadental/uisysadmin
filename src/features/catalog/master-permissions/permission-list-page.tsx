@@ -6,7 +6,9 @@
  * list, so search and paging run on the client (`useClientPagedList`). The
  * route needs `master_permissions:view`; "Ubah" shows only with
  * `:update` (UX only, the backend enforces). There is no create, activate or
- * delete control, whatever keys the session holds.
+ * delete control, whatever keys the session holds. A Scope column shows the
+ * PLATFORM or TENANT badge (REQ-FE-057); there is no scope filter, and search
+ * also matches the scope.
  */
 
 import { useState, type ReactNode } from "react"
@@ -43,12 +45,19 @@ import {
 } from "./permission-form-dialog"
 
 const META = routeMeta["catalog.permission"]
-const COLUMN_COUNT = 7
+const COLUMN_COUNT = 8
 const SKELETON_ROWS = 5
 const EMPTY_ITEMS: readonly MasterPermission[] = []
 
 function matchesQuery(item: MasterPermission, query: string): boolean {
-  return [item.key, item.name, item.category, item.module, item.description]
+  return [
+    item.key,
+    item.name,
+    item.category,
+    item.module,
+    item.scope,
+    item.description,
+  ]
     .filter((value): value is string => typeof value === "string")
     .some((value) => value.toLocaleLowerCase().includes(query))
 }
@@ -92,7 +101,7 @@ export function PermissionListPage() {
               id="permission-search"
               type="search"
               autoComplete="off"
-              placeholder="Cari key, nama, kategori, atau modul"
+              placeholder="Cari key, nama, kategori, modul, atau scope"
               value={list.query}
               onChange={(event) => list.setQuery(event.target.value)}
             />
@@ -106,6 +115,7 @@ export function PermissionListPage() {
                 <TableHead>Nama</TableHead>
                 <TableHead>Kategori</TableHead>
                 <TableHead>Modul</TableHead>
+                <TableHead className="w-28">Scope</TableHead>
                 <TableHead className="w-28">Status</TableHead>
                 <TableHead className="w-36">Tenant</TableHead>
                 {showActions ? (
@@ -154,6 +164,17 @@ export function PermissionListPage() {
                     </TableCell>
                     <TableCell className="py-2 text-muted-foreground">
                       {permission.module}
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <Badge
+                        variant={
+                          permission.scope === "PLATFORM"
+                            ? "default"
+                            : "outline"
+                        }
+                      >
+                        {permission.scope}
+                      </Badge>
                     </TableCell>
                     <TableCell className="py-2">
                       {permission.active === undefined ? (
